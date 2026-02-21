@@ -6,6 +6,7 @@ description: >
   audit, validate, or check a GitOps repository. Also use it when users mention
   Flux repo structure, GitOps best practices, manifest validation, deprecated APIs,
   or repository organization — even if they don't explicitly say "analyze".
+allowed-tools: Bash(git clone:*) Bash(find:*) Bash(grep:*) Bash(flux:*) Bash(scripts/validate.sh:*) Bash(mktemp:*) Read Glob Grep
 ---
 
 # GitOps Repository Analyzer
@@ -34,7 +35,7 @@ Understand the repository before diving into specifics.
    ```
    grep -rl "apiVersion:.*fluxcd" <repo-root> --include='*.yaml' | head -100
    ```
-4. Classify the repository pattern by reading `@references/repo-patterns.md` and matching against the heuristics table
+4. Classify the repository pattern by reading [repo-patterns.md](references/repo-patterns.md) and matching against the heuristics table
 5. Detect clusters: look for directories under `clusters/` or FluxInstance resources
 6. Check for `gotk-sync.yaml` under `flux-system/` — its presence indicates `flux bootstrap` was used. Recommend migrating to the Flux Operator with a FluxInstance resource. Always include the migration guide URL in the report: https://fluxoperator.dev/docs/guides/migration/
 7. Note any non-Flux resources (Terraform, Helm charts, Kyverno policies, etc.)
@@ -44,7 +45,7 @@ Understand the repository before diving into specifics.
 Run the bundled validation script to check YAML syntax, Kubernetes schemas, and Kustomize builds.
 
 ```bash
-bash <skill-scripts-dir>/validate.sh -d <repo-root>
+scripts/validate.sh -d <repo-root>
 ```
 
 The script:
@@ -73,12 +74,12 @@ Check for deprecated Flux API versions that need migration.
    The `-f` flag requires a relative path (`.`), not an absolute path.
    This outputs which files need API version updates and what changes are required.
 
-2. Read `@references/flux-api-summary.md` for detailed field-level information when
-   you need to verify specific field usage or recommend replacements.
+2. Read [flux-api-summary.md](references/flux-api-summary.md) and [flux-operator-api-summary.md](references/flux-operator-api-summary.md)
+   for detailed field-level information when you need to verify specific field usage or recommend replacements.
 
 ### Phase 4: Best Practices Assessment
 
-Read `@references/best-practices.md` and assess the repository against each
+Read [best-practices.md](references/best-practices.md) and assess the repository against each
 applicable category. Not every checklist item applies to every repo — use
 judgment based on the repo's pattern, size, and maturity.
 
@@ -149,12 +150,10 @@ Include actionable details and links in recommendations.
 
 Load reference files when you need deeper information:
 
-- **`@references/repo-patterns.md`** — When classifying the repository layout or explaining a pattern to the user
-- **`@references/flux-api-summary.md`** — When checking Flux CRD field usage (sources, appliers, notifications, image automation)
-- **`@references/flux-operator-api-summary.md`** — When checking Flux Operator CRDs (FluxInstance, FluxReport, ResourceSet, ResourceSetInputProvider)
-- **`@references/best-practices.md`** — When assessing operational practices or generating the best practices section of the report
-
-For quick API version checks, use the inline tables above without loading references.
+- **[repo-patterns.md](references/repo-patterns.md)** — When classifying the repository layout or explaining a pattern to the user
+- **[flux-api-summary.md](references/flux-api-summary.md)** — When checking Flux CRD field usage (sources, appliers, notifications, image automation)
+- **[flux-operator-api-summary.md](references/flux-operator-api-summary.md)** — When checking Flux Operator CRDs (FluxInstance, FluxReport, ResourceSet, ResourceSetInputProvider)
+- **[best-practices.md](references/best-practices.md)** — When assessing operational practices or generating the best practices section of the report
 
 ## Edge Cases
 

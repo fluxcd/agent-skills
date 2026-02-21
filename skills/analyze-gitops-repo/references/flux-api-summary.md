@@ -1,7 +1,6 @@
 # Flux API Summary
 
 Condensed reference for the Flux CRDs.
-For Flux Operator CRDs (FluxInstance, FluxReport, ResourceSet, ResourceSetInputProvider), see `@references/flux-operator-api-summary.md`.
 
 ## Source API
 
