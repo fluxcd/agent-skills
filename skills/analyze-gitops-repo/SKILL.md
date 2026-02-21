@@ -71,11 +71,11 @@ Check for deprecated Flux API versions.
    ```
    scripts/check-deprecated.sh -d <repo-root>
    ```
-   The script uses `flux migrate --dry-run` if the flux CLI is available,
-   otherwise falls back to grep-based scanning against known deprecated versions.
-
-2. Read [flux-api-summary.md](references/flux-api-summary.md) and [flux-operator-api-summary.md](references/flux-operator-api-summary.md)
-   for detailed field-level information when you need to verify specific field usage or recommend replacements.
+   The script runs `flux migrate -f . --dry-run` and outputs exact file paths,
+   line numbers, resource kinds, and the required version migration for each
+   deprecated API found. Exit code 1 means deprecated APIs were found.
+   If deprecated APIs are found, include this migration guide URL in the report:
+   https://github.com/fluxcd/flux2/discussions/5572
 
 ### Phase 4: Best Practices Assessment
 
