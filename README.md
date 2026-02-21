@@ -21,7 +21,7 @@ For Claude Code, first add the marketplace:
 
 Then install the `gitops-skills` plugin:
 
-```
+```shell
 /plugin install gitops-skills@fluxcd
 ```
 
@@ -39,3 +39,5 @@ To invoke the skill, use the following prompt:
 ```
 Analyze the current repo and provide a GitOps report.
 ```
+
+In Claude Code, you can also invoke the skill directly with `/analyze-gitops-repo`.
