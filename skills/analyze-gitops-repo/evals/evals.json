@@ -84,6 +84,44 @@
         "Notes security hardening in flux-system kustomization patches (resource limits, concurrency, caching)",
         "Produces a structured report with recommendations"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Analyze the evals/files/deprecated-apis/ directory as a GitOps repository and provide a complete analysis report.",
+      "expected_output": "A report flagging multiple deprecated Flux API versions across all resource types, recommending migration to current versions, and noting gotk-sync.yaml means flux bootstrap is used.",
+      "files": ["evals/files/deprecated-apis/"],
+      "expectations": [
+        "Detects GitRepository using source.toolkit.fluxcd.io/v1beta1 (should be v1)",
+        "Detects Kustomization using kustomize.toolkit.fluxcd.io/v1beta1 and v1beta2 (should be v1)",
+        "Detects HelmRelease using helm.toolkit.fluxcd.io/v2beta1 and v2beta2 (should be v2)",
+        "Detects HelmRepository using source.toolkit.fluxcd.io/v1beta1 and v1beta2 (should be v1)",
+        "Detects Provider using notification.toolkit.fluxcd.io/v1beta1 (should be v1beta3)",
+        "Detects Alert using notification.toolkit.fluxcd.io/v1beta2 (should be v1beta3)",
+        "Flags HelmRepository with type: oci as legacy, recommends migration to OCIRepository",
+        "Detects gotk-sync.yaml and recommends migrating to Flux Operator with link to https://fluxoperator.dev/docs/guides/migration/",
+        "Reports overall status as critical-issues due to deprecated APIs",
+        "Produces a structured report with API compliance section listing all deprecated versions"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Analyze the evals/files/bad-structure/ directory as a GitOps repository and provide a complete analysis report.",
+      "expected_output": "A report identifying critical structural issues: flat layout with no separation, everything in default namespace, hardcoded password, insecure source, unpinned chart versions, missing prune/dependsOn/driftDetection.",
+      "files": ["evals/files/bad-structure/"],
+      "expectations": [
+        "Flags the flat directory structure with no apps/infrastructure/clusters separation",
+        "Flags everything deployed to the default namespace instead of per-app namespaces",
+        "Detects the hardcoded password (supersecret123) in redis.yaml values",
+        "Detects insecure: true on the ingress-nginx HelmRepository",
+        "Flags unpinned chart versions (version: '*' or missing version)",
+        "Notes missing prune: true on the Kustomization",
+        "Notes missing dependsOn between Kustomization and HelmReleases",
+        "Notes missing drift detection on all HelmReleases",
+        "Notes missing remediation/retry strategy on all HelmReleases",
+        "Flags HelmRepository with type: oci as legacy, recommends migration to OCIRepository",
+        "Reports overall status as critical-issues",
+        "Produces a structured report with security findings and recommendations"
+      ]
     }
   ]
 }

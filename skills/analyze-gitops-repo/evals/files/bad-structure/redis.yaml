@@ -1,0 +1,27 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: bitnami
+  namespace: default
+spec:
+  interval: 24h
+  type: oci
+  url: oci://registry-1.docker.io/bitnamicharts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: redis
+  namespace: default
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: redis
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+  values:
+    auth:
+      password: supersecret123

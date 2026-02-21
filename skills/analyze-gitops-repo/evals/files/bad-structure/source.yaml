@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  interval: 1h
+  ref:
+    branch: main
+  url: https://github.com/example/my-app
