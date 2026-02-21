@@ -6,7 +6,7 @@ description: >
   audit, validate, or check a GitOps repository. Also use it when users mention
   Flux repo structure, GitOps best practices, manifest validation, deprecated APIs,
   or repository organization — even if they don't explicitly say "analyze".
-allowed-tools: Bash(git clone:*) Bash(find:*) Bash(grep:*) Bash(flux:*) Bash(scripts/validate.sh:*) Bash(mktemp:*) Read Glob Grep
+allowed-tools: Bash(find:*) Bash(grep:*) Bash(scripts/validate.sh:*) Bash(scripts/check-deprecated.sh:*) Read Glob Grep
 ---
 
 # GitOps Repository Analyzer
@@ -65,14 +65,14 @@ validation tools.
 
 ### Phase 3: API Compliance
 
-Check for deprecated Flux API versions that need migration.
+Check for deprecated Flux API versions.
 
-1. If the `flux` CLI is available, run from within the repo directory:
+1. Run the bundled check script:
    ```
-   cd <repo-root> && flux migrate -f . --dry-run
+   scripts/check-deprecated.sh -d <repo-root>
    ```
-   The `-f` flag requires a relative path (`.`), not an absolute path.
-   This outputs which files need API version updates and what changes are required.
+   The script uses `flux migrate --dry-run` if the flux CLI is available,
+   otherwise falls back to grep-based scanning against known deprecated versions.
 
 2. Read [flux-api-summary.md](references/flux-api-summary.md) and [flux-operator-api-summary.md](references/flux-operator-api-summary.md)
    for detailed field-level information when you need to verify specific field usage or recommend replacements.
