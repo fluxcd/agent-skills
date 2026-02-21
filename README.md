@@ -13,17 +13,29 @@ Install skills for Agents with support for `.agents/skills` e.g. Codex, Gemini, 
 npx skills add https://github.com/fluxcd/skills
 ```
 
-Add all skills to [Claude Code](https://code.claude.com/docs/en/discover-plugins#add-from-github):
+For Claude Code, first add the marketplace:
 
 ```shell
 /plugin marketplace add fluxcd/skills
 ```
 
-## Skills Overview
+Then install the `gitops-skills` plugin:
+
+```
+/plugin install gitops-skills@fluxcd
+```
+
+## Skills
 
 ### analyze-gitops-repo
 
-Analyze Flux CD GitOps repositories for structure, validation, API compliance,
+This skill is for analyzing Flux GitOps repositories for structure, validation, API compliance,
 and best practices. Scans directory layout, validates manifests with kubeconform,
 detects deprecated API versions, checks against operational best practices,
 and generates a structured report with prioritized recommendations.
+
+To invoke the skill, use the following prompt:
+
+```
+Analyze the current repo and provide a GitOps report.
+```
