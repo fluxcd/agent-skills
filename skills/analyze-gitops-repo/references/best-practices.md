@@ -22,7 +22,8 @@ not all apply to every repo. Judge based on the repo's complexity and maturity.
 
 ## Remediation and Reliability
 
-- [ ] **Install/upgrade strategies on HelmReleases**: Configure `install.remediation.retries` or the newer `install.strategy` (RetryOnFailure/RemediateOnFailure)
+- [ ] **Install/upgrade strategies on HelmReleases**: Use the modern `install.strategy.name: RetryOnFailure` and `upgrade.strategy.name: RetryOnFailure`.
+  The legacy `install.remediation.retries` / `upgrade.remediation.retries` pattern still works but should be flagged for migration
 - [ ] **Retry intervals**: Set `retryInterval` on Kustomizations and HelmReleases to avoid overwhelming the API server on failures
 - [ ] **Timeouts**: Set `timeout` on Kustomizations and HelmReleases to prevent indefinite hangs
 - [ ] **Drift detection**: Enable `driftDetection.mode: enabled` on production HelmReleases to detect and correct out-of-band changes

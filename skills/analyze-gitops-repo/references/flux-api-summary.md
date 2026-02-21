@@ -131,9 +131,10 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 - `.spec.timeout` — Timeout for Helm actions
 - `.spec.values` / `.spec.valuesFrom` — Helm values (inline or from ConfigMap/Secret)
 - `.spec.dependsOn[]` — Other HelmReleases that must be ready first
-- `.spec.install.remediation.retries` — Retry count on install failure
+- `.spec.install.strategy.name` — `RetryOnFailure` (recommended: retries without uninstalling) or `RemediateOnFailure` (default: uninstalls between retries)
+- `.spec.install.strategy.retryInterval` — Retry interval on install failure (e.g., `5m`, only for `RetryOnFailure`)
 - `.spec.install.crds` — CRD install policy: `Create`, `CreateReplace`, `Skip`
-- `.spec.upgrade.remediation.retries` — Retry count on upgrade failure
+- `.spec.upgrade.strategy.name` — `RetryOnFailure` (recommended: retries without rollback) or `RemediateOnFailure` (default: rolls back between retries)
 - `.spec.upgrade.crds` — CRD upgrade policy: `CreateReplace`, `Skip`
 - `.spec.driftDetection.mode` — `enabled`, `warn`, or `disabled`
 - `.spec.driftDetection.ignore[]` — Paths to ignore during drift detection
@@ -142,7 +143,7 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 - `.spec.postRenderers[]` — Post-rendering with Kustomize patches
 
 **Pattern:** Use `.spec.chartRef` with OCIRepository for OCI charts. Enable `driftDetection.mode: enabled` in production.
-**Gotcha:** `install.remediation.retries` and `upgrade.remediation.retries` is the legacy pattern. The new pattern uses `install.strategy` and `upgrade.strategy` with `RetryOnFailure` or `RemediateOnFailure`.
+**Gotcha:** `install.remediation.retries` and `upgrade.remediation.retries` is the legacy pattern. The new pattern uses `install.strategy` and `upgrade.strategy` with `RetryOnFailure`.
 
 ## Notification API
 
