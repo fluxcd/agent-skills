@@ -1,0 +1,22 @@
+{
+  "name": "fluxcd-skills",
+  "owner": {
+    "name": "The Flux authors",
+    "email": "cncf-flux-dev@lists.cncf.io"
+  },
+  "metadata": {
+    "description": "AI skills for GitOps engineering with Flux CD and Kubernetes",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "gitops-skills",
+      "description": "Collection of GitOps engineering skills for Flux CD repository analysis, validation, and best practices",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/analyze-gitops-repo"
+      ]
+    }
+  ]
+}
