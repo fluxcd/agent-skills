@@ -74,8 +74,9 @@ Check for deprecated Flux API versions.
    The script runs `flux migrate -f . --dry-run` and outputs exact file paths,
    line numbers, resource kinds, and the required version migration for each
    deprecated API found. Exit code 1 means deprecated APIs were found.
-   If deprecated APIs are found, include this migration guide URL in the report:
-   https://github.com/fluxcd/flux2/discussions/5572
+   
+2. If deprecated APIs are found, read [api-migration.md](references/api-migration.md) for the
+   migration procedure and include the steps in the report.
 
 ### Phase 4: Best Practices Assessment
 
@@ -154,6 +155,7 @@ Load reference files when you need deeper information:
 - **[flux-api-summary.md](references/flux-api-summary.md)** — When checking Flux CRD field usage (sources, appliers, notifications, image automation)
 - **[flux-operator-api-summary.md](references/flux-operator-api-summary.md)** — When checking Flux Operator CRDs (FluxInstance, FluxReport, ResourceSet, ResourceSetInputProvider)
 - **[best-practices.md](references/best-practices.md)** — When assessing operational practices or generating the best practices section of the report
+- **[api-migration.md](references/api-migration.md)** — When deprecated APIs are found, include the migration steps in the report
 
 ## Edge Cases
 
