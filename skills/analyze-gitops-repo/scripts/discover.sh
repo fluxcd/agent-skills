@@ -7,7 +7,7 @@
 # and outputs an inventory report with counts by kind and directory.
 
 # Prerequisites
-# - yq >= 4.50
+# - awk
 
 set -o errexit
 set -o pipefail
@@ -59,23 +59,55 @@ parse_args() {
 }
 
 check_prerequisites() {
-  if ! command -v yq &> /dev/null; then
-    echo "ERROR - yq is not installed" >&2
+  if ! command -v awk &> /dev/null; then
+    echo "ERROR - awk is not installed" >&2
     exit 1
   fi
 }
 
-declare -a auto_skip_dirs=()
+# List files matching glob patterns under root_dir, respecting .gitignore.
+# Outputs null-terminated paths. Falls back to find for non-git directories.
+# Usage: find_files '*.yaml' or find_files '*.tf' 'Chart.yaml'
+find_files() {
+  if git -C "$root_dir" rev-parse --is-inside-work-tree &>/dev/null; then
+    # Literal filenames need **/ prefix for recursive matching in git pathspec;
+    # glob patterns (containing * ? [) already match recursively.
+    local git_patterns=()
+    for pattern in "$@"; do
+      if [[ "$pattern" == *'*'* || "$pattern" == *'?'* || "$pattern" == *'['* ]]; then
+        git_patterns+=("$pattern")
+      else
+        git_patterns+=("**/$pattern")
+      fi
+    done
+    git -C "$root_dir" ls-files -z --cached --others --exclude-standard -- "${git_patterns[@]}" | \
+      while IFS= read -r -d '' f; do printf '%s\0' "$root_dir/$f"; done
+  else
+    local name_args=()
+    local first=true
+    for pattern in "$@"; do
+      if $first; then
+        name_args+=(-name "$pattern")
+        first=false
+      else
+        name_args+=(-o -name "$pattern")
+      fi
+    done
+    find "$root_dir" -path '*/.*' -prune -o -type f \( "${name_args[@]}" \) -print0
+  fi
+}
+
+declare -A auto_skip_dirs=()
 
 detect_excluded_dirs() {
   while IFS= read -r -d $'\0' file; do
-    auto_skip_dirs+=("$(dirname "$file")")
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f \( -name '*.tf' -o -name 'Chart.yaml' \) -print0)
+    auto_skip_dirs["$(dirname "$file")"]=1
+  done < <(find_files '*.tf' 'Chart.yaml')
 }
 
 is_excluded() {
   local path="$1"
-  for dir in "${exclude_dirs[@]}" "${auto_skip_dirs[@]}"; do
+  for dir in "${exclude_dirs[@]}" "${!auto_skip_dirs[@]}"; do
     if [[ "$path" == "$dir"/* || "$path" == "$dir" ]]; then
       return 0
     fi
@@ -84,92 +116,76 @@ is_excluded() {
 }
 
 discover() {
-  declare -A flux_kind_counts
-  declare -A flux_dir_counts
-  declare -A k8s_kind_counts
-  declare -A k8s_dir_counts
-  declare -A kustomize_dir_counts
-
+  # Collect non-excluded YAML files
+  local files=()
   while IFS= read -r -d $'\0' file; do
     dir="$(dirname "$file")"
     if is_excluded "$dir"; then
       continue
     fi
+    files+=("$file")
+  done < <(find_files '*.yaml')
 
-    local rel_dir="${dir#"$root_dir"}"
-    rel_dir="${rel_dir#/}"
-    [[ -z "$rel_dir" ]] && rel_dir="."
+  if [[ ${#files[@]} -eq 0 ]]; then
+    echo '{}'
+    return
+  fi
 
-    # extract kind and apiVersion from each document in the file
-    while IFS=$'\t' read -r kind api_version; do
-      [[ -z "$kind" || "$kind" == "null" ]] && continue
-      [[ -z "$api_version" || "$api_version" == "null" ]] && continue
+  # Single-pass extraction using awk: reads top-level kind/apiVersion from
+  # each YAML document across all files, categorizes, counts, and outputs JSON.
+  # Avoids per-file yq invocations and space-unsafe string splitting.
+  awk -v root_dir="$root_dir" '
+    FNR == 1 || /^---[[:space:]]*$/ { kind = ""; api = "" }
+    /^kind:[[:space:]]/ {
+      val = $0; sub(/^kind:[[:space:]]+/, "", val); gsub(/["\047\r]/, "", val); kind = val
+    }
+    /^apiVersion:[[:space:]]/ {
+      val = $0; sub(/^apiVersion:[[:space:]]+/, "", val); gsub(/["\047\r]/, "", val); api = val
+    }
+    kind != "" && api != "" {
+      dir = FILENAME
+      if (index(dir, "/") > 0) sub(/\/[^\/]*$/, "", dir); else dir = "."
+      rd_len = length(root_dir)
+      if (rd_len > 0 && substr(dir, 1, rd_len) == root_dir) {
+        dir = substr(dir, rd_len + 1)
+        sub(/^\//, "", dir)
+      }
+      if (dir == "") dir = "."
 
-      case "$api_version" in
-        *kustomize.config.k8s.io*)
-          kustomize_dir_counts["$rel_dir"]=$(( ${kustomize_dir_counts["$rel_dir"]:-0} + 1 ))
-          continue
-          ;;
-        *fluxcd*)
-          flux_kind_counts["$kind"]=$(( ${flux_kind_counts["$kind"]:-0} + 1 ))
-          flux_dir_counts["$rel_dir"]=$(( ${flux_dir_counts["$rel_dir"]:-0} + 1 ))
-          ;;
-        *)
-          k8s_kind_counts["$kind"]=$(( ${k8s_kind_counts["$kind"]:-0} + 1 ))
-          k8s_dir_counts["$rel_dir"]=$(( ${k8s_dir_counts["$rel_dir"]:-0} + 1 ))
-          ;;
-      esac
-    done < <(yq eval -N '.kind + "\t" + .apiVersion' "$file" 2>/dev/null)
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f -name '*.yaml' -print0)
-
-  # build JSON output
-  local json="{"
-
-  # flux resources
-  json+="\"fluxResources\":{\"byKind\":{"
-  local first=true
-  for kind in $(echo "${!flux_kind_counts[@]}" | tr ' ' '\n' | sort); do
-    $first || json+=","
-    json+="\"$kind\":${flux_kind_counts[$kind]}"
-    first=false
-  done
-  json+="},\"byDirectory\":{"
-  first=true
-  for dir in $(echo "${!flux_dir_counts[@]}" | tr ' ' '\n' | sort); do
-    $first || json+=","
-    json+="\"$dir\":${flux_dir_counts[$dir]}"
-    first=false
-  done
-  json+="}}"
-
-  # kubernetes resources
-  json+=",\"kubernetesResources\":{\"byKind\":{"
-  first=true
-  for kind in $(echo "${!k8s_kind_counts[@]}" | tr ' ' '\n' | sort); do
-    $first || json+=","
-    json+="\"$kind\":${k8s_kind_counts[$kind]}"
-    first=false
-  done
-  json+="},\"byDirectory\":{"
-  first=true
-  for dir in $(echo "${!k8s_dir_counts[@]}" | tr ' ' '\n' | sort); do
-    $first || json+=","
-    json+="\"$dir\":${k8s_dir_counts[$dir]}"
-    first=false
-  done
-  json+="}}"
-
-  # kustomize overlays
-  json+=",\"kustomizeOverlays\":{\"byDirectory\":{"
-  first=true
-  for dir in $(echo "${!kustomize_dir_counts[@]}" | tr ' ' '\n' | sort); do
-    $first || json+=","
-    json+="\"$dir\":${kustomize_dir_counts[$dir]}"
-    first=false
-  done
-  json+="}}}"
-
-  echo "$json" | yq -P -o json
+      if (api ~ /kustomize\.config\.k8s\.io/) {
+        kust_dirs[dir]++
+      } else if (api ~ /fluxcd/) {
+        flux_kinds[kind]++
+        flux_dirs[dir]++
+      } else {
+        k8s_kinds[kind]++
+        k8s_dirs[dir]++
+      }
+      kind = ""; api = ""
+    }
+    function print_obj(arr,    s, k) {
+      printf "{"
+      s = ""
+      for (k in arr) { printf "%s\n      \"%s\": %d", s, k, arr[k]; s = "," }
+      if (s != "") printf "\n    "
+      printf "}"
+    }
+    END {
+      printf "{\n"
+      printf "  \"fluxResources\": {\n"
+      printf "    \"byKind\": "; print_obj(flux_kinds)
+      printf ",\n    \"byDirectory\": "; print_obj(flux_dirs)
+      printf "\n  },\n"
+      printf "  \"kubernetesResources\": {\n"
+      printf "    \"byKind\": "; print_obj(k8s_kinds)
+      printf ",\n    \"byDirectory\": "; print_obj(k8s_dirs)
+      printf "\n  },\n"
+      printf "  \"kustomizeOverlays\": {\n"
+      printf "    \"byDirectory\": "; print_obj(kust_dirs)
+      printf "\n  }\n"
+      printf "}\n"
+    }
+  ' "${files[@]}"
 }
 
 # Main
