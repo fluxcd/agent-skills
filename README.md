@@ -44,3 +44,18 @@ Analyze the current repo and provide a GitOps report.
 ```
 
 In Claude Code, you can also invoke the skill directly with `/analyze-gitops-repo`.
+
+To run only the manifest validation phase, use:
+
+```text
+Validate my repo without analyzing it.
+```
+
+This prompt can be used when changes have been made to the repository, 
+and you want to re-run the validation checks without performing a full analysis.
+
+You can also use the skill to analyze only the files with changes:
+
+```text
+Run a GitOps analysis only on the files with changes.
+```
