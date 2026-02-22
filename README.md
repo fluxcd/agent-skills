@@ -32,7 +32,6 @@ and generates a structured report with prioritized recommendations.
 The following tools are used by the skill and must be available in the environment for it to work properly:
 
 - `flux` for deprecated API detection
-- `curl` for fetching Flux OpenAPI schemas from GitHub
 - `yq` for YAML parsing and validation
 - `kustomize` for building kustomize overlays
 - `kubeconform` for validating Kubernetes manifests against OpenAPI schemas

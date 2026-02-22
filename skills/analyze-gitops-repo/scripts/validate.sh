@@ -3,10 +3,9 @@
 # Copyright 2023-2026 The Flux authors. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# This script downloads the Flux OpenAPI schemas, then it validates the
-# Flux custom resources and the kustomize overlays using kubeconform.
-# This script is meant to be run locally and in CI before the changes
-# are merged on the main branch that's synced by Flux.
+# This script validates the Flux custom resources and the kustomize
+# overlays using kubeconform against the Flux OpenAPI schemas bundled
+# in the assets directory.
 
 # Prerequisites
 # - yq >= 4.50
@@ -16,13 +15,18 @@
 set -o errexit
 set -o pipefail
 
+# resolve the skill root directory (parent of scripts/)
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+skill_dir="$(cd "$script_dir/.." && pwd)"
+assets_schemas_dir="$skill_dir/assets/schemas"
+
 # mirror kustomize-controller build options
 kustomize_flags=("--load-restrictor=LoadRestrictionsNone")
 kustomize_config="kustomization.yaml"
 
 # skip Kubernetes Secrets due to SOPS fields failing validation
 kubeconform_flags=("-skip=Secret")
-kubeconform_config=("-strict" "-ignore-missing-schemas" "-schema-location" "default" "-schema-location" "/tmp/flux-crd-schemas" "-verbose")
+kubeconform_config=("-strict" "-ignore-missing-schemas" "-schema-location" "default" "-verbose")
 
 # root directory to validate
 root_dir="."
@@ -81,22 +85,24 @@ parse_args() {
 
 check_prerequisites() {
   local missing=0
-  for cmd in yq kustomize kubeconform curl; do
+  for cmd in yq kustomize kubeconform; do
     if ! command -v "$cmd" &> /dev/null; then
       echo "ERROR - $cmd is not installed" >&2
       missing=1
     fi
   done
+  if [[ ! -d "$assets_schemas_dir/master-standalone-strict" ]]; then
+    echo "ERROR - Flux OpenAPI schemas not found in $assets_schemas_dir" >&2
+    echo "ERROR - Run 'make download-schemas' to fetch them" >&2
+    missing=1
+  fi
   if [[ $missing -ne 0 ]]; then
     exit 1
   fi
 }
 
-download_schemas() {
-  echo "INFO - Downloading Flux OpenAPI schemas"
-  mkdir -p /tmp/flux-crd-schemas/master-standalone-strict
-  curl -sL https://github.com/controlplaneio-fluxcd/flux-operator/releases/latest/download/crd-schemas.tar.gz | tar zxf - -C /tmp/flux-crd-schemas/master-standalone-strict
-  curl -sL https://github.com/fluxcd/flux2/releases/latest/download/crd-schemas.tar.gz | tar zxf - -C /tmp/flux-crd-schemas/master-standalone-strict
+setup_schemas() {
+  kubeconform_config+=("-schema-location" "$assets_schemas_dir")
 }
 
 # Normalize a path by stripping leading "./" for consistent comparisons
@@ -198,7 +204,7 @@ validate_kustomize_overlays() {
 # Main
 parse_args "$@"
 check_prerequisites
-download_schemas
+setup_schemas
 detect_excluded_dirs
 validate_yaml_syntax
 validate_kubernetes_manifests

@@ -70,14 +70,15 @@ Check for deprecated Flux API versions.
 
 ### Phase 4: Best Practices Assessment
 
-Read [best-practices.md](references/best-practices.md) and assess the repository against each
-applicable category. Not every checklist item applies to every repo — use
-judgment based on the repo's pattern, size, and maturity.
+Read [best-practices.md](references/best-practices.md) in full, do not summarize. Assess the repository
+against each applicable category. Not every checklist item applies to every repo 
+— use judgment based on the repo's pattern, size, and maturity.
 
 Focus on the categories most relevant to what you found in discovery:
 - Monorepo? Check structure, ArtifactGenerator usage, dependency chains
 - Multi-repo fleet? Check RBAC, multi-tenancy, service accounts
 - Has HelmReleases? Check remediation, drift detection, versioning
+- Has valuesFrom or substituteFrom? Check those references
 - Has image automation? Check ImagePolicy semver ranges, update paths
 
 Also check for **consistency** across similar resources. For example, if some
