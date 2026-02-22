@@ -35,10 +35,10 @@ root_dir="."
 exclude_dirs=()
 
 # directories auto-detected as non-Kubernetes (terraform, helm charts)
-declare -a auto_skip_dirs=()
+declare -A auto_skip_dirs=()
 
 # directories that are kustomize overlays
-declare -a kustomize_dirs=()
+declare -A kustomize_dirs=()
 
 usage() {
   echo "Usage: $0 [-d <dir>] [-e <dir>]... [-h]"
@@ -105,6 +105,38 @@ setup_schemas() {
   kubeconform_config+=("-schema-location" "$assets_schemas_dir")
 }
 
+# List files matching glob patterns under root_dir, respecting .gitignore.
+# Outputs null-terminated paths. Falls back to find for non-git directories.
+# Usage: find_files '*.yaml' or find_files '*.tf' 'Chart.yaml'
+find_files() {
+  if git -C "$root_dir" rev-parse --is-inside-work-tree &>/dev/null; then
+    # Literal filenames need **/ prefix for recursive matching in git pathspec;
+    # glob patterns (containing * ? [) already match recursively.
+    local git_patterns=()
+    for pattern in "$@"; do
+      if [[ "$pattern" == *'*'* || "$pattern" == *'?'* || "$pattern" == *'['* ]]; then
+        git_patterns+=("$pattern")
+      else
+        git_patterns+=("**/$pattern")
+      fi
+    done
+    git -C "$root_dir" ls-files -z --cached --others --exclude-standard -- "${git_patterns[@]}" | \
+      while IFS= read -r -d '' f; do printf '%s\0' "$root_dir/$f"; done
+  else
+    local name_args=()
+    local first=true
+    for pattern in "$@"; do
+      if $first; then
+        name_args+=(-name "$pattern")
+        first=false
+      else
+        name_args+=(-o -name "$pattern")
+      fi
+    done
+    find "$root_dir" -path '*/.*' -prune -o -type f \( "${name_args[@]}" \) -print0
+  fi
+}
+
 # Normalize a path by stripping leading "./" for consistent comparisons
 normalize_path() {
   local p="${1#./}"
@@ -122,14 +154,14 @@ is_excluded_dir() {
       return 0
     fi
   done
-  for dir in "${auto_skip_dirs[@]}"; do
+  for dir in "${!auto_skip_dirs[@]}"; do
     local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
       return 0
     fi
   done
-  for dir in "${kustomize_dirs[@]}"; do
+  for dir in "${!kustomize_dirs[@]}"; do
     local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
@@ -143,7 +175,7 @@ is_excluded_dir() {
 is_non_kustomize_excluded_dir() {
   local path
   path="$(normalize_path "$1")"
-  for dir in "${exclude_dirs[@]}" "${auto_skip_dirs[@]}"; do
+  for dir in "${exclude_dirs[@]}" "${!auto_skip_dirs[@]}"; do
     local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
@@ -156,12 +188,12 @@ is_non_kustomize_excluded_dir() {
 # Detect directories containing Terraform files, Helm charts, or kustomize overlays
 detect_excluded_dirs() {
   while IFS= read -r -d $'\0' file; do
-    auto_skip_dirs+=("$(dirname "$file")")
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f \( -name '*.tf' -o -name 'Chart.yaml' \) -print0)
+    auto_skip_dirs["$(dirname "$file")"]=1
+  done < <(find_files '*.tf' 'Chart.yaml')
 
   while IFS= read -r -d $'\0' file; do
-    kustomize_dirs+=("$(dirname "$file")")
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f -name "$kustomize_config" -print0)
+    kustomize_dirs["$(dirname "$file")"]=1
+  done < <(find_files "$kustomize_config")
 }
 
 validate_yaml_syntax() {
@@ -172,7 +204,7 @@ validate_yaml_syntax() {
       continue
     fi
     yq e 'true' "$file" > /dev/null
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f -name '*.yaml' -print0)
+  done < <(find_files '*.yaml')
 }
 
 validate_kubernetes_manifests() {
@@ -183,7 +215,7 @@ validate_kubernetes_manifests() {
       continue
     fi
     kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}"
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f -name '*.yaml' -print0)
+  done < <(find_files '*.yaml')
 }
 
 validate_kustomize_overlays() {
@@ -198,7 +230,7 @@ validate_kustomize_overlays() {
     if [[ ${PIPESTATUS[0]} != 0 || ${PIPESTATUS[1]} != 0 ]]; then
       exit 1
     fi
-  done < <(find "$root_dir" -path '*/.*' -prune -o -type f -name "$kustomize_config" -print0)
+  done < <(find_files "$kustomize_config")
 }
 
 # Main
