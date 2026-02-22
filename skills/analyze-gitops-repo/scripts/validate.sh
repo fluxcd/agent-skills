@@ -121,7 +121,10 @@ find_files() {
       fi
     done
     git -C "$root_dir" ls-files -z --cached --others --exclude-standard -- "${git_patterns[@]}" | \
-      while IFS= read -r -d '' f; do printf '%s\0' "$root_dir/$f"; done
+      while IFS= read -r -d '' f; do
+        [[ "$f" == .* || "$f" == */.* ]] && continue
+        printf '%s\0' "$root_dir/$f"
+      done
   else
     local name_args=()
     local first=true

@@ -96,45 +96,41 @@ Scan for common security issues:
 
 ### Phase 6: Report
 
-Structure findings as a markdown report. Assign severity to each finding:
-- **Critical**: Broken manifests, deprecated APIs that will stop working, exposed secrets
-- **Warning**: Missing best practices that could cause issues (no drift detection, no retry strategy, no prune)
-- **Info**: Suggestions for improvement (could use ArtifactGenerator, could enable receivers)
+Structure findings as a markdown report with these sections if applicable:
 
-## Current Flux CRD Versions
+1. **Summary** — repo name, pattern, clusters, Flux/K8s resource counts, overall status
+2. **Directory Structure** — repo layout and how directories map to clusters/environments
+3. **Validation Results** — if any errors where found
+4. **API Compliance** — if deprecated API are found include migration steps
+5. **Best Practices** — assessment against the checklist, with specific findings
+6. **Security** — secrets, RBAC, network policies, multi-tenancy
+7. **Recommendations** — prioritized by severity: **Critical**, **Warning**, **Info**
 
-Use this table to quickly check if manifests use the correct API versions.
+## Flux CRD Reference
 
-| Controller | Kind | Current apiVersion |
-|---|---|---|
-| Flux Operator | FluxInstance | `fluxcd.controlplane.io/v1` |
-| Flux Operator | FluxReport | `fluxcd.controlplane.io/v1` |
-| Flux Operator | ResourceSet | `fluxcd.controlplane.io/v1` |
-| Flux Operator | ResourceSetInputProvider | `fluxcd.controlplane.io/v1` |
-| Source Controller | GitRepository | `source.toolkit.fluxcd.io/v1` |
-| Source Controller | OCIRepository | `source.toolkit.fluxcd.io/v1` |
-| Source Controller | Bucket | `source.toolkit.fluxcd.io/v1` |
-| Source Controller | HelmRepository | `source.toolkit.fluxcd.io/v1` |
-| Source Controller | HelmChart | `source.toolkit.fluxcd.io/v1` |
-| Source Controller | ExternalArtifact | `source.toolkit.fluxcd.io/v1` |
-| Source Watcher | ArtifactGenerator | `source.extensions.fluxcd.io/v1beta1` |
-| Kustomize Controller | Kustomization | `kustomize.toolkit.fluxcd.io/v1` |
-| Helm Controller | HelmRelease | `helm.toolkit.fluxcd.io/v2` |
-| Notification Controller | Provider | `notification.toolkit.fluxcd.io/v1beta3` |
-| Notification Controller | Alert | `notification.toolkit.fluxcd.io/v1beta3` |
-| Notification Controller | Receiver | `notification.toolkit.fluxcd.io/v1` |
-| Image Reflector | ImageRepository | `image.toolkit.fluxcd.io/v1` |
-| Image Reflector | ImagePolicy | `image.toolkit.fluxcd.io/v1` |
-| Image Automation | ImageUpdateAutomation | `image.toolkit.fluxcd.io/v1` |
+Use this table to check API versions and read the OpenAPI schema before recommending YAML changes.
 
-## Report Format
-
-Structure the report with sections like:
-Summary (table with repo, pattern, clusters, resource counts, overall status),
-Directory Structure, Validation Results, API Compliance, Best Practices Assessment,
-Security Review, and Recommendations (prioritized by severity: Critical, Warning, Info).
-
-Include actionable details and links in recommendations.
+| Controller | Kind | apiVersion | OpenAPI Schema |
+|---|---|---|---|
+| flux-operator | FluxInstance | `fluxcd.controlplane.io/v1` | [fluxinstance-fluxcd-v1.json](assets/schemas/master-standalone-strict/fluxinstance-fluxcd-v1.json) |
+| flux-operator | FluxReport | `fluxcd.controlplane.io/v1` | [fluxreport-fluxcd-v1.json](assets/schemas/master-standalone-strict/fluxreport-fluxcd-v1.json) |
+| flux-operator | ResourceSet | `fluxcd.controlplane.io/v1` | [resourceset-fluxcd-v1.json](assets/schemas/master-standalone-strict/resourceset-fluxcd-v1.json) |
+| flux-operator | ResourceSetInputProvider | `fluxcd.controlplane.io/v1` | [resourcesetinputprovider-fluxcd-v1.json](assets/schemas/master-standalone-strict/resourcesetinputprovider-fluxcd-v1.json) |
+| source-controller | GitRepository | `source.toolkit.fluxcd.io/v1` | [gitrepository-source-v1.json](assets/schemas/master-standalone-strict/gitrepository-source-v1.json) |
+| source-controller | OCIRepository | `source.toolkit.fluxcd.io/v1` | [ocirepository-source-v1.json](assets/schemas/master-standalone-strict/ocirepository-source-v1.json) |
+| source-controller | Bucket | `source.toolkit.fluxcd.io/v1` | [bucket-source-v1.json](assets/schemas/master-standalone-strict/bucket-source-v1.json) |
+| source-controller | HelmRepository | `source.toolkit.fluxcd.io/v1` | [helmrepository-source-v1.json](assets/schemas/master-standalone-strict/helmrepository-source-v1.json) |
+| source-controller | HelmChart | `source.toolkit.fluxcd.io/v1` | [helmchart-source-v1.json](assets/schemas/master-standalone-strict/helmchart-source-v1.json) |
+| source-controller | ExternalArtifact | `source.toolkit.fluxcd.io/v1` | [externalartifact-source-v1.json](assets/schemas/master-standalone-strict/externalartifact-source-v1.json) |
+| source-watcher | ArtifactGenerator | `source.extensions.fluxcd.io/v1beta1` | [artifactgenerator-source-v1beta1.json](assets/schemas/master-standalone-strict/artifactgenerator-source-v1beta1.json) |
+| kustomize-controller | Kustomization | `kustomize.toolkit.fluxcd.io/v1` | [kustomization-kustomize-v1.json](assets/schemas/master-standalone-strict/kustomization-kustomize-v1.json) |
+| helm-controller | HelmRelease | `helm.toolkit.fluxcd.io/v2` | [helmrelease-helm-v2.json](assets/schemas/master-standalone-strict/helmrelease-helm-v2.json) |
+| notification-controller | Provider | `notification.toolkit.fluxcd.io/v1beta3` | [provider-notification-v1beta3.json](assets/schemas/master-standalone-strict/provider-notification-v1beta3.json) |
+| notification-controller | Alert | `notification.toolkit.fluxcd.io/v1beta3` | [alert-notification-v1beta3.json](assets/schemas/master-standalone-strict/alert-notification-v1beta3.json) |
+| notification-controller | Receiver | `notification.toolkit.fluxcd.io/v1` | [receiver-notification-v1.json](assets/schemas/master-standalone-strict/receiver-notification-v1.json) |
+| image-reflector-controller | ImageRepository | `image.toolkit.fluxcd.io/v1` | [imagerepository-image-v1.json](assets/schemas/master-standalone-strict/imagerepository-image-v1.json) |
+| image-reflector-controller | ImagePolicy | `image.toolkit.fluxcd.io/v1` | [imagepolicy-image-v1.json](assets/schemas/master-standalone-strict/imagepolicy-image-v1.json) |
+| image-automation-controller | ImageUpdateAutomation | `image.toolkit.fluxcd.io/v1` | [imageupdateautomation-image-v1.json](assets/schemas/master-standalone-strict/imageupdateautomation-image-v1.json) |
 
 ## Loading References
 
