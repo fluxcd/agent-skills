@@ -9,3 +9,6 @@ bin/
 
 # skill workspaces (eval/benchmark output)
 *-workspace/
+
+# repo clone for eval/benchmark
+workspace/
