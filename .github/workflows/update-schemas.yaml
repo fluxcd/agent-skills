@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup flux
         uses: fluxcd/flux2/action@main
       - name: Setup kubeconform
@@ -24,7 +24,7 @@ jobs:
       - name: Run validation tests
         run: make test-validate
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           branch: update-schemas
