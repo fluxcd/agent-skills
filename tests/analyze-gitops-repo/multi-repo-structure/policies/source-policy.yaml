@@ -1,0 +1,31 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: flux-source-allowlist
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["source.toolkit.fluxcd.io"]
+        apiVersions: ["*"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["ocirepositories", "gitrepositories"]
+  validations:
+    - expression: >-
+        object.spec.url.startsWith('oci://ghcr.io/example/') ||
+        object.spec.url.startsWith('https://github.com/example/')
+      message: "Source URL must be from the allowed organization registries"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: flux-source-allowlist
+spec:
+  policyName: flux-source-allowlist
+  validationActions:
+    - Deny
+  matchResources:
+    namespaceSelector:
+      matchExpressions:
+        - key: toolkit.fluxcd.io/tenant
+          operator: Exists

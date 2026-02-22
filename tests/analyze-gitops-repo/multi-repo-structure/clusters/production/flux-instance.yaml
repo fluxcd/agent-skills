@@ -1,0 +1,25 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.x"
+    registry: ghcr.io/fluxcd
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    size: large
+    multitenant: true
+    networkPolicy: true
+  sync:
+    kind: OCIRepository
+    url: oci://ghcr.io/example/fleet-manifests
+    ref: latest-stable
+    path: clusters/production
+    pullSecret: flux-system

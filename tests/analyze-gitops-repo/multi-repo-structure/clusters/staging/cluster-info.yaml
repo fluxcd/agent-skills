@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-info
+  namespace: flux-system
+data:
+  cluster_name: staging
+  cluster_region: us-east-1
+  cluster_env: staging

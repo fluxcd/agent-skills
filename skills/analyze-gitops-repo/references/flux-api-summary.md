@@ -33,7 +33,9 @@ Produces an Artifact from an OCI container registry.
 - `.spec.provider` — Auth provider: `generic` `aws`, `gcp`, `azure`
 - `.spec.secretRef` — Image pull secret reference (if not using Workload Identity)
 
-**Pattern:** Preferred over HelmRepository for OCI registries. Use with `.spec.chartRef` on HelmRelease. When pointing to AWS (ECR), GCP (Artifact Registry/GCR), or Azure (ACR) registries, set `.spec.provider` to use Workload Identity instead of static credentials.
+**Pattern:** Preferred over HelmRepository for OCI registries. Use with `.spec.chartRef` on HelmRelease.
+When pointing to AWS (ECR), GCP (Artifact Registry/GCR), or Azure (ACR) registries,
+set `.spec.provider` to use Workload Identity instead of static credentials.
 **Gotcha:** For Helm charts stored as OCI artifacts, set `layerSelector.operation: copy`.
 
 ### Bucket (`source.toolkit.fluxcd.io/v1`)
@@ -47,6 +49,8 @@ Produces an Artifact from an S3-compatible bucket.
 - `.spec.prefix` — Object key prefix to filter
 - `.spec.secretRef` — Auth credentials secret
 
+**Pattern:** Mainly used for fetching Kubernetes manifests referenced by Flux Kustomizations.
+
 ### HelmRepository (`source.toolkit.fluxcd.io/v1`)
 
 References a Helm chart repository (HTTP/S or OCI).
@@ -58,7 +62,9 @@ References a Helm chart repository (HTTP/S or OCI).
 - `.spec.secretRef` — Auth credentials
 
 **Pattern:** Use for traditional HTTPS Helm chart repositories only.
-**Gotcha:** `HelmRepository` with `type: oci` is a legacy pattern. Recommend migrating to `OCIRepository` with `chartRef` on HelmRelease — OCIRepository supports Cosign signature verification, semver-based tag policies, and layer selection that HelmRepository OCI mode does not.
+**Gotcha:** `HelmRepository` with `type: oci` is a legacy pattern.
+Recommend migrating to `OCIRepository` with `chartRef` on HelmRelease,
+OCIRepository semver-based tag policies, and layer selection that HelmRepository OCI mode does not.
 
 ### HelmChart (`source.toolkit.fluxcd.io/v1`)
 
@@ -91,7 +97,8 @@ Composes and decomposes sources into new ExternalArtifacts.
   - `.copy[].from` — Source path using `@alias/path/**` syntax
   - `.copy[].to` — Destination path using `@artifact/path/` syntax
 
-**Pattern:** Monorepo decomposition — split one GitRepository into multiple ExternalArtifacts for independent reconciliation. E.g., separate `infrastructure/**` and `apps/**` into independent artifacts so infra changes don't trigger app reconciliation.
+**Pattern:** Monorepo decomposition — split one GitRepository into multiple ExternalArtifacts for independent reconciliation.
+E.g., separate `infrastructure/**` and `apps/**` into independent artifacts so infra changes don't trigger app reconciliation.
 **Gotcha:** Uses `@alias` and `@artifact` path prefixes. The `@monorepo` alias references the first source.
 
 ## Appliers API

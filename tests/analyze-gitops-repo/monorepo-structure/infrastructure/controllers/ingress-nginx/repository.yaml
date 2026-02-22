@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+spec:
+  interval: 12h
+  url: oci://ghcr.io/nginxinc/charts/nginx-ingress
+  ref:
+    semver: ">=4.0.0"

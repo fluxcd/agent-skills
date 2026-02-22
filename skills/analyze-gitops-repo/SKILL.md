@@ -6,7 +6,7 @@ description: >
   audit, validate, or check a GitOps repository. Also use it when users mention
   Flux repo structure, GitOps best practices, manifest validation, deprecated APIs,
   or repository organization — even if they don't explicitly say "analyze".
-allowed-tools: Bash(find:*) Bash(grep:*) Bash(scripts/validate.sh:*) Bash(scripts/check-deprecated.sh:*) Read Glob Grep
+allowed-tools: Read Glob Grep Bash(scripts/validate.sh:*) Bash(scripts/check-deprecated.sh:*)
 ---
 
 # GitOps Repository Analyzer
@@ -26,19 +26,13 @@ does.
 
 Understand the repository before diving into specifics.
 
-1. Scan the directory tree to identify top-level structure:
-   ```
-   find <repo-root> -type f -name '*.yaml' | head -100
-   ```
+1. Scan the directory tree to identify the repo structure
 2. Look for key directories: `apps/`, `infrastructure/`, `clusters/`, `tenants/`, `components/`, `flux-system/`, `deploy/`
-3. Identify Flux resources by scanning for `apiVersion` patterns:
-   ```
-   grep -rl "apiVersion:.*fluxcd" <repo-root> --include='*.yaml' | head -100
-   ```
-4. Classify the repository pattern by reading [repo-patterns.md](references/repo-patterns.md) and matching against the heuristics table
-5. Detect clusters: look for directories under `clusters/` or FluxInstance resources
-6. Check for `gotk-sync.yaml` under `flux-system/` — its presence indicates `flux bootstrap` was used. Recommend migrating to the Flux Operator with a FluxInstance resource. Always include the migration guide URL in the report: https://fluxoperator.dev/docs/guides/migration/
-7. Note any non-Flux resources (Terraform, Helm charts, Kyverno policies, etc.)
+3. Identify Flux resources by searching for the keyword `fluxcd` in `apiVersion` in YAML files
+4. Identify Flux Operator usage by searching for `kind: FluxInstance` and `kind: ResourceSet` in YAML files
+5. Classify the repository pattern by reading [repo-patterns.md](references/repo-patterns.md) and matching against the heuristics table
+6. Detect clusters: look for directories under `clusters/` or FluxInstance resources
+7. Check for `gotk-sync.yaml` under `flux-system/` — its presence indicates `flux bootstrap` was used. Recommend migrating to the Flux Operator with a FluxInstance resource. Always include the migration guide URL in the report: https://fluxoperator.dev/docs/guides/migration/
 
 ### Phase 2: Manifest Validation
 
@@ -58,10 +52,6 @@ The script:
 - Skips Secrets (which may contain SOPS-encrypted fields)
 
 Use `-e <dir>` to exclude additional directories from validation.
-
-If the prerequisites are not installed, skip this phase and note which tools
-are missing in the report. Do not fail the entire analysis because of missing
-validation tools.
 
 ### Phase 3: API Compliance
 
@@ -99,7 +89,7 @@ on the modern pattern.
 
 Scan for common security issues:
 
-1. **Hardcoded secrets**: Look for `password:`, `token:`, `apiKey:` in non-Secret YAML files, or base64-encoded strings in unexpected places
+1. **Hardcoded secrets**: Look for `password:`, `token:`, `apiKey:` in YAML files, or base64-encoded strings in Secret manifests that don't have `sops:` metadata.
 2. **Insecure sources**: Check for `insecure: true` on any source definition
 3. **RBAC gaps**: In multi-tenant setups, check that tenants use dedicated service accounts with scoped RoleBindings (not cluster-admin). If FluxInstance has `cluster.multitenant: true`, the operator enforces a default service account for all controllers — individual Kustomizations and HelmReleases don't need `serviceAccountName` explicitly set
 4. **Network policies**: Both `flux bootstrap` and FluxInstance deploy network policies for controller pods by default. For FluxInstance, `cluster.networkPolicy` defaults to `true` — only flag if explicitly set to `false`. For bootstrap installs, network policies are included in `gotk-components.yaml`. Do not flag missing network policies unless there is evidence they were intentionally removed

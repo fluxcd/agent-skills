@@ -1,0 +1,74 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: apps-tenant
+  namespace: flux-system
+spec:
+  inputs:
+    - tenant: podinfo
+      url: oci://ghcr.io/example/podinfo-deploy
+      tag: ">=1.0.0"
+      cosignKey: cosign-pub
+    - tenant: frontend
+      url: oci://ghcr.io/example/frontend-deploy
+      tag: ">=2.0.0"
+      cosignKey: cosign-pub
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "<< inputs.tenant >>"
+        labels:
+          toolkit.fluxcd.io/tenant: "<< inputs.tenant >>"
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: "<< inputs.tenant >>"
+        namespace: "<< inputs.tenant >>"
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: "<< inputs.tenant >>"
+        namespace: "<< inputs.tenant >>"
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+        - kind: ServiceAccount
+          name: "<< inputs.tenant >>"
+          namespace: "<< inputs.tenant >>"
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: "<< inputs.tenant >>"
+        namespace: "<< inputs.tenant >>"
+      spec:
+        interval: 10m
+        url: "<< inputs.url >>"
+        ref:
+          semver: "<< inputs.tag >>"
+        verify:
+          provider: cosign
+          secretRef:
+            name: "<< inputs.cosignKey >>"
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: "<< inputs.tenant >>"
+        namespace: "<< inputs.tenant >>"
+      spec:
+        interval: 1h
+        retryInterval: 1m
+        timeout: 5m
+        sourceRef:
+          kind: OCIRepository
+          name: "<< inputs.tenant >>"
+        path: ./
+        prune: true
+        wait: true
+        serviceAccountName: "<< inputs.tenant >>"
+        postBuild:
+          substituteFrom:
+            - kind: ConfigMap
+              name: cluster-info

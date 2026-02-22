@@ -57,7 +57,7 @@ Best for organizations with distinct platform and application teams.
 fleet-repo/                      # Platform team owns this
 ├── clusters/
 │   ├── staging/
-│   │   ├── flux-system/         # Flux bootstrap
+│   │   ├── flux-system/         # Flux bootstrap (gotk-components, gotk-sync) or FluxInstance
 │   │   ├── runtime-info.yaml    # ConfigMap with cluster variables
 │   │   ├── infra-tenant.yaml    # Kustomization → tenants/infra
 │   │   └── apps-tenant.yaml     # Kustomization → tenants/apps (dependsOn infra)

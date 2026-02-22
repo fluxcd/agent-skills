@@ -1,0 +1,22 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+spec:
+  interval: 1h
+  timeout: 5m
+  chartRef:
+    kind: OCIRepository
+    name: ingress-nginx
+  install:
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 5m
+    crds: Create
+  upgrade:
+    strategy:
+      name: RetryOnFailure
+    crds: CreateReplace
+  driftDetection:
+    mode: enabled

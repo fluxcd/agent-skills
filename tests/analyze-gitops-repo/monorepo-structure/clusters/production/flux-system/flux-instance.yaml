@@ -1,0 +1,24 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.x"
+    registry: ghcr.io/fluxcd
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    multitenant: false
+    networkPolicy: true
+  sync:
+    kind: GitRepository
+    url: https://github.com/example/monorepo-fleet
+    ref: refs/heads/main
+    path: clusters/production
+    pullSecret: flux-system

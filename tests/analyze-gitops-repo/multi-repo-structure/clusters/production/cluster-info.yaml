@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-info
+  namespace: flux-system
+data:
+  cluster_name: production
+  cluster_region: eu-west-1
+  cluster_env: production

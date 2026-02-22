@@ -3,90 +3,43 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Clone https://github.com/fluxcd/flux2-kustomize-helm-example.git (shallow, HEAD only) into the workspace/ dir, analyze it as a GitOps repository, provide a complete analysis report, then delete the cloned directory.",
-      "expected_output": "A comprehensive analysis report identifying this as a monorepo pattern with two clusters (staging and production), covering structure, validation, API compliance, best practices, and recommendations.",
+      "prompt": "Analyze the tests/analyze-gitops-repo/monorepo-structure/ directory as a GitOps repository and provide a complete analysis report.",
+      "expected_output": "A comprehensive analysis report identifying this as a monorepo pattern with two clusters (staging and production), FluxInstance with GitRepository sync, ArtifactGenerator for monorepo decomposition, Kustomize base/overlay pattern, modern HelmRelease patterns, and recommendations for cluster.size, GitHub App auth, and notifications.",
       "files": [],
       "expectations": [
-        "Clones the repo with --depth=1 into a temp directory and cleans up after analysis",
         "Identifies the repository as a monorepo pattern with apps/infrastructure/clusters structure",
         "Detects two clusters: staging and production",
+        "Detects FluxInstance resources with sync.kind GitRepository",
         "Identifies ArtifactGenerator usage for monorepo decomposition into ExternalArtifacts",
-        "Finds HelmRelease, HelmRepository, OCIRepository, and Kustomization resources",
+        "Finds HelmRelease and OCIRepository resources",
         "Notes the dependency chain: infra-controllers depends on nothing, infra-configs depends on infra-controllers, apps depends on infra-configs",
         "Recognizes the Kustomize base/overlay pattern in apps/ with per-environment patches",
-        "Runs the bundled validate.sh script or notes if prerequisites are missing",
+        "Notes modern install.strategy and upgrade.strategy on HelmReleases",
+        "Detects drift detection enabled on HelmReleases",
         "Checks for deprecated API versions and reports findings",
-        "Produces a structured report with summary, structure, validation, best practices, and recommendations sections"
+        "Produces a structured report with summary, structure, best practices, and recommendations sections"
       ]
     },
     {
       "id": 2,
-      "prompt": "Clone https://github.com/controlplaneio-fluxcd/d2-fleet.git (shallow, HEAD only) into the workspace/ dir, analyze it as a GitOps repository, provide a complete analysis report, then delete the cloned directory.",
-      "expected_output": "A comprehensive analysis report identifying this as an OCI-based multi-repo fleet management pattern using FluxInstance and ResourceSet.",
+      "prompt": "Analyze the tests/analyze-gitops-repo/multi-repo-structure/ directory as a GitOps repository and provide a complete analysis report.",
+      "expected_output": "A comprehensive analysis report identifying this as an OCI-based multi-repo fleet management pattern using FluxInstance with OCIRepository sync, ResourceSet templates for multi-tenant resource generation, Cosign signature verification, ValidatingAdmissionPolicy for source allowlist, and recommendations for dependency ordering and notifications.",
       "files": [],
       "expectations": [
-        "Clones the repo with --depth=1 into a temp directory and cleans up after analysis",
         "Identifies the repository as an OCI-based multi-repo fleet management pattern",
-        "Detects FluxInstance resources for declarative Flux installation",
+        "Detects FluxInstance resources with sync.kind OCIRepository and multitenant: true",
         "Identifies ResourceSet resources for templated multi-tenant resource generation",
-        "Detects multiple clusters (staging, prod-eu, prod-us)",
-        "Notes the OCI artifact sync strategy with tag promotion (latest vs latest-stable)",
+        "Detects multiple clusters: staging and production",
+        "Notes the OCI artifact sync strategy with tag promotion (latest for staging vs latest-stable for production)",
         "Identifies ValidatingAdmissionPolicy for source allowlist enforcement",
-        "Notes Cosign signature verification on OCI sources",
-        "Produces a structured report with recommendations"
+        "Notes Cosign signature verification on OCI sources within ResourceSet templates",
+        "Detects dedicated ServiceAccounts and RoleBindings per tenant for RBAC isolation",
+        "Notes postBuild.substituteFrom for cluster-specific variable injection",
+        "Produces a structured report with summary, structure, best practices, and recommendations sections"
       ]
     },
     {
       "id": 3,
-      "prompt": "Clone https://github.com/controlplaneio-fluxcd/d1-apps.git (shallow, HEAD only) into the workspace/ dir, analyze it as a GitOps repository, provide a complete analysis report, then delete the cloned directory.",
-      "expected_output": "A comprehensive analysis report identifying this as an application repo in a Git-based multi-repo setup with HelmRelease configurations and image automation.",
-      "files": [],
-      "expectations": [
-        "Clones the repo with --depth=1 into a temp directory and cleans up after analysis",
-        "Identifies the repository as an application repo in a multi-repo GitOps setup",
-        "Finds HelmRelease resources for frontend (podinfo) and backend (redis, memcached) components",
-        "Notes the base/staging/production overlay pattern under components/",
-        "Detects image automation setup (ImageRepository and ImagePolicy in update/ directory)",
-        "Checks HelmRelease configurations for drift detection settings",
-        "Notes that some HelmReleases use the older install.remediation.retries pattern",
-        "Produces a structured report with best practices assessment and recommendations"
-      ]
-    },
-    {
-      "id": 4,
-      "prompt": "Clone https://github.com/controlplaneio-fluxcd/d1-infra.git (shallow, HEAD only) into the workspace/ dir, analyze it as a GitOps repository, provide a complete analysis report, then delete the cloned directory.",
-      "expected_output": "A comprehensive analysis report identifying this as an infrastructure repo with controllers/configs separation, HelmReleases for cluster add-ons, and image automation.",
-      "files": [],
-      "expectations": [
-        "Clones the repo with --depth=1 into a temp directory and cleans up after analysis",
-        "Identifies the repository as an infrastructure repo in a multi-repo GitOps setup",
-        "Detects the controllers/configs separation pattern under each component (admission, monitoring)",
-        "Finds HelmRelease resources for Kyverno and kube-prometheus-stack",
-        "Notes drift detection configuration on monitoring HelmRelease",
-        "Detects CRD handling strategy (install.crds: Create, upgrade.crds: CreateReplace)",
-        "Identifies image automation for chart version updates in update/ directory",
-        "Produces a structured report with recommendations"
-      ]
-    },
-    {
-      "id": 5,
-      "prompt": "Clone https://github.com/controlplaneio-fluxcd/d1-fleet.git (shallow, HEAD only) into the workspace/ dir, analyze it as a GitOps repository, provide a complete analysis report, then delete the cloned directory.",
-      "expected_output": "A comprehensive analysis report identifying this as a Git-based multi-repo fleet management pattern with multi-tenant RBAC, Kyverno policies, and postBuild substitution.",
-      "files": [],
-      "expectations": [
-        "Clones the repo with --depth=1 into a temp directory and cleans up after analysis",
-        "Identifies the repository as a Git-based fleet management repo in a multi-repo setup",
-        "Detects multiple clusters (staging, prod-eu, prod-us)",
-        "Finds the tenant structure with separate infra and apps tenant configurations",
-        "Notes multi-tenancy enforcement: dedicated service accounts, RoleBindings, no-cross-namespace-refs",
-        "Identifies postBuild.substituteFrom using ConfigMaps for cluster-specific variables",
-        "Detects ImageUpdateAutomation for automated version bumps across repos",
-        "Notes security hardening in flux-system kustomization patches (resource limits, concurrency, caching)",
-        "Produces a structured report with recommendations"
-      ]
-    },
-    {
-      "id": 6,
       "prompt": "Analyze the tests/analyze-gitops-repo/deprecated-apis/ directory as a GitOps repository and provide a complete analysis report.",
       "expected_output": "A report flagging multiple deprecated Flux API versions across all resource types, recommending migration to current versions, and noting gotk-sync.yaml means flux bootstrap is used.",
       "files": [],
@@ -104,7 +57,7 @@
       ]
     },
     {
-      "id": 7,
+      "id": 4,
       "prompt": "Analyze the tests/analyze-gitops-repo/bad-structure/ directory as a GitOps repository and provide a complete analysis report.",
       "expected_output": "A report identifying critical structural issues: flat layout with no separation, everything in default namespace, hardcoded password, insecure source, unpinned chart versions, missing prune/dependsOn/driftDetection.",
       "files": [],
