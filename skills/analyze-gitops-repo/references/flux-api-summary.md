@@ -268,7 +268,6 @@ Automatically updates Git repositories with new image tags selected by ImagePoli
 - Semver ranges must be valid (e.g., `>=1.0.0`, `1.x`, `~1.2.0`, `6.5.*`)
 - Secret references must point to existing Secrets in the same namespace
 
-
 ## Deep Dive API Specs
 
 Do NOT fetch these URLs unless you need to look up a specific field or behavior not covered above.
