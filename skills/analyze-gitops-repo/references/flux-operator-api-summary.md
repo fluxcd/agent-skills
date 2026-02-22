@@ -4,6 +4,8 @@ Condensed reference for the Flux Operator CRDs.
 
 ## FluxInstance (`fluxcd.controlplane.io/v1`)
 
+OpenAPI schema: assets/schemas/master-standalone-strict/fluxinstance-fluxcd-v1.json
+
 Manages the Flux controllers installation and configuration.
 
 **Key fields:**
@@ -28,6 +30,8 @@ Manages the Flux controllers installation and configuration.
 
 ## ResourceSet (`fluxcd.controlplane.io/v1`)
 
+OpenAPI schema: assets/schemas/master-standalone-strict/resourceset-fluxcd-v1.json
+
 Generates groups of Kubernetes resources from a matrix of input values with templated resources.
 
 **Key fields:**
@@ -50,6 +54,8 @@ Generates groups of Kubernetes resources from a matrix of input values with temp
 - Supports slim-sprig functions (`quote`, `int`, `toYaml`, `nindent`, `get`, `default`, etc.) plus a custom `slugify` function.
 
 ## ResourceSetInputProvider (`fluxcd.controlplane.io/v1`)
+
+OpenAPI schema: assets/schemas/master-standalone-strict/resourcesetinputprovider-fluxcd-v1.json
 
 Fetches input values from external services for ResourceSet consumption.
 
