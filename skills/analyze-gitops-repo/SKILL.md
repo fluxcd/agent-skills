@@ -70,13 +70,19 @@ Focus on the categories most relevant to what you found in discovery:
 - Monorepo? Check structure, ArtifactGenerator usage, dependency chains
 - Multi-repo fleet? Check RBAC, multi-tenancy, service accounts
 - Has HelmReleases? Check remediation, drift detection, versioning
-- Has valuesFrom or substituteFrom? Check those references
+- Has valuesFrom or substituteFrom? Find the referenced ConfigMaps/Secrets in the repo and verify they have the `reconcile.fluxcd.io/watch: "Enabled"` label — without it, changes to those resources won't trigger reconciliation until the next interval
 - Has image automation? Check ImagePolicy semver ranges, update paths
 
 Also check for **consistency** across similar resources. For example, if some
 HelmReleases use the modern `install.strategy` pattern while others use legacy
 `install.remediation.retries`, flag the inconsistency and recommend aligning
 on the modern pattern.
+
+**Before recommending any YAML changes**, read the relevant OpenAPI schema from
+`assets/schemas/master-standalone-strict/` to verify the exact field names and nesting.
+Schema files follow the naming convention `{kind}-{group}-{version}.json`
+(e.g., `helmrelease-helm-v2.json`, `kustomization-kustomize-v1.json`).
+Do not guess YAML structure from the checklist summaries.
 
 ### Phase 5: Security Review
 
