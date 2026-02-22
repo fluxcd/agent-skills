@@ -1,0 +1,12 @@
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    labels: ["dependencies"]
+    groups:
+      ci:
+        patterns:
+          - "*"
+    schedule:
+      interval: "monthly"

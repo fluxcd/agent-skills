@@ -1,0 +1,39 @@
+name: update-schemas
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1-5"
+
+jobs:
+  update-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup flux
+        uses: fluxcd/flux2/action@main
+      - name: Setup kubeconform
+        uses: fluxcd/pkg/actions/kubeconform@main
+      - name: Setup kustomize
+        uses: fluxcd/pkg/actions/kustomize@main
+      - name: Setup yq
+        uses: fluxcd/pkg/actions/yq@main
+      - name: Download schemas
+        run: make download-schemas
+      - name: Run validation tests
+        run: make test-validate
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          branch: update-schemas
+          committer: GitHub <noreply@github.com>
+          author: fluxcdbot <fluxcdbot@users.noreply.github.com>
+          signoff: true
+          commit-message: Update Flux OpenAPI schemas
+          title: Update Flux OpenAPI schemas
+          body: |
+            Update the Flux OpenAPI schemas used for kubeconform validation.
+          labels: |
+            dependencies
