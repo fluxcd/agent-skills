@@ -1,11 +1,11 @@
 # Makefile for maintaining the GitOps AI Skills assets.
 # Run 'make help' to see available targets.
 
-SCHEMAS_DIR := skills/analyze-gitops-repo/assets/schemas/master-standalone-strict
+SCHEMAS_DIR := skills/gitops-repo-audit/assets/schemas/master-standalone-strict
 
-DISCOVER_SCRIPT := skills/analyze-gitops-repo/scripts/discover.sh
-VALIDATE_SCRIPT := skills/analyze-gitops-repo/scripts/validate.sh
-TEST_DIR := tests/analyze-gitops-repo
+DISCOVER_SCRIPT := skills/gitops-repo-audit/scripts/discover.sh
+VALIDATE_SCRIPT := skills/gitops-repo-audit/scripts/validate.sh
+TEST_DIR := tests/gitops-repo-audit
 
 .PHONY: help download-schemas clean-schemas test-discover test-validate
 

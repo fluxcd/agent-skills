@@ -6,16 +6,16 @@
   },
   "metadata": {
     "description": "AI skills for GitOps engineering with Flux CD and Kubernetes",
-    "version": "0.0.2"
+    "version": "0.0.1"
   },
   "plugins": [
     {
       "name": "gitops-skills",
-      "description": "Collection of GitOps engineering skills for Flux CD repository analysis, validation, and best practices",
+      "description": "Collection of GitOps engineering skills for Flux CD repository auditing, security review, and best practices",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/analyze-gitops-repo"
+        "./skills/gitops-repo-audit"
       ]
     }
   ]

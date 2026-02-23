@@ -11,4 +11,4 @@ bin/
 *-workspace/
 
 # repo clone for eval/benchmark
-workspace/
+workspace/gitops-repo-audit-workspace/

@@ -1,9 +1,9 @@
 {
-  "skill_name": "analyze-gitops-repo",
+  "skill_name": "gitops-repo-audit",
   "evals": [
     {
       "id": 1,
-      "prompt": "Analyze the tests/analyze-gitops-repo/monorepo-structure/ directory as a GitOps repository and provide a complete analysis report.",
+      "prompt": "Analyze the tests/gitops-repo-audit/monorepo-structure/ directory as a GitOps repository and provide a complete analysis report.",
       "expected_output": "A comprehensive analysis report identifying this as a monorepo pattern with two clusters (staging and production), FluxInstance with GitRepository sync, ArtifactGenerator for monorepo decomposition, Kustomize base/overlay pattern, modern HelmRelease patterns, and recommendations for cluster.size, GitHub App auth, and notifications.",
       "files": [],
       "expectations": [
@@ -22,7 +22,7 @@
     },
     {
       "id": 2,
-      "prompt": "Analyze the tests/analyze-gitops-repo/multi-repo-structure/ directory as a GitOps repository and provide a complete analysis report.",
+      "prompt": "Analyze the tests/gitops-repo-audit/multi-repo-structure/ directory as a GitOps repository and provide a complete analysis report.",
       "expected_output": "A comprehensive analysis report identifying this as an OCI-based multi-repo fleet management pattern using FluxInstance with OCIRepository sync, ResourceSet templates for multi-tenant resource generation, Cosign signature verification, ValidatingAdmissionPolicy for source allowlist, and recommendations for dependency ordering and notifications.",
       "files": [],
       "expectations": [
@@ -40,7 +40,7 @@
     },
     {
       "id": 3,
-      "prompt": "Analyze the tests/analyze-gitops-repo/deprecated-apis/ directory as a GitOps repository and provide a complete analysis report.",
+      "prompt": "Analyze the tests/gitops-repo-audit/deprecated-apis/ directory as a GitOps repository and provide a complete analysis report.",
       "expected_output": "A report flagging multiple deprecated Flux API versions across all resource types, recommending migration to current versions, and noting gotk-sync.yaml means flux bootstrap is used.",
       "files": [],
       "expectations": [
@@ -58,7 +58,7 @@
     },
     {
       "id": 4,
-      "prompt": "Analyze the tests/analyze-gitops-repo/bad-structure/ directory as a GitOps repository and provide a complete analysis report.",
+      "prompt": "Analyze the tests/gitops-repo-audit/bad-structure/ directory as a GitOps repository and provide a complete analysis report.",
       "expected_output": "A report identifying critical structural issues: flat layout with no separation, everything in default namespace, hardcoded password, insecure source, unpinned chart versions, missing prune/dependsOn/driftDetection.",
       "files": [],
       "expectations": [
