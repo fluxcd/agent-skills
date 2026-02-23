@@ -86,13 +86,17 @@ Do not guess YAML structure from the checklist summaries.
 
 ### Phase 5: Security Review
 
-Scan for common security issues:
+Read [security-audit.md](references/security-audit.md) in full. Audit the repository against each
+applicable category. Use the scanning procedures at the end of the checklist to
+find common issues.
 
-1. **Hardcoded secrets**: Look for `password:`, `token:`, `identity:` in YAML files. Look for `data:` and `stringData:` in Kubernetes Secret manifests that don't have `sops:` metadata.
-2. **Insecure sources**: Check for `insecure: true` on any source definition.
-3. **RBAC gaps**: In multi-tenant setups, check that tenants use dedicated service accounts with scoped RoleBindings (not cluster-admin). If FluxInstance has `cluster.multitenant: true`, the operator enforces a default service account for all controllers — individual Kustomizations and HelmReleases don't need `serviceAccountName` explicitly set.
-4. **Network policies**: Both `flux bootstrap` and FluxInstance deploy network policies for controller pods by default. Check if the FluxInstance explicitly sets `cluster.networkPolicy` to `false` and warn if so.
-5. **Cross-namespace refs**: In multi-tenant setups, check for any `sourceRef.namespace` (e.g. a Kustomization in one namespace referencing a GitRepository in another).
+Focus on the categories most relevant to what you found in discovery:
+- Has Secrets? Check secrets management (SOPS, External Secrets)
+- Has private sources? Check source authentication and Workload Identity
+- Has OCI sources? Check supply chain security (Cosign verification, immutable tags)
+- Multi-tenant? Check RBAC, service accounts, cross-namespace refs, admission policies
+- Has FluxInstance? Check operator security settings (multitenant, network policies)
+- Has image automation? Check push credential separation and branch isolation
 
 ### Phase 6: Report
 
@@ -140,6 +144,7 @@ Load reference files when you need deeper information:
 - **[flux-api-summary.md](references/flux-api-summary.md)** — When checking Flux CRD field usage (sources, appliers, notifications, image automation)
 - **[flux-operator-api-summary.md](references/flux-operator-api-summary.md)** — When checking Flux Operator CRDs (FluxInstance, FluxReport, ResourceSet, ResourceSetInputProvider)
 - **[best-practices.md](references/best-practices.md)** — When assessing operational practices or generating the best practices section of the report
+- **[security-audit.md](references/security-audit.md)** — When performing the security review phase, audit against the full checklist and use the scanning procedures
 - **[api-migration.md](references/api-migration.md)** — When deprecated APIs are found, include the migration steps in the report
 
 ## Edge Cases
