@@ -39,10 +39,11 @@
                       "type": "string"
                     },
                     "strategy": {
-                      "description": "Strategy specifies the copy strategy to use.\n'Overwrite' will overwrite existing files in the destination.\n'Merge' is for merging YAML files using Helm values merge strategy.\nIf not specified, defaults to 'Overwrite'.",
+                      "description": "Strategy specifies the copy strategy to use.\n'Overwrite' will overwrite existing files in the destination.\n'Merge' is for merging YAML files using Helm values merge strategy.\n'Extract' is for extracting the contents of tarball archives (.tar.gz, .tgz)\nWhen using glob patterns, non-tarball files are silently skipped. For single file sources,\nthe file must be a tarball or an error is returned. Directories are not supported.\nIf not specified, defaults to 'Overwrite'.",
                       "enum": [
                         "Overwrite",
-                        "Merge"
+                        "Merge",
+                        "Extract"
                       ],
                       "type": "string"
                     },
@@ -109,7 +110,9 @@
                 "enum": [
                   "Bucket",
                   "GitRepository",
-                  "OCIRepository"
+                  "OCIRepository",
+                  "HelmChart",
+                  "ExternalArtifact"
                 ],
                 "type": "string"
               },

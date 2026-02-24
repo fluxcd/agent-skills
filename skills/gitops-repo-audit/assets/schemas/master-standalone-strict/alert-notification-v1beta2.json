@@ -52,7 +52,9 @@
                   "ImageRepository",
                   "ImagePolicy",
                   "ImageUpdateAutomation",
-                  "OCIRepository"
+                  "OCIRepository",
+                  "ArtifactGenerator",
+                  "ExternalArtifact"
                 ],
                 "type": "string"
               },
