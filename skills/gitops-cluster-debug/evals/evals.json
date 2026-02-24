@@ -1,0 +1,56 @@
+{
+  "skill_name": "gitops-cluster-debug",
+  "note": "These evals require a live Kubernetes cluster with Flux Operator and the flux-operator-mcp server running. They serve as documentation for expected skill behavior.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Check the Flux installation health on the current cluster and provide a status report.",
+      "expected_output": "A report showing the Flux Operator status, FluxInstance readiness, controller deployment health, installed Flux version, and a summary from the FluxReport.",
+      "files": [],
+      "expectations": [
+        "Calls get_flux_instance to check the Flux Operator status",
+        "Reports the FluxInstance Ready condition and any issues",
+        "Lists all Flux controller deployments and their status",
+        "Reports the installed Flux distribution version",
+        "Summarizes the FluxReport resource counts and conditions",
+        "If controllers are unhealthy, checks controller pod logs",
+        "Produces a structured report with summary and recommendations"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Debug the failing Kustomization 'apps' in the 'flux-system' namespace.",
+      "expected_output": "A root cause analysis identifying that the Kustomization fails because its source GitRepository has an authentication error, with recommendations to fix the Git credentials.",
+      "files": [],
+      "expectations": [
+        "Calls get_flux_instance to check the kustomize-controller status",
+        "Calls get_kubernetes_api_versions to verify the Kustomization apiVersion",
+        "Gets the Kustomization resource and analyzes its status conditions and events",
+        "Identifies the sourceRef pointing to a GitRepository",
+        "Gets the GitRepository resource and finds the FetchFailed condition",
+        "Identifies the authentication error as the root cause",
+        "Checks if the referenced secretRef Secret exists and has the expected keys",
+        "Produces a root cause analysis report with the dependency chain",
+        "Recommends fixing the Git credentials in the referenced Secret"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Debug the failing HelmRelease 'podinfo' in the 'default' namespace.",
+      "expected_output": "A root cause analysis identifying that the HelmRelease upgrade failed with managed Deployment pods in ImagePullBackOff due to a non-existent container image tag.",
+      "files": [],
+      "expectations": [
+        "Calls get_flux_instance to check the helm-controller status",
+        "Calls get_kubernetes_api_versions to verify the HelmRelease apiVersion",
+        "Gets the HelmRelease resource and analyzes its status conditions and events",
+        "Identifies the chart source from chartRef or sourceRef",
+        "Gets the source resource and verifies it is ready",
+        "Checks the HelmRelease inventory for managed resources",
+        "Gets managed Deployments and finds pods in ImagePullBackOff",
+        "Analyzes pod events to identify the image pull error",
+        "Produces a root cause analysis tracing from HelmRelease to Deployment to Pod",
+        "Recommends fixing the container image reference in the HelmRelease values"
+      ]
+    }
+  ]
+}

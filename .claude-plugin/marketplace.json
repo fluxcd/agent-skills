@@ -15,7 +15,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/gitops-repo-audit"
+        "./skills/gitops-repo-audit",
+        "./skills/gitops-cluster-debug"
       ]
     }
   ]

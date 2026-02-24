@@ -3,7 +3,8 @@
 [![license](https://img.shields.io/github/license/fluxcd/skills.svg)](https://github.com/fluxcd/skills/blob/main/LICENSE)
 
 A collection of reusable skills that give AI Agents expertise in Flux CD,
-Kubernetes, and GitOps best practices for auditing repository structure, security, and operational readiness.
+Kubernetes, and GitOps best practices for auditing repository structure, security,
+operational readiness, and debugging live cluster installations.
 
 > [!IMPORTANT]
 > This project is under active development. Skill definitions, reference files,
@@ -32,6 +33,7 @@ The skills in this repository rely on the following tools being available in the
 - `yq` for YAML parsing and validation
 - `kustomize` for building kustomize overlays
 - `kubeconform` for validating Kubernetes manifests against OpenAPI schemas
+- `flux-operator-mcp` for debugging Flux on live Kubernetes clusters (required by `gitops-cluster-debug`)
 
 A [Brewfile](https://raw.githubusercontent.com/fluxcd/agent-skills/refs/heads/main/Brewfile) is provided for easy installation of the prerequisites on macOS.
 
@@ -66,6 +68,36 @@ You can also use the skill to audit only the files with changes:
 ```text
 Run a GitOps audit only on the files with changes.
 ```
+
+### gitops-cluster-debug
+
+Debugs and troubleshoots Flux CD on live Kubernetes clusters using the
+[Flux MCP](https://fluxoperator.dev/mcp-server/) server. Inspects Flux installation health, diagnoses
+HelmRelease and Kustomization failures, analyzes pod logs and traces dependency chains.
+
+To invoke the skill, use the following prompts:
+
+```text
+Check the Flux installation on my current cluster.
+```
+
+```text
+Debug the failing HelmRelease podinfo in the apps namespace on my current cluster.
+```
+
+```text
+Troubleshoot the Kustomization flux-system/infra-controllers in the staging cluster.
+```
+
+The `flux-operator-mcp` server can be configured in Claude Code with:
+
+```bash
+claude mcp add --scope user --transport stdio flux-operator-mcp \
+  --env KUBECONFIG=$HOME/.kube/config \
+  -- flux-operator-mcp serve --read-only
+```
+
+Note that the `--read-only` flag is will prevent the Agent from making any changes to the cluster.
 
 ## Skill Structure
 
