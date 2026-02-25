@@ -25,6 +25,7 @@ root causes.
   the Flux Operator status, version, and settings before doing anything else.
 - When creating or updating resources on the cluster, generate a Kubernetes YAML manifest
   and call the `apply_kubernetes_resource` tool. Do not apply resources unless explicitly requested by the user.
+- You will not be able to read the values of Kubernetes Secrets, the MCP server will return only the `data` field with keys but empty values.
 
 ## Cluster Context
 

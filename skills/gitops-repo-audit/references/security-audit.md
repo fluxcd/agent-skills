@@ -12,10 +12,10 @@ the repo's deployment model (single-tenant vs multi-tenant) and infrastructure.
 
 ## Hardcoded Credentials
 
-Scan for literal credentials (e.g.`password:`, `token:`, `privateKey:`, `clientSecret:`, `apiKey:`, `secretKey:`, `accessKey:`, `connectionString:`, and similar patterns) in the following places:
+Scan for literal credentials patterns in the following places:
 
 - [ ] **HelmReleases**: Search in `.spec.values:` fields
-- [ ] **Kustomizations**: Search in `.spec.postBuild.substitute:` and `.spec.patches` fields
+- [ ] **Kustomizations**: Search in `.spec.postBuild.substitute:` and `.spec.patches:` fields
 - [ ] **ConfigMaps**: Search in `data:` fields
 - [ ] **Kustomize overlay**: Search in `kustomization.yaml` files for `configMapGenerator` with `literals` or `envs`
 
@@ -73,7 +73,8 @@ Read each match and check for `literals:` or `envs:` entries. Flag `secretGenera
 credential-like values (passwords, keys, tokens, connection strings).
 
 **Find hardcoded credentials:**
-Search for patterns: `password:`, `token:`, `apiKey:`, `client-secret:`, `private-key:`, `identity:`, `stringData:` in YAML files. Cross-reference with Secret resources to distinguish Flux-managed secrets from inline values.
+Search for patterns: `password:`, `token:`, `privateKey:`, `clientSecret:`, `apiKey:`, `secretKey:`, `accessKey:`, `connectionString:` in YAML files.
+Cross-reference with Secret resources to distinguish Flux-managed secrets from inline values.
 Also search for credential-like patterns inside literal strings: `PASSWORD=`, `_KEY=`,
 `_SECRET=`, `_TOKEN=`, `ACCESS_KEY=`, `CONNECTION_STRING=` — these appear in
 `secretGenerator`/`configMapGenerator` literals and environment variable definitions.

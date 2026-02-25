@@ -117,7 +117,7 @@ Use this when you need to understand CRD fields, status conditions, or common fa
 - `.spec.secretRef` — Auth credentials secret
 - `.spec.sparseCheckout` — Directories to include
 
-**Key status conditions**: `Ready`, `Reconciling`, `FetchFailed`, `ArtifactInStorage`, `ArtifactOutdated`, `SourceVerified`
+**Key status conditions**: `Ready`, `Reconciling`, `FetchFailed`, `SourceVerified`
 
 **Common failures**:
 - Authentication error (invalid credentials, expired token, wrong SSH key)
@@ -138,7 +138,7 @@ Use this when you need to understand CRD fields, status conditions, or common fa
 - `.spec.verify.provider` — Signature verification (cosign)
 - `.spec.layerSelector` — Media type and operation for layer extraction
 
-**Key status conditions**: `Ready`, `Reconciling`, `FetchFailed`, `ArtifactInStorage`, `ArtifactOutdated`, `SourceVerified`
+**Key status conditions**: `Ready`, `Reconciling`, `FetchFailed`, `SourceVerified`
 
 **Common failures**:
 - Authentication error (wrong pull secret, expired token, misconfigured workload identity)
@@ -155,7 +155,7 @@ Use this when you need to understand CRD fields, status conditions, or common fa
 - `.spec.secretRef` — Auth credentials
 - `.spec.provider` — Auth provider for OCI registries
 
-**Key status conditions**: `Ready`, `Reconciling`, `Stalled`, `FetchFailed`, `ArtifactInStorage`, `ArtifactOutdated`
+**Key status conditions**: `Ready`, `Reconciling`, `Stalled`, `FetchFailed`
 
 Note: OCI HelmRepositories have no status conditions.
 
@@ -174,7 +174,7 @@ Note: OCI HelmRepositories have no status conditions.
 - `.spec.sourceRef` — Reference to HelmRepository, GitRepository, or Bucket
 - `.spec.valuesFiles` — Additional values files from the source
 
-**Key status conditions**: `Ready`, `Reconciling`, `Stalled`, `FetchFailed`, `ArtifactInStorage`, `ArtifactOutdated`, `SourceVerified`
+**Key status conditions**: `Ready`, `Reconciling`, `Stalled`, `FetchFailed`, `SourceVerified`
 
 **Common failures**:
 - Chart not found in repository (wrong name or version)

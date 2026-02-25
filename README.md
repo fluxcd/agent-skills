@@ -98,6 +98,7 @@ claude mcp add --scope user --transport stdio flux-operator-mcp \
 ```
 
 Note that the `--read-only` flag is will prevent the Agent from making any changes to the cluster.
+The MCP server masks Kubernetes Secrets, the Agent receives only the data key names without values.
 
 ## Skill Structure
 
