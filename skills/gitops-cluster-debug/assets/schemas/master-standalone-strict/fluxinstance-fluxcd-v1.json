@@ -107,7 +107,7 @@
           "additionalProperties": false
         },
         "components": {
-          "description": "Components is the list of controllers to install.\nDefaults to a commonly used subset.",
+          "description": "Components is the list of controllers to install.\nDefaults to the core Flux controllers:\n  - source-controller\n  - kustomize-controller\n  - helm-controller\n  - notification-controller",
           "items": {
             "description": "Component is the name of a controller to install.",
             "enum": [
