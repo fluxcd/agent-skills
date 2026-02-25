@@ -136,7 +136,6 @@ discover() {
 
   # Single-pass extraction using awk: reads top-level kind/apiVersion from
   # each YAML document across all files, categorizes, counts, and outputs JSON.
-  # Avoids per-file yq invocations and space-unsafe string splitting.
   awk -v root_dir="$root_dir" '
     FNR == 1 || /^---[[:space:]]*$/ { kind = ""; api = "" }
     /^kind:[[:space:]]/ {

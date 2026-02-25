@@ -30,6 +30,7 @@ For Claude Code, add the marketplace and install the skills with:
 The skills in this repository rely on the following tools being available in the environment:
 
 - `flux` for dry running and manifest generation
+- `awk` for text processing and data extraction
 - `yq` for YAML parsing and validation
 - `kustomize` for building kustomize overlays
 - `kubeconform` for validating Kubernetes manifests against OpenAPI schemas
