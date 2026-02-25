@@ -30,9 +30,9 @@ root causes.
 
 If the user specifies a cluster name:
 
-1. Call `get_kubernetes_contexts` to list available contexts.
+1. Call `get_kubeconfig_contexts` to list available contexts.
 2. Find the context matching the user's cluster name.
-3. Call `set_kubernetes_context` to switch to it.
+3. Call `set_kubeconfig_context` to switch to it.
 4. Call `get_flux_instance` to verify the Flux installation on that cluster.
 
 If no cluster is specified, debug on the current context. Still call `get_flux_instance`
