@@ -96,7 +96,28 @@ Follow these steps when troubleshooting a Kustomization:
 10. Create a root cause analysis report. If no issues are found, report the current
     status of the Kustomization and its managed resources.
 
-### Workflow 4: Kubernetes Logs Analysis
+### Workflow 4: ResourceSet Debugging
+
+Follow these steps when troubleshooting a ResourceSet:
+
+1. Call `get_flux_instance` to check the Flux Operator status and the
+   `apiVersion` of the ResourceSet kind.
+2. Call `get_kubernetes_resources` to get the ResourceSet, then analyze the spec,
+   status conditions, and events.
+3. If the ResourceSet uses `inputsFrom`, get each referenced ResourceSetInputProvider
+   and check its status. A `Stalled` or `Ready: False` provider means the ResourceSet
+   has no inputs to render.
+4. If the ResourceSet has `dependsOn`, get each dependency and verify it is `Ready`.
+   ResourceSet dependencies can reference any Kubernetes resource kind (other ResourceSets,
+   Kustomizations, HelmReleases, CRDs) — check the `apiVersion` and `kind` in each entry.
+5. Check the ResourceSet inventory for generated resources. Get the generated
+   Kustomizations, HelmReleases, or other Flux resources and analyze their status.
+6. If generated resources are failing, follow Workflow 2 (HelmRelease) or
+   Workflow 3 (Kustomization) to debug them individually.
+7. Create a root cause analysis report. Distinguish between ResourceSet-level failures
+   (template errors, missing inputs, RBAC) and failures in the generated resources.
+
+### Workflow 5: Kubernetes Logs Analysis
 
 When analyzing logs for any workload:
 
