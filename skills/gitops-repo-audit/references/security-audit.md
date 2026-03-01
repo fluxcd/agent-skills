@@ -6,9 +6,9 @@ the repo's deployment model (single-tenant vs multi-tenant) and infrastructure.
 
 ## Secrets Management
 
-- [ ] **Secrets encryption strategy**: Identify which secret management approach the repo uses — SOPS (look for `sops:` metadata in Secret manifests and `.spec.decryption` on Flux `Kustomization`), External Secrets Operator (look for `ExternalSecret` or `ClusterSecretStore` resources), or Sealed Secrets (look for `SealedSecret` resources).
-- [ ] **No plain-text secrets in Git**: Flag any `apiVersion: v1` / `kind: Secret` manifest without `sops:` metadata as they indicate unencrypted secrets stored in Git
-- [ ] **No plain-text secrets in Kustomize overlays**: Flag any `secretGenerator` in `kustomization.yaml` files that contains `literals` or `envs`
+- [ ] **Secrets encryption strategy**: Identify which secret management approach the repo uses — SOPS (look for `sops:` metadata block in Secret manifests and `ENC[` prefixed values in data fields, plus `.spec.decryption` on Flux `Kustomization`), External Secrets Operator (look for `ExternalSecret` or `ClusterSecretStore` resources), or Sealed Secrets (look for `SealedSecret` resources).
+- [ ] **No plain-text secrets in Git**: Flag any `apiVersion: v1` / `kind: Secret` manifest where values are not SOPS-encrypted (no `sops:` metadata block and no `ENC[` prefixed values) as they indicate unencrypted secrets stored in Git
+- [ ] **No plain-text secrets in Kustomize overlays**: Flag any `secretGenerator` in `kustomization.yaml` files that contains `literals`, `envs`, or `files` referencing plaintext files (without `ENC[` SOPS markers). Also check `configMapGenerator` with `literals`, `envs`, or `files` for credential-like values (passwords, keys, tokens, connection strings)
 
 ## Hardcoded Credentials
 
@@ -63,14 +63,15 @@ Scan for literal credentials patterns in the following places:
 Use the following grep patterns to find common security issues. Run ALL of these
 scans — do not skip any, even if earlier checklist items found no issues.
 
-**Find unencrypted Secrets (no SOPS metadata):**
-Search for files containing `kind: Secret` then check if the same file contains `sops:` — if not, the Secret is likely unencrypted.
+**Find unencrypted Secrets (no SOPS encryption):**
+Search for files containing `kind: Secret` then check if the same file contains `sops:` metadata block or `ENC[` prefixed values — if neither is present, the Secret is likely unencrypted.
 
-**Find secretGenerator and configMapGenerator with literals:**
+**Find secretGenerator and configMapGenerator with literals or files:**
 Search all `kustomization.yaml` files for `secretGenerator` and `configMapGenerator` blocks.
-Read each match and check for `literals:` or `envs:` entries. Flag `secretGenerator` with
-`literals` as plain-text secrets in Git. Flag `configMapGenerator` `literals` that contain
-credential-like values (passwords, keys, tokens, connection strings).
+Read each match and check for `literals:`, `envs:`, or `files:` entries. Flag `secretGenerator` with
+`literals`, `envs`, or `files` referencing plaintext content (no `ENC[` SOPS markers) as plain-text secrets in Git.
+Flag `configMapGenerator` `literals`, `envs`, or `files` that contain credential-like values
+(passwords, keys, tokens, connection strings).
 
 **Find hardcoded credentials:**
 Search for patterns: `password:`, `token:`, `privateKey:`, `clientSecret:`, `apiKey:`, `secretKey:`, `accessKey:`, `connectionString:` in YAML files.
@@ -78,6 +79,7 @@ Cross-reference with Secret resources to distinguish Flux-managed secrets from i
 Also search for credential-like patterns inside literal strings: `PASSWORD=`, `_KEY=`,
 `_SECRET=`, `_TOKEN=`, `ACCESS_KEY=`, `CONNECTION_STRING=` — these appear in
 `secretGenerator`/`configMapGenerator` literals and environment variable definitions.
+Skip values containing `ENC[` — these are SOPS-encrypted and not plain-text credentials.
 
 **Find insecure sources:**
 Search for `insecure: true` across all YAML files.
