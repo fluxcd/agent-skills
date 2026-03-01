@@ -166,6 +166,9 @@ Load reference files when you need deeper information:
 
 ## Report Format
 
+As you trace through any debugging workflow, record each resource you inspect
+(kind, name, namespace, status) to build the dependency chain for the report.
+
 Structure debugging findings as a markdown report with these sections:
 
 1. **Summary** — cluster name, Flux version, resource under investigation, current status
