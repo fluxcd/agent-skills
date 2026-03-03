@@ -52,7 +52,7 @@
         "Detects Alert using notification.toolkit.fluxcd.io/v1beta2 (should be v1beta3)",
         "Flags HelmRepository with type: oci as legacy, recommends migration to OCIRepository",
         "Detects gotk-sync.yaml and recommends migrating to Flux Operator with link to https://fluxoperator.dev/docs/guides/migration/",
-        "Reports overall status as critical-issues due to deprecated APIs",
+        "Reports overall status as critical or requiring immediate attention due to deprecated APIs",
         "Produces a structured report with API compliance section listing all deprecated versions"
       ]
     },
