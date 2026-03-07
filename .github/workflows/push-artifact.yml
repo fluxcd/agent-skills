@@ -1,0 +1,57 @@
+name: push-artifact
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '*'
+
+jobs:
+  flux-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # for pushing to GHCR
+      id-token: write # for signing with cosign
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+      - name: Install flux
+        uses: controlplaneio-fluxcd/distribution/actions/setup@v2.8.1
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.0.0
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare tags
+        id: prep
+        run: |
+          TAG=${{ github.ref_name }}
+          VERSION="${{ github.ref_name }}-${GITHUB_SHA::8}"
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            TAG=latest
+            VERSION="${{ github.ref_name }}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - name: Push artifact
+        uses: controlplaneio-fluxcd/distribution/actions/push@v2.8.1
+        id: push
+        with:
+          repository: ghcr.io/${{ github.repository }}
+          path: "skills"
+          diff-tag: ${{ steps.prep.outputs.tag }}
+          tags: ${{ steps.prep.outputs.version }}
+          annotations: |
+            org.opencontainers.image.description=Flux AI Agent Skills
+            org.opencontainers.image.licenses=Apache-2.0
+            env=production
+      - name: Sign artifact
+        if: steps.push.outputs.pushed == 'true'
+        run: cosign sign --yes $DIGEST_URL
+        env:
+          DIGEST_URL: ${{ steps.push.outputs.digest-url }}
