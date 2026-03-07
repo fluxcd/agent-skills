@@ -47,9 +47,7 @@ jobs:
           diff-tag: ${{ steps.prep.outputs.tag }}
           tags: ${{ steps.prep.outputs.version }}
           annotations: |
-            org.opencontainers.image.description=Flux AI Agent Skills
             org.opencontainers.image.licenses=Apache-2.0
-            env=production
       - name: Sign artifact
         if: steps.push.outputs.pushed == 'true'
         run: cosign sign --yes $DIGEST_URL
