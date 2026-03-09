@@ -7,6 +7,8 @@ description: >
   Flux repo structure, GitOps best practices, manifest validation, deprecated APIs,
   security review, or repository organization — even if they don't explicitly say "audit".
 allowed-tools: Read Glob Grep Bash(scripts/discover.sh:*) Bash(scripts/validate.sh:*) Bash(scripts/check-deprecated.sh:*)
+license: Apache-2.0
+compatibility: Requires awk, git, kustomize, kubeconform, flux, yq
 ---
 
 # GitOps Repository Auditor

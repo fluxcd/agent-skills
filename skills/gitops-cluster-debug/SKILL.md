@@ -6,6 +6,8 @@ description: >
   reconciliation issues, pod logs, controller problems, or cluster debugging — even if they
   don't explicitly say "debug".
 allowed-tools: mcp__flux-operator-mcp__*
+license: Apache-2.0
+compatibility: Requires flux-operator-mcp
 ---
 
 # Flux Cluster Debugger
