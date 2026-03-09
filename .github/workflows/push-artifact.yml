@@ -39,7 +39,7 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
       - name: Push artifact
-        uses: controlplaneio-fluxcd/distribution/actions/push@v2.8.1
+        uses: controlplaneio-fluxcd/distribution/actions/push@gha-annotation
         id: push
         with:
           repository: ghcr.io/${{ github.repository }}
@@ -47,6 +47,7 @@ jobs:
           diff-tag: ${{ steps.prep.outputs.tag }}
           tags: ${{ steps.prep.outputs.version }}
           annotations: |
+            org.opencontainers.image.description=AI Agent Skills for Flux CD
             org.opencontainers.image.licenses=Apache-2.0
       - name: Sign artifact
         if: steps.push.outputs.pushed == 'true'
