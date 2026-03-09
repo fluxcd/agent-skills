@@ -91,7 +91,7 @@ check_prerequisites() {
       missing=1
     fi
   done
-  if [[ ! -d "$assets_schemas_dir/master-standalone-strict" ]]; then
+  if [[ ! -d "$assets_schemas_dir" ]]; then
     echo "ERROR - Flux OpenAPI schemas not found in $assets_schemas_dir" >&2
     echo "ERROR - Run 'make download-schemas' to fetch them" >&2
     missing=1
@@ -102,7 +102,7 @@ check_prerequisites() {
 }
 
 setup_schemas() {
-  kubeconform_config+=("-schema-location" "$assets_schemas_dir")
+  kubeconform_config+=("-schema-location" "$assets_schemas_dir/{{.ResourceKind}}{{.KindSuffix}}.json")
 }
 
 # List files matching glob patterns under root_dir, respecting .gitignore.

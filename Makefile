@@ -1,8 +1,8 @@
 # Makefile for maintaining the GitOps AI Skills assets.
 # Run 'make help' to see available targets.
 
-SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas/master-standalone-strict \
-	skills/gitops-cluster-debug/assets/schemas/master-standalone-strict
+SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas \
+	skills/gitops-cluster-debug/assets/schemas
 
 DISCOVER_SCRIPT := skills/gitops-repo-audit/scripts/discover.sh
 VALIDATE_SCRIPT := skills/gitops-repo-audit/scripts/validate.sh

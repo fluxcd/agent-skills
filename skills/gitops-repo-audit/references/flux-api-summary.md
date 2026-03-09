@@ -6,7 +6,7 @@ Condensed reference for the Flux CRDs.
 
 ### GitRepository (`source.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/gitrepository-source-v1.json
+OpenAPI schema: assets/schemas/gitrepository-source-v1.json
 
 Produces an Artifact from a Git repository revision.
 
@@ -26,7 +26,7 @@ Produces an Artifact from a Git repository revision.
 
 ### OCIRepository (`source.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/ocirepository-source-v1.json
+OpenAPI schema: assets/schemas/ocirepository-source-v1.json
 
 Produces an Artifact from an OCI container registry.
 
@@ -49,7 +49,7 @@ Produces an Artifact from an OCI container registry.
 
 ### Bucket (`source.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/bucket-source-v1.json
+OpenAPI schema: assets/schemas/bucket-source-v1.json
 
 Produces an Artifact from an S3-compatible bucket.
 
@@ -65,7 +65,7 @@ Produces an Artifact from an S3-compatible bucket.
 
 ### HelmRepository (`source.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/helmrepository-source-v1.json
+OpenAPI schema: assets/schemas/helmrepository-source-v1.json
 
 References a Helm chart repository (HTTP/S or OCI).
 
@@ -83,7 +83,7 @@ References a Helm chart repository (HTTP/S or OCI).
 
 ### HelmChart (`source.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/helmchart-source-v1.json
+OpenAPI schema: assets/schemas/helmchart-source-v1.json
 
 References a chart from a HelmRepository or GitRepository. Usually auto-created by HelmRelease.
 
@@ -98,7 +98,7 @@ References a chart from a HelmRepository or GitRepository. Usually auto-created 
 
 ### ExternalArtifact (`source.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/externalartifact-source-v1.json
+OpenAPI schema: assets/schemas/externalartifact-source-v1.json
 
 Represents a 3rd-party source controller artifact. Managed by ArtifactGenerator, not created manually.
 
@@ -110,7 +110,7 @@ Represents a 3rd-party source controller artifact. Managed by ArtifactGenerator,
 
 ### ArtifactGenerator (`source.extensions.fluxcd.io/v1beta1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/artifactgenerator-source-v1beta1.json
+OpenAPI schema: assets/schemas/artifactgenerator-source-v1beta1.json
 
 Composes and decomposes sources into new ExternalArtifacts.
 
@@ -130,7 +130,7 @@ Composes and decomposes sources into new ExternalArtifacts.
 
 ### Kustomization (`kustomize.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/kustomization-kustomize-v1.json
+OpenAPI schema: assets/schemas/kustomization-kustomize-v1.json
 
 Builds and applies Kubernetes manifests from sources using Kustomize.
 
@@ -159,7 +159,7 @@ Builds and applies Kubernetes manifests from sources using Kustomize.
 
 ### HelmRelease (`helm.toolkit.fluxcd.io/v2`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/helmrelease-helm-v2.json
+OpenAPI schema: assets/schemas/helmrelease-helm-v2.json
 
 Manages Helm chart releases with install, upgrade, test, rollback, and drift detection.
 
@@ -193,7 +193,7 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 
 ### Provider (`notification.toolkit.fluxcd.io/v1beta3`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/provider-notification-v1beta3.json
+OpenAPI schema: assets/schemas/provider-notification-v1beta3.json
 
 Configures notification services for forwarding events.
 
@@ -205,7 +205,7 @@ Configures notification services for forwarding events.
 
 ### Alert (`notification.toolkit.fluxcd.io/v1beta3`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/alert-notification-v1beta3.json
+OpenAPI schema: assets/schemas/alert-notification-v1beta3.json
 
 Configures events to be forwarded to a Provider.
 
@@ -221,7 +221,7 @@ Configures events to be forwarded to a Provider.
 
 ### Receiver (`notification.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/receiver-notification-v1.json
+OpenAPI schema: assets/schemas/receiver-notification-v1.json
 
 Defines webhooks for triggering immediate reconciliation.
 
@@ -238,7 +238,7 @@ Defines webhooks for triggering immediate reconciliation.
 
 ### ImageRepository (`image.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/imagerepository-image-v1.json
+OpenAPI schema: assets/schemas/imagerepository-image-v1.json
 
 Scans container registries for new image tags.
 
@@ -251,7 +251,7 @@ Scans container registries for new image tags.
 
 ### ImagePolicy (`image.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/imagepolicy-image-v1.json
+OpenAPI schema: assets/schemas/imagepolicy-image-v1.json
 
 Selects the latest image tag based on a policy.
 
@@ -269,7 +269,7 @@ Selects the latest image tag based on a policy.
 
 ### ImageUpdateAutomation (`image.toolkit.fluxcd.io/v1`)
 
-OpenAPI schema: assets/schemas/master-standalone-strict/imageupdateautomation-image-v1.json
+OpenAPI schema: assets/schemas/imageupdateautomation-image-v1.json
 
 Automatically updates Git repositories with new image tags selected by ImagePolicy.
 

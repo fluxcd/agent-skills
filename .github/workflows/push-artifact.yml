@@ -39,7 +39,7 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
       - name: Push artifact
-        uses: controlplaneio-fluxcd/distribution/actions/push@gha-annotation
+        uses: controlplaneio-fluxcd/distribution/actions/push@main
         id: push
         with:
           repository: ghcr.io/${{ github.repository }}

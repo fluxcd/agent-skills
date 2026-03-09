@@ -81,7 +81,7 @@ HelmReleases use the modern `install.strategy` pattern while others use legacy
 on the modern pattern.
 
 **Before recommending any YAML changes**, read the relevant OpenAPI schema from
-`assets/schemas/master-standalone-strict/` to verify the exact field names and nesting.
+`assets/schemas/` to verify the exact field names and nesting.
 Schema files follow the naming convention `{kind}-{group}-{version}.json`
 (e.g., `helmrelease-helm-v2.json`, `kustomization-kustomize-v1.json`).
 Do not guess YAML structure from the checklist summaries.
@@ -118,25 +118,25 @@ Use this table to check API versions and read the OpenAPI schema before recommen
 
 | Controller | Kind | apiVersion | OpenAPI Schema |
 |---|---|---|---|
-| flux-operator | FluxInstance | `fluxcd.controlplane.io/v1` | [fluxinstance-fluxcd-v1.json](assets/schemas/master-standalone-strict/fluxinstance-fluxcd-v1.json) |
-| flux-operator | FluxReport | `fluxcd.controlplane.io/v1` | [fluxreport-fluxcd-v1.json](assets/schemas/master-standalone-strict/fluxreport-fluxcd-v1.json) |
-| flux-operator | ResourceSet | `fluxcd.controlplane.io/v1` | [resourceset-fluxcd-v1.json](assets/schemas/master-standalone-strict/resourceset-fluxcd-v1.json) |
-| flux-operator | ResourceSetInputProvider | `fluxcd.controlplane.io/v1` | [resourcesetinputprovider-fluxcd-v1.json](assets/schemas/master-standalone-strict/resourcesetinputprovider-fluxcd-v1.json) |
-| source-controller | GitRepository | `source.toolkit.fluxcd.io/v1` | [gitrepository-source-v1.json](assets/schemas/master-standalone-strict/gitrepository-source-v1.json) |
-| source-controller | OCIRepository | `source.toolkit.fluxcd.io/v1` | [ocirepository-source-v1.json](assets/schemas/master-standalone-strict/ocirepository-source-v1.json) |
-| source-controller | Bucket | `source.toolkit.fluxcd.io/v1` | [bucket-source-v1.json](assets/schemas/master-standalone-strict/bucket-source-v1.json) |
-| source-controller | HelmRepository | `source.toolkit.fluxcd.io/v1` | [helmrepository-source-v1.json](assets/schemas/master-standalone-strict/helmrepository-source-v1.json) |
-| source-controller | HelmChart | `source.toolkit.fluxcd.io/v1` | [helmchart-source-v1.json](assets/schemas/master-standalone-strict/helmchart-source-v1.json) |
-| source-controller | ExternalArtifact | `source.toolkit.fluxcd.io/v1` | [externalartifact-source-v1.json](assets/schemas/master-standalone-strict/externalartifact-source-v1.json) |
-| source-watcher | ArtifactGenerator | `source.extensions.fluxcd.io/v1beta1` | [artifactgenerator-source-v1beta1.json](assets/schemas/master-standalone-strict/artifactgenerator-source-v1beta1.json) |
-| kustomize-controller | Kustomization | `kustomize.toolkit.fluxcd.io/v1` | [kustomization-kustomize-v1.json](assets/schemas/master-standalone-strict/kustomization-kustomize-v1.json) |
-| helm-controller | HelmRelease | `helm.toolkit.fluxcd.io/v2` | [helmrelease-helm-v2.json](assets/schemas/master-standalone-strict/helmrelease-helm-v2.json) |
-| notification-controller | Provider | `notification.toolkit.fluxcd.io/v1beta3` | [provider-notification-v1beta3.json](assets/schemas/master-standalone-strict/provider-notification-v1beta3.json) |
-| notification-controller | Alert | `notification.toolkit.fluxcd.io/v1beta3` | [alert-notification-v1beta3.json](assets/schemas/master-standalone-strict/alert-notification-v1beta3.json) |
-| notification-controller | Receiver | `notification.toolkit.fluxcd.io/v1` | [receiver-notification-v1.json](assets/schemas/master-standalone-strict/receiver-notification-v1.json) |
-| image-reflector-controller | ImageRepository | `image.toolkit.fluxcd.io/v1` | [imagerepository-image-v1.json](assets/schemas/master-standalone-strict/imagerepository-image-v1.json) |
-| image-reflector-controller | ImagePolicy | `image.toolkit.fluxcd.io/v1` | [imagepolicy-image-v1.json](assets/schemas/master-standalone-strict/imagepolicy-image-v1.json) |
-| image-automation-controller | ImageUpdateAutomation | `image.toolkit.fluxcd.io/v1` | [imageupdateautomation-image-v1.json](assets/schemas/master-standalone-strict/imageupdateautomation-image-v1.json) |
+| flux-operator | FluxInstance | `fluxcd.controlplane.io/v1` | [fluxinstance-fluxcd-v1.json](assets/schemas/fluxinstance-fluxcd-v1.json) |
+| flux-operator | FluxReport | `fluxcd.controlplane.io/v1` | [fluxreport-fluxcd-v1.json](assets/schemas/fluxreport-fluxcd-v1.json) |
+| flux-operator | ResourceSet | `fluxcd.controlplane.io/v1` | [resourceset-fluxcd-v1.json](assets/schemas/resourceset-fluxcd-v1.json) |
+| flux-operator | ResourceSetInputProvider | `fluxcd.controlplane.io/v1` | [resourcesetinputprovider-fluxcd-v1.json](assets/schemas/resourcesetinputprovider-fluxcd-v1.json) |
+| source-controller | GitRepository | `source.toolkit.fluxcd.io/v1` | [gitrepository-source-v1.json](assets/schemas/gitrepository-source-v1.json) |
+| source-controller | OCIRepository | `source.toolkit.fluxcd.io/v1` | [ocirepository-source-v1.json](assets/schemas/ocirepository-source-v1.json) |
+| source-controller | Bucket | `source.toolkit.fluxcd.io/v1` | [bucket-source-v1.json](assets/schemas/bucket-source-v1.json) |
+| source-controller | HelmRepository | `source.toolkit.fluxcd.io/v1` | [helmrepository-source-v1.json](assets/schemas/helmrepository-source-v1.json) |
+| source-controller | HelmChart | `source.toolkit.fluxcd.io/v1` | [helmchart-source-v1.json](assets/schemas/helmchart-source-v1.json) |
+| source-controller | ExternalArtifact | `source.toolkit.fluxcd.io/v1` | [externalartifact-source-v1.json](assets/schemas/externalartifact-source-v1.json) |
+| source-watcher | ArtifactGenerator | `source.extensions.fluxcd.io/v1beta1` | [artifactgenerator-source-v1beta1.json](assets/schemas/artifactgenerator-source-v1beta1.json) |
+| kustomize-controller | Kustomization | `kustomize.toolkit.fluxcd.io/v1` | [kustomization-kustomize-v1.json](assets/schemas/kustomization-kustomize-v1.json) |
+| helm-controller | HelmRelease | `helm.toolkit.fluxcd.io/v2` | [helmrelease-helm-v2.json](assets/schemas/helmrelease-helm-v2.json) |
+| notification-controller | Provider | `notification.toolkit.fluxcd.io/v1beta3` | [provider-notification-v1beta3.json](assets/schemas/provider-notification-v1beta3.json) |
+| notification-controller | Alert | `notification.toolkit.fluxcd.io/v1beta3` | [alert-notification-v1beta3.json](assets/schemas/alert-notification-v1beta3.json) |
+| notification-controller | Receiver | `notification.toolkit.fluxcd.io/v1` | [receiver-notification-v1.json](assets/schemas/receiver-notification-v1.json) |
+| image-reflector-controller | ImageRepository | `image.toolkit.fluxcd.io/v1` | [imagerepository-image-v1.json](assets/schemas/imagerepository-image-v1.json) |
+| image-reflector-controller | ImagePolicy | `image.toolkit.fluxcd.io/v1` | [imagepolicy-image-v1.json](assets/schemas/imagepolicy-image-v1.json) |
+| image-automation-controller | ImageUpdateAutomation | `image.toolkit.fluxcd.io/v1` | [imageupdateautomation-image-v1.json](assets/schemas/imageupdateautomation-image-v1.json) |
 
 ## Loading References
 
