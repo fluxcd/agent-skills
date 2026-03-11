@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Analyze the tests/gitops-repo-audit/monorepo-structure/ directory as a GitOps repository and provide a complete analysis report.",
-      "expected_output": "A comprehensive analysis report identifying this as a monorepo pattern with two clusters (staging and production), FluxInstance with GitRepository sync, ArtifactGenerator for monorepo decomposition, Kustomize base/overlay pattern, modern HelmRelease patterns, and recommendations for cluster.size, GitHub App auth, and notifications.",
+      "expected_output": "A comprehensive analysis report identifying this as a monorepo pattern with two clusters (staging and production), FluxInstance with GitRepository sync, ArtifactGenerator for monorepo decomposition, Kustomize base/overlay pattern, modern HelmRelease patterns, flags createNamespace/targetNamespace on metrics-server HelmRelease, and recommendations for cluster.size, GitHub App auth, and notifications.",
       "files": [],
       "expectations": [
         "Identifies the repository as a monorepo pattern with apps/infrastructure/clusters structure",
@@ -17,6 +17,7 @@
         "Notes modern install.strategy and upgrade.strategy on HelmReleases",
         "Detects drift detection enabled on HelmReleases",
         "Checks for deprecated API versions and reports findings",
+        "Flags the metrics-server HelmRelease for using targetNamespace and createNamespace instead of creating the namespace in the Kustomization or ResourceSet",
         "Produces a structured report with summary, structure, best practices, and recommendations sections"
       ]
     },
@@ -72,7 +73,7 @@
         "Notes missing drift detection on all HelmReleases",
         "Notes missing remediation/retry strategy on all HelmReleases",
         "Flags HelmRepository with type: oci as legacy, recommends migration to OCIRepository",
-        "Reports overall status as critical-issues",
+        "Reports overall status as critical or failing due to multiple serious issues",
         "Produces a structured report with security findings and recommendations"
       ]
     }

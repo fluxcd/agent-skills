@@ -12,8 +12,8 @@ spec:
         resources: ["ocirepositories", "gitrepositories"]
   validations:
     - expression: >-
-        object.spec.url.startsWith('oci://ghcr.io/example/') ||
-        object.spec.url.startsWith('https://github.com/example/')
+        object.spec.url.startsWith('oci://ghcr.io/fluxcd/') ||
+        object.spec.url.startsWith('https://github.com/fluxcd/')
       message: "Source URL must be from the allowed organization registries"
 ---
 apiVersion: admissionregistration.k8s.io/v1
