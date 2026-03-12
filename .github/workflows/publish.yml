@@ -1,4 +1,4 @@
-name: push-artifact
+name: publish
 on:
   workflow_dispatch:
   push:
@@ -8,7 +8,7 @@ on:
       - '*'
 
 jobs:
-  flux-push:
+  skills-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -18,9 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6.0.2
       - name: Install flux
-        uses: controlplaneio-fluxcd/distribution/actions/setup@v2.8.1
+        uses: controlplaneio-fluxcd/flux-operator/actions/setup@v0.44.0
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4.0.0
+        uses: sigstore/cosign-installer@v4.1.0
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4.0.0
         with:
@@ -38,19 +38,12 @@ jobs:
           fi
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-      - name: Push artifact
-        uses: controlplaneio-fluxcd/distribution/actions/push@main
-        id: push
-        with:
-          repository: ghcr.io/${{ github.repository }}
-          path: "skills"
-          diff-tag: ${{ steps.prep.outputs.tag }}
-          tags: ${{ steps.prep.outputs.version }}
-          annotations: |
-            org.opencontainers.image.description=AI Agent Skills for Flux CD
-            org.opencontainers.image.licenses=Apache-2.0
-      - name: Sign artifact
-        if: steps.push.outputs.pushed == 'true'
-        run: cosign sign --yes $DIGEST_URL
-        env:
-          DIGEST_URL: ${{ steps.push.outputs.digest-url }}
+      - name: Publish skills
+        run: |
+          flux-operator skills publish ghcr.io/${{ github.repository }} \
+            --tag ${{ steps.prep.outputs.version }} \
+            --tag ${{ steps.prep.outputs.tag }} \
+            --diff-tag ${{ steps.prep.outputs.tag }} \
+            -a 'org.opencontainers.image.description=AI Agent Skills for Flux CD' \
+            -a 'org.opencontainers.image.licenses=Apache-2.0' \
+            --sign
