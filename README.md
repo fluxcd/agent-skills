@@ -13,11 +13,29 @@ cluster installations.
 
 ## Install
 
-Install skills for AI Agents with support for `.agents/skills` e.g. Codex, Copilot, Gemini, etc:
+### Using Flux Operator CLI
+
+Navigate to your GitOps repository root and run:
+
+```shell
+flux-operator skills install ghcr.io/fluxcd/agent-skills --agent claude-code
+```
+
+The operator CLI verifies the cosign signature and installs the skills in the repo root
+at `.agents/skills`. The `--agent` flag creates per-skill symlinks from agent-specific
+directories to the canonical location.
+
+To update the skills run `flux-operator skills update`.
+
+### Using NPX
+
+Install the skills with Vercel's skills tool:
 
 ```shell
 npx skills add https://github.com/fluxcd/agent-skills
 ```
+
+### Using Claude Code
 
 For Claude Code, add the marketplace and install the skills with:
 
