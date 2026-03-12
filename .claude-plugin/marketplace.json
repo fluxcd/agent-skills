@@ -11,10 +11,11 @@
   "plugins": [
     {
       "name": "gitops-skills",
-      "description": "Collection of GitOps engineering skills for Flux CD repository auditing, security review, and best practices",
+      "description": "Collection of GitOps engineering skills for Flux CD knowledge, manifest generation, repository auditing, and cluster debugging",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/gitops-knowledge",
         "./skills/gitops-repo-audit",
         "./skills/gitops-cluster-debug"
       ]
