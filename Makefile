@@ -2,7 +2,8 @@
 # Run 'make help' to see available targets.
 
 SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas \
-	skills/gitops-cluster-debug/assets/schemas
+	skills/gitops-cluster-debug/assets/schemas \
+	skills/gitops-knowledge/assets/schemas
 
 DISCOVER_SCRIPT := skills/gitops-repo-audit/scripts/discover.sh
 VALIDATE_SCRIPT := skills/gitops-repo-audit/scripts/validate.sh

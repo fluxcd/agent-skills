@@ -1,0 +1,359 @@
+# Source CRDs Reference
+
+All source CRDs are in `apiVersion: source.toolkit.fluxcd.io/v1` (except ArtifactGenerator
+which uses `source.extensions.fluxcd.io/v1beta1`). Source-controller polls for changes at
+the configured interval and produces versioned artifacts consumed by Kustomization and HelmRelease.
+
+## GitRepository
+
+Fetches manifests from a Git repository, producing a tarball artifact.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: my-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: https://github.com/org/my-app.git
+  ref:
+    branch: main
+  secretRef:
+    name: git-credentials
+  ignore: |
+    # exclude non-deployment files
+    /*
+    !/deploy
+```
+
+**Key spec fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | string | Git URL — HTTPS (`https://`) or SSH (`ssh://user@host:22/repo.git`). SSH scp-style syntax (`git@host:repo`) is NOT supported. |
+| `interval` | duration | How often to poll for changes (e.g., `5m`, `1h`) |
+| `ref.branch` | string | Branch name |
+| `ref.tag` | string | Tag name |
+| `ref.semver` | string | Semver constraint (e.g., `>=1.0.0 <2.0.0`) |
+| `ref.commit` | string | Exact commit SHA |
+| `secretRef.name` | string | Secret with credentials |
+| `ignore` | string | `.gitignore`-style patterns to exclude from artifact |
+| `recurseSubmodules` | bool | Include Git submodules (default: false) |
+| `insecure` | bool | Skip TLS verification for HTTP URLs |
+| `verify.provider` | string | Signature verification provider (`cosign`) |
+
+**Authentication secrets:**
+
+For HTTPS — Secret with `username` and `password` (or token) fields:
+```yaml
+stringData:
+  username: git
+  password: ghp_xxxxxxxxxxxx
+```
+
+For SSH — Secret with `identity` (private key) and `known_hosts` fields:
+```yaml
+stringData:
+  identity: |
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    ...
+  known_hosts: github.com ssh-ed25519 AAAA...
+```
+
+For GitHub App — Secret with `githubAppID`, `githubAppInstallationID`, `githubAppPrivateKey`.
+
+## OCIRepository
+
+Fetches OCI artifacts from container registries. Used for Gitless GitOps patterns and
+OCI Helm chart references.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: fleet-manifests
+  namespace: flux-system
+spec:
+  interval: 5m
+  url: oci://ghcr.io/my-org/fleet-manifests
+  ref:
+    tag: latest
+  secretRef:
+    name: registry-auth
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: ^https://token\.actions\.githubusercontent\.com$
+        subject: ^https://github\.com/my-org/fleet/\.github/workflows/push\.yaml@refs/heads/main$
+```
+
+**Key spec fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | string | OCI URL with `oci://` prefix (e.g., `oci://ghcr.io/org/repo`) |
+| `interval` | duration | Poll interval |
+| `ref.tag` | string | Image tag |
+| `ref.semver` | string | Semver constraint for tag selection |
+| `ref.digest` | string | Exact digest (`sha256:...`) |
+| `secretRef.name` | string | Secret of type `kubernetes.io/dockerconfigjson` |
+| `provider` | string | Cloud OIDC provider for keyless auth: `aws`, `azure`, `gcp` |
+| `layerSelector.mediaType` | string | Filter OCI layers by media type |
+| `layerSelector.operation` | string | `extract` (default) or `copy` |
+| `verify.provider` | string | Signature verification: `cosign` or `notation` |
+| `verify.matchOIDCIdentity` | array | OIDC issuer/subject patterns for keyless verification |
+| `serviceAccountName` | string | Service account for image pull (uses imagePullSecrets) |
+| `insecure` | bool | Allow HTTP (non-TLS) connections |
+
+**Fetching Helm charts from OCI registries:**
+
+When an OCI registry stores Helm charts, use `layerSelector` to extract the chart layer:
+
+```yaml
+spec:
+  url: oci://quay.io/jetstack/charts/cert-manager
+  layerSelector:
+    mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+    operation: copy
+  ref:
+    semver: "1.x"
+```
+
+Without `layerSelector`, the full OCI manifest is fetched (suitable for plain YAML artifacts).
+
+**Cosign verification with OIDC identity matching:**
+
+```yaml
+spec:
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: ^https://token\.actions\.githubusercontent\.com$
+        subject: ^https://github\.com/org/repo/\.github/workflows/release\.yaml@refs/tags/v\d+\.\d+\.\d+$
+```
+
+## HelmRepository
+
+Defines an HTTPS Helm chart repository. Source-controller downloads and caches the repository index.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: metrics-server
+  namespace: kube-system
+spec:
+  interval: 1h
+  url: https://kubernetes-sigs.github.io/metrics-server/
+```
+
+**Key spec fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | string | Helm repository HTTPS URL |
+| `interval` | duration | How often to fetch the index |
+| `secretRef.name` | string | Secret with `username`/`password` for auth |
+| `provider` | string | Cloud OIDC provider for keyless auth |
+| `passCredentials` | bool | Pass credentials to chart download URLs |
+| `type` | string | `default` (HTTPS) or `oci` — but prefer `OCIRepository` for OCI registries |
+| `insecure` | bool | Skip TLS verification |
+
+**Important:** For OCI registries, use `OCIRepository` with `layerSelector` instead of
+`HelmRepository` with `type: oci`. The OCIRepository approach is more flexible and supports
+Cosign verification.
+
+## HelmChart
+
+Fetches and packages a Helm chart from a source. Usually auto-created by HelmRelease when
+using `spec.chart.spec` — you rarely create HelmChart resources directly.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmChart
+metadata:
+  name: my-chart
+  namespace: flux-system
+spec:
+  interval: 10m
+  chart: metrics-server
+  version: "3.x"
+  sourceRef:
+    kind: HelmRepository
+    name: metrics-server
+  reconcileStrategy: ChartVersion
+```
+
+**Key spec fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chart` | string | Chart name (from HelmRepository) or path (from GitRepository/Bucket) |
+| `version` | string | Semver constraint (e.g., `18.x`, `>=1.0.0 <2.0.0`) |
+| `sourceRef.kind` | string | `HelmRepository`, `GitRepository`, or `Bucket` |
+| `sourceRef.name` | string | Source name |
+| `reconcileStrategy` | string | `ChartVersion` (default) or `Revision` |
+| `valuesFiles` | array | Values files to merge during packaging |
+
+## Bucket
+
+Fetches from S3-compatible object storage (AWS S3, GCS, MinIO, Azure Blob).
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: Bucket
+metadata:
+  name: manifests
+  namespace: flux-system
+spec:
+  interval: 5m
+  provider: generic
+  bucketName: my-manifests
+  endpoint: s3.amazonaws.com
+  region: us-east-1
+  secretRef:
+    name: s3-credentials
+```
+
+**Key spec fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `bucketName` | string | Bucket name |
+| `endpoint` | string | S3 endpoint (e.g., `s3.amazonaws.com`, `minio.example.com`) |
+| `region` | string | AWS region (default: `us-east-1`) |
+| `provider` | string | `generic` (default), `aws`, `azure`, `gcp` |
+| `secretRef.name` | string | Secret with `accesskey` and `secretkey` fields |
+| `insecure` | bool | Use HTTP instead of HTTPS |
+| `prefix` | string | S3 key prefix filter |
+| `ignore` | string | `.gitignore`-style patterns to exclude |
+
+## ExternalArtifact
+
+Generic artifact storage API for third-party controllers. ExternalArtifact resources are
+typically created by ArtifactGenerator, not manually.
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: ExternalArtifact
+metadata:
+  name: my-component
+  namespace: flux-system
+```
+
+ExternalArtifact has no spec fields to configure — its `status.artifact` is populated by
+an external controller (like ArtifactGenerator). Kustomization and HelmRelease can reference
+ExternalArtifact via `sourceRef`.
+
+## ArtifactGenerator
+
+`apiVersion: source.extensions.fluxcd.io/v1beta1` — managed by `source-watcher` controller.
+
+Composes or decomposes artifacts from multiple sources. Two main use cases:
+- **Decomposition** — split a monorepo into multiple ExternalArtifacts, one per component
+- **Helm chart composition** — combine an OCI chart with environment-specific values from Git
+
+### Monorepo Decomposition
+
+```yaml
+apiVersion: source.extensions.fluxcd.io/v1beta1
+kind: ArtifactGenerator
+metadata:
+  name: monorepo
+  namespace: flux-system
+spec:
+  sources:
+    - alias: mono
+      kind: GitRepository
+      name: monorepo
+  artifacts:
+    - name: frontend
+      revision: "@mono"
+      copy:
+        - from: "@mono/apps/frontend/**"
+          to: "@artifact/"
+    - name: backend
+      revision: "@mono"
+      copy:
+        - from: "@mono/apps/backend/**"
+          to: "@artifact/"
+    - name: infra
+      revision: "@mono"
+      copy:
+        - from: "@mono/infrastructure/**"
+          to: "@artifact/"
+```
+
+Each ExternalArtifact can be referenced by a separate Kustomization:
+```yaml
+sourceRef:
+  kind: ExternalArtifact
+  name: frontend
+```
+
+Only the affected artifact gets a new revision when its source path changes,
+so unrelated Kustomizations won't reconcile.
+
+### Helm Chart Composition
+
+Merge environment-specific values from Git into a chart from an OCI registry:
+
+```yaml
+apiVersion: source.extensions.fluxcd.io/v1beta1
+kind: ArtifactGenerator
+metadata:
+  name: podinfo
+  namespace: apps
+spec:
+  sources:
+    - alias: chart
+      kind: OCIRepository
+      name: podinfo-chart
+    - alias: repo
+      kind: GitRepository
+      name: podinfo-values
+  artifacts:
+    - name: podinfo-composite
+      originRevision: "@chart"
+      copy:
+        - from: "@chart/"
+          to: "@artifact/"
+        - from: "@repo/charts/podinfo/values-prod.yaml"
+          to: "@artifact/podinfo/values.yaml"
+          strategy: Merge
+```
+
+The resulting ExternalArtifact can be deployed with a HelmRelease:
+
+```yaml
+spec:
+  chartRef:
+    kind: ExternalArtifact
+    name: podinfo-composite
+```
+
+**Key spec fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sources[].alias` | string | Unique alias for referencing in copy operations |
+| `sources[].kind` | string | `GitRepository`, `OCIRepository`, `Bucket`, `HelmChart`, or `ExternalArtifact` |
+| `sources[].name` | string | Source name |
+| `artifacts[].name` | string | Name of the ExternalArtifact to create |
+| `artifacts[].revision` | string | Revision tracking (e.g., `@alias`) |
+| `artifacts[].copy[].from` | string | Source path (`@alias/pattern`) |
+| `artifacts[].copy[].to` | string | Destination path (`@artifact/path`) |
+| `artifacts[].copy[].exclude` | array | Glob patterns to exclude |
+| `artifacts[].copy[].strategy` | string | `Overwrite` (default), `Merge`, or `Extract` |
+
+**Copy strategies:**
+- `Overwrite` (default) — later copies overwrite earlier files at the same path
+- `Merge` — for YAML files only; merges arrays entirely (like `helm --values`)
+- `Extract` — extracts tarball archives (`.tar.gz`, `.tgz`) preserving internal directory
+  structure; useful for charts built with `helm package` or `flux build artifact`
+
+**Copy semantics:**
+- `@source/file.yaml` → `@artifact/dest/` copies the file to `dest/file.yaml`
+- `@source/dir/` copies the directory as a subdirectory
+- `@source/dir/**` copies contents recursively (flattened)

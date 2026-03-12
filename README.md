@@ -3,8 +3,9 @@
 [![license](https://img.shields.io/github/license/fluxcd/skills.svg)](https://github.com/fluxcd/skills/blob/main/LICENSE)
 
 A collection of reusable skills that give AI Agents expertise in Flux CD,
-Kubernetes, and GitOps best practices for auditing repository structure, security,
-operational readiness, and debugging live cluster installations.
+Kubernetes, and GitOps best practices for generating manifests, answering Flux questions,
+auditing repository structure, security, operational readiness, and debugging live
+cluster installations.
 
 > [!IMPORTANT]
 > This project is under active development. Skill definitions, reference files,
@@ -39,6 +40,37 @@ The skills in this repository rely on the following tools being available in the
 A [Brewfile](https://raw.githubusercontent.com/fluxcd/agent-skills/refs/heads/main/Brewfile) is provided for easy installation of the prerequisites on macOS.
 
 ## Available Skills
+
+The skills are designed to work together and the agent automatically selects the right one
+based on context: `gitops-knowledge` for answering Flux questions and generating manifests,
+`gitops-repo-audit` for validating and auditing repository contents,
+and `gitops-cluster-debug` for troubleshooting live clusters.
+
+### gitops-knowledge
+
+Answers questions about Flux CD and generates uo-to-date YAML for all Flux custom resources.
+Bundled with OpenAPI schemas for every Flux resource and reference documentation covering
+sources, HelmRelease, Kustomization, ResourceSets, image automation, notifications,
+repository patterns, and the Flux Operator APIs.
+
+To invoke the skill, use the following prompts:
+
+```text
+What's the recommended GitOps structure for a multi-cluster fleet?
+```
+
+```text
+Generate a HelmRelease for oci://ghcr.io/my-org/frontend, and a Kustomization to deploy it in the staging cluster.
+```
+
+```text
+How do I set up preview environments for pull requests with Flux Operator?
+```
+
+This skill works best in the context of a GitOps repository that contains an `AGENTS.md`
+or `CLAUDE.md` with details about your organization's structure, cluster topology,
+and secret management approach. The agent combines the skill's reference files with
+the repository context to generate manifests tailored to your setup.
 
 ### gitops-repo-audit
 
@@ -93,7 +125,7 @@ Troubleshoot the Kustomization flux-system/infra-controllers in the staging clus
 The `flux-operator-mcp` server can be configured in Claude Code with:
 
 ```bash
-claude mcp add --scope user --transport stdio flux-operator-mcp \
+claude mcp add --scope project --transport stdio flux-operator-mcp \
   --env KUBECONFIG=$HOME/.kube/config \
   -- flux-operator-mcp serve --read-only
 ```
@@ -108,3 +140,4 @@ Each skill follows the [Agent Skills Open Standard](https://agentskills.io/):
 - `SKILL.md` - Instructions for the agent
 - `scripts/` - Helper scripts for automation
 - `references/` - Supporting documentation
+- `assets/` - OpenAPI schemas, templates, and other data files

@@ -1,0 +1,107 @@
+{
+  "skill_name": "gitops-fluxcd-knowledge",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to deploy the Envoy Gateway Helm chart from the OCI registry at oci://docker.io/envoyproxy/gateway-helm into the envoy-gateway-system namespace. I need version pinning to 1.x, drift detection that warns but doesn't auto-correct, and it should retry on failure during both install and upgrade. Can you generate the complete YAML manifests?",
+      "expected_output": "An OCIRepository with layerSelector for Helm chart media type, and a HelmRelease using chartRef (not chart.spec) pointing to that OCIRepository. Drift detection mode should be 'warn'. Install and upgrade strategies should use RetryOnFailure.",
+      "files": [],
+      "expectations": [
+        "The OCIRepository uses apiVersion source.toolkit.fluxcd.io/v1",
+        "The OCIRepository spec includes layerSelector with mediaType 'application/vnd.cncf.helm.chart.content.v1.tar+gzip' and operation 'copy'",
+        "The OCIRepository url starts with 'oci://' prefix and references docker.io/envoyproxy/gateway-helm",
+        "The OCIRepository ref uses semver field with value '1.x' or similar semver range",
+        "The HelmRelease uses apiVersion helm.toolkit.fluxcd.io/v2 (not v1 or v2beta1)",
+        "The HelmRelease uses spec.chartRef (not spec.chart.spec) to reference the OCIRepository",
+        "The HelmRelease does NOT contain both spec.chart and spec.chartRef (mutual exclusivity)",
+        "The HelmRelease driftDetection.mode is 'warn' (not 'enabled' or 'disabled')",
+        "The HelmRelease install.strategy.name is 'RetryOnFailure' (exact casing)",
+        "The HelmRelease upgrade.strategy.name is 'RetryOnFailure' (exact casing)",
+        "Both resources are in the envoy-gateway-system namespace"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We use GitHub pull requests for our app at https://github.com/acme-corp/web-platform. I need a ResourceSet that automatically creates preview environments for PRs labeled 'preview'. Each preview should get its own namespace named 'preview-<PR-ID>', a GitRepository pointing to the repo with the PR's commit SHA as the ref, and a Kustomization deploying from that source. The ResourceSetInputProvider should check every 2 minutes. Generate the complete manifests.",
+      "expected_output": "A ResourceSetInputProvider of type GitHubPullRequest with filter for 'preview' label and reconcileEvery annotation, plus a ResourceSet with inputsFrom referencing the provider. Templates must use << >> delimiters.",
+      "files": [],
+      "expectations": [
+        "The ResourceSetInputProvider uses apiVersion fluxcd.controlplane.io/v1",
+        "The ResourceSetInputProvider spec.type is 'GitHubPullRequest' (exact casing)",
+        "The ResourceSetInputProvider has a filter.labels array containing 'preview'",
+        "The ResourceSetInputProvider has annotation fluxcd.controlplane.io/reconcileEvery set to '2m'",
+        "The ResourceSet uses apiVersion fluxcd.controlplane.io/v1",
+        "The ResourceSet uses << >> template delimiters (not {{ }})",
+        "The ResourceSet references the input provider via spec.inputsFrom",
+        "The namespace template uses inputs.id (e.g., << inputs.id >>)",
+        "The GitRepository uses apiVersion source.toolkit.fluxcd.io/v1",
+        "The GitRepository ref.commit uses inputs.sha (the PR commit SHA)",
+        "The Kustomization uses apiVersion kustomize.toolkit.fluxcd.io/v1",
+        "The Kustomization includes spec.prune (required field, not omitted)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Set up Flux notifications for our production cluster. I need: (1) Slack alerts for all errors across all Kustomizations and HelmReleases, (2) GitHub commit status updates on our repo https://github.com/acme-corp/infra for the 'infra' Kustomization so we can see deploy status on commits, (3) a GitHub webhook Receiver that triggers immediate reconciliation of the 'infra' Kustomization on push events. Give me the Provider, Alert, Receiver, and Secret manifests for all three.",
+      "expected_output": "Two Providers (one Slack type, one GitHub type), two Alerts using notification.toolkit.fluxcd.io/v1beta3, and a Receiver using notification.toolkit.fluxcd.io/v1. Slack provider uses secretRef for webhook URL. GitHub provider uses address field for repo URL. Receiver type is 'github' with a secretRef for webhook validation.",
+      "files": [],
+      "expectations": [
+        "All Provider resources use apiVersion notification.toolkit.fluxcd.io/v1beta3 (not v1 or v1beta2)",
+        "All Alert resources use apiVersion notification.toolkit.fluxcd.io/v1beta3 (not v1 or v1beta2)",
+        "The Slack Provider spec.type is 'slack' (not 'Slack')",
+        "The Slack Provider has a secretRef pointing to a Secret",
+        "The Slack Secret has a 'token' key in stringData for the bot token",
+        "The GitHub Provider spec.type is 'github'",
+        "The GitHub Provider has spec.address set to the repository URL",
+        "The Slack Alert has eventSeverity set to 'error'",
+        "The Slack Alert eventSources include both Kustomization and HelmRelease with name '*'",
+        "The GitHub Alert eventSources reference the 'infra' Kustomization by name",
+        "Each Alert has a providerRef.name pointing to its respective Provider",
+        "The Receiver uses apiVersion notification.toolkit.fluxcd.io/v1 (not v1beta3)",
+        "The Receiver spec.type is 'github'",
+        "The Receiver has a secretRef pointing to a Secret for webhook validation",
+        "The Receiver spec.resources includes a GitRepository named 'infra'",
+        "The Receiver spec.events includes 'push' or a list of relevant GitHub events"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I push container images to ghcr.io/acme-corp/api-server with semver tags. I want Flux to automatically detect new versions starting with 2.0.0, update the image tag in my deployment YAML at ./k8s/production/ in the Git repo https://github.com/acme-corp/api-server, and push changes to a branch called 'flux-image-updates'. Generate all the resources I need for this image automation pipeline.",
+      "expected_output": "An ImageRepository, ImagePolicy with semver policy, a GitRepository, and an ImageUpdateAutomation. All image resources use image.toolkit.fluxcd.io/v1. Includes the $imagepolicy marker format.",
+      "files": [],
+      "expectations": [
+        "The ImageRepository uses apiVersion image.toolkit.fluxcd.io/v1 (not v1beta1 or v1beta2)",
+        "The ImageRepository spec.image is 'ghcr.io/acme-corp/api-server' (no tag)",
+        "The ImagePolicy uses apiVersion image.toolkit.fluxcd.io/v1",
+        "The ImagePolicy has a semver policy with range that matches >= 2.0.0",
+        "The ImageUpdateAutomation uses apiVersion image.toolkit.fluxcd.io/v1",
+        "The ImageUpdateAutomation spec.git.push.branch is 'flux-image-updates'",
+        "The ImageUpdateAutomation spec.update.path is './k8s/production' or similar",
+        "The ImageUpdateAutomation spec.update.strategy is 'Setters'",
+        "The output mentions the $imagepolicy marker comment format for marking images in YAML"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I'm setting up a new production Kubernetes cluster with Flux. I want to use the OCI-based (gitless) GitOps model. My fleet manifests are at oci://ghcr.io/acme-corp/fleet-prod. The cluster should be multi-tenant with medium sizing. I need two ResourceSets: 'infra' for deploying cert-manager and monitoring, and 'apps' for deploying frontend and backend services. The apps ResourceSet should wait for infra to be Ready before deploying. Each component gets its own namespace with an OCIRepository + Kustomization. Generate the FluxInstance and both ResourceSets.",
+      "expected_output": "A FluxInstance named 'flux' in flux-system with OCI sync, multi-tenancy enabled, medium cluster size. Two ResourceSets using << >> delimiters with dependsOn chain and readyExpr CEL expressions.",
+      "files": [],
+      "expectations": [
+        "The FluxInstance uses apiVersion fluxcd.controlplane.io/v1",
+        "The FluxInstance metadata.name is 'flux' (the only allowed name)",
+        "The FluxInstance is in the flux-system namespace",
+        "The FluxInstance spec.cluster.multitenant is true",
+        "The FluxInstance spec.cluster.size is 'medium'",
+        "The FluxInstance spec.sync.kind is 'OCIRepository'",
+        "The FluxInstance spec.sync.url starts with 'oci://'",
+        "Both ResourceSets use apiVersion fluxcd.controlplane.io/v1",
+        "Both ResourceSets use << >> template delimiters (not {{ }})",
+        "The apps ResourceSet has spec.dependsOn referencing the infra ResourceSet",
+        "The dependsOn includes ready: true and a readyExpr with a CEL expression",
+        "The infra ResourceSet inputs include entries for cert-manager and monitoring",
+        "The apps ResourceSet inputs include entries for frontend and backend",
+        "Generated Kustomizations include spec.prune (required field)"
+      ]
+    }
+  ]
+}

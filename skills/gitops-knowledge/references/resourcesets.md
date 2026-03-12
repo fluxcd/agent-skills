@@ -1,0 +1,449 @@
+# ResourceSet Reference
+
+`apiVersion: fluxcd.controlplane.io/v1` — managed by flux-operator.
+
+ResourceSet generates Kubernetes resources from a matrix of input values using a template-based
+approach. It is the primary mechanism for multi-tenant orchestration, fleet management, and
+self-service platforms.
+
+## Canonical YAML
+
+Based on the D2 reference architecture fleet pattern — deploys per-tenant namespaces with
+OCIRepository sources and Kustomizations:
+
+```yaml
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: apps
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "5m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: infra
+      ready: true
+      readyExpr: "status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')"
+  inputs:
+    - tenant: "frontend"
+      tag: "${ARTIFACT_TAG}"
+      environment: "${ENVIRONMENT}"
+    - tenant: "backend"
+      tag: "${ARTIFACT_TAG}"
+      environment: "${ENVIRONMENT}"
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: << inputs.tenant >>
+        labels:
+          toolkit.fluxcd.io/role: "tenant"
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: flux-runtime-info
+        namespace: << inputs.tenant >>
+        annotations:
+          fluxcd.controlplane.io/copyFrom: "flux-system/flux-runtime-info"
+        labels:
+          reconcile.fluxcd.io/watch: Enabled
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: registry-auth
+        namespace: << inputs.tenant >>
+        annotations:
+          fluxcd.controlplane.io/copyFrom: "flux-system/registry-auth"
+      type: kubernetes.io/dockerconfigjson
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: flux
+        namespace: << inputs.tenant >>
+      imagePullSecrets:
+        - name: registry-auth
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: flux
+        namespace: << inputs.tenant >>
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: admin
+      subjects:
+        - kind: ServiceAccount
+          name: flux
+          namespace: << inputs.tenant >>
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: apps
+        namespace: << inputs.tenant >>
+      spec:
+        interval: 5m
+        serviceAccountName: flux
+        url: "oci://ghcr.io/my-org/apps/<< inputs.tenant >>"
+        ref:
+          tag: << inputs.tag >>
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: apps
+        namespace: << inputs.tenant >>
+      spec:
+        targetNamespace: << inputs.tenant >>
+        serviceAccountName: flux
+        interval: 30m
+        retryInterval: 5m
+        wait: true
+        timeout: 5m
+        sourceRef:
+          kind: OCIRepository
+          name: apps
+        path: "./<< inputs.environment >>"
+        prune: true
+        postBuild:
+          substituteFrom:
+            - kind: ConfigMap
+              name: flux-runtime-info
+```
+
+## Key Spec Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `inputs` | array | List of input value maps — each entry generates one set of resources |
+| `inputsFrom` | array | References to ResourceSetInputProvider resources |
+| `inputStrategy.name` | string | `Flatten` (default) or `Permute` (Cartesian product) |
+| `resources` | array | Templated Kubernetes resource definitions |
+| `commonMetadata` | object | Labels/annotations applied to all generated resources |
+| `dependsOn` | array | Prerequisites with optional readiness checks |
+
+## Template Syntax
+
+**Delimiters:** `<< >>` — NOT `{{ }}`
+
+| Expression | Description |
+|-----------|-------------|
+| `<< inputs.name >>` | Simple field substitution |
+| `<< inputs.name \| quote >>` | Quote the value (wraps in double quotes) |
+| `<< inputs.replicas \| int >>` | Convert to integer (for numeric YAML fields) |
+| `<< inputs.config \| toYaml \| nindent 4 >>` | Render as YAML with indentation |
+| `<< inputs.config \| toJson >>` | Render as JSON string |
+| `<< inputs.name \| slugify >>` | Convert to DNS-safe slug |
+| `<< inputs.labels \| get "app" >>` | Get value from nested map |
+| `<< inputs.tag \| default "latest" >>` | Default value if empty |
+| `<< inputs.name \| upper >>` | Convert to uppercase |
+| `<< inputs.name \| lower >>` | Convert to lowercase |
+| `<< inputs.name \| trimSuffix "-app" >>` | Remove suffix |
+
+Template functions come from slim-sprig (a subset of Go's sprig template functions).
+
+**Important:** Template expressions are evaluated per input entry. For each entry in
+`inputs`, the entire `resources` array is rendered once.
+
+## Input Strategies
+
+### Flatten (Default)
+
+Inputs from `inputs` and `inputsFrom` are concatenated into a flat list.
+Each input entry produces one set of resources.
+
+```yaml
+spec:
+  inputs:
+    - tenant: "frontend"
+    - tenant: "backend"
+  # Produces 2 sets of resources (one per tenant)
+```
+
+### Permute (Cartesian Product)
+
+Computes the Cartesian product of all input sources. Useful when combining
+independent dimensions.
+
+```yaml
+spec:
+  inputStrategy:
+    name: Permute
+  inputs:
+    - region: "us-east"
+    - region: "eu-west"
+  inputsFrom:
+    - name: apps-provider  # provides [{app: "web"}, {app: "api"}]
+  # Produces 4 sets: us-east/web, us-east/api, eu-west/web, eu-west/api
+```
+
+**Permute field access:** In Permute mode, inputs from different sources are accessed via
+normalized source names. Normalization rules: uppercase → lowercase, spaces/punctuation
+(including `-`) → underscores, non-alphanumeric removed. For example, a provider named
+`git-tags` is accessed as `inputs.git_tags.tag`, not `inputs.tag`.
+
+## Dependencies
+
+ResourceSets support rich dependency definitions:
+
+```yaml
+spec:
+  dependsOn:
+    # Wait for another ResourceSet to be Ready
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: infra
+      namespace: flux-system
+      ready: true
+      readyExpr: "status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')"
+
+    # Wait for a CRD to exist (no readiness check needed)
+    - apiVersion: apiextensions.k8s.io/v1
+      kind: CustomResourceDefinition
+      name: helmreleases.helm.toolkit.fluxcd.io
+
+    # Wait for a Kustomization to be Ready
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: infra-configs
+      namespace: monitoring
+      ready: true
+      readyExpr: "status.observedGeneration >= 0"
+```
+
+**CEL expressions** in `readyExpr` evaluate against the dependency resource's status.
+Common patterns:
+- `status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')` — standard Ready check
+- `status.observedGeneration >= 0` — resource has been reconciled at least once
+
+## Advanced Features
+
+### Conditional Reconciliation
+
+Control which resources are reconciled per input using the `reconcile` annotation
+with conditional template expressions:
+
+```yaml
+spec:
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: << inputs.tenant >>
+        annotations:
+          fluxcd.controlplane.io/reconcile: << if eq inputs.tenant "team1" >>enabled<< else >>disabled<< end >>
+```
+
+When the annotation value is `disabled`, the resource is excluded from reconciliation
+for that input entry.
+
+### copyFrom Annotation
+
+Copy ConfigMaps and Secrets from another namespace:
+
+```yaml
+metadata:
+  annotations:
+    fluxcd.controlplane.io/copyFrom: "source-namespace/resource-name"
+```
+
+The ResourceSet controller copies the data from the source resource and keeps it in sync.
+For Secrets, you must also set the `type` field.
+
+### resourcesTemplate
+
+Instead of inline `resources`, reference a ConfigMap containing the template:
+
+```yaml
+spec:
+  resourcesTemplate:
+    name: my-template
+```
+
+### Deduplication
+
+When multiple inputs produce resources with the same name/namespace/kind, the last input wins.
+Resources are deduplicated by their GVK + namespace + name.
+
+## Built-in Input Fields
+
+Every input entry automatically includes:
+
+| Field | Description |
+|-------|-------------|
+| `inputs._index` | Zero-based index of the input entry |
+| `inputs._id` | Unique identifier (Adler-32 checksum of input values) |
+| `inputs.provider.apiVersion` | API version of the object providing the inputs |
+| `inputs.provider.kind` | Kind of the object providing the inputs (`ResourceSet` for inline, `ResourceSetInputProvider` for external) |
+| `inputs.provider.name` | Name of the providing object |
+| `inputs.provider.namespace` | Namespace of the providing object |
+
+## ResourceSetInputProvider
+
+Fetches input values from external services for use in ResourceSets.
+
+### Canonical YAML
+
+```yaml
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: github-prs
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "5m"
+spec:
+  type: GitHubPullRequest
+  url: https://github.com/my-org/my-app
+  secretRef:
+    name: github-token
+  filter:
+    limit: 10
+    labels:
+      - deploy-preview
+  defaultValues:
+    cluster: preview
+```
+
+### Provider Types and Exported Fields
+
+| Type | Exported Fields | Description |
+|------|----------------|-------------|
+| `GitHubPullRequest` | `id`, `sha`, `branch`, `author`, `title` | Open pull requests with matching labels |
+| `GitHubBranch` | `id`, `branch`, `sha` | Repository branches |
+| `GitHubTag` | `id`, `tag`, `sha` | Repository tags |
+| `GitLabMergeRequest` | `id`, `sha`, `branch`, `author`, `title` | Open merge requests |
+| `GitLabBranch` | `id`, `branch`, `sha` | Repository branches |
+| `GitLabTag` | `id`, `tag`, `sha` | Repository tags |
+| `GitLabEnvironment` | `id`, `sha`, `branch`, `author`, `title`, `slug` | Deployed GitLab environments |
+| `AzureDevOpsPullRequest` | `id`, `sha`, `branch`, `author`, `title` | Open pull requests |
+| `AzureDevOpsBranch` | `id`, `branch`, `sha` | Repository branches |
+| `AzureDevOpsTag` | `id`, `tag`, `sha` | Repository tags |
+| `GiteaPullRequest` | `id`, `sha`, `branch`, `author`, `title` | Open pull requests |
+| `GiteaBranch` | `id`, `branch`, `sha` | Repository branches |
+| `GiteaTag` | `id`, `tag`, `sha` | Repository tags |
+| `OCIArtifactTag` | `id`, `tag`, `digest` | OCI artifact tags (generic registries) |
+| `ACRArtifactTag` | `id`, `tag`, `digest` | Azure Container Registry tags (workload identity) |
+| `ECRArtifactTag` | `id`, `tag`, `digest` | AWS ECR tags (workload identity) |
+| `GARArtifactTag` | `id`, `tag`, `digest` | Google Artifact Registry tags (workload identity) |
+| `ExternalService` | (from HTTP response) | Custom HTTP service endpoint |
+| `Static` | (from `defaultValues`) | Single input from inline values |
+
+### Key Spec Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Provider type (required, see table above) |
+| `url` | string | Repository or registry URL (required for non-Static types) |
+| `secretRef.name` | string | Secret with credentials (`username`/`password` for Git, dockerconfigjson for OCI) |
+| `serviceAccountName` | string | SA for workload identity (AzureDevOps*, *ArtifactTag types) |
+| `filter.limit` | int | Max number of inputs to return (default: 100) |
+| `filter.labels` | array | Label filter for change requests |
+| `filter.includeBranch` | string | Regex to include branches |
+| `filter.excludeBranch` | string | Regex to exclude branches |
+| `filter.includeTag` | string | Regex to include tags |
+| `filter.excludeTag` | string | Regex to exclude tags |
+| `filter.semver` | string | Semver range to filter and sort tags |
+| `skip.labels` | array | Labels to skip input updates (prefix `!` to skip if absent) |
+| `defaultValues` | map | Default key-value pairs merged with exported values |
+| `schedule` | array | Cron schedules with `cron`, `timeZone`, `window` fields |
+| `insecure` | bool | Allow HTTP (ExternalService, OCIArtifactTag only) |
+| `certSecretRef.name` | string | Secret with TLS CA cert (`ca.crt`) |
+
+Reconciliation is configured via annotations, not spec fields:
+- `fluxcd.controlplane.io/reconcileEvery: "5m"` — poll interval (default: `10m`)
+- `fluxcd.controlplane.io/reconcile: "enabled"` — enable/disable reconciliation
+- `fluxcd.controlplane.io/reconcileTimeout: "2m"` — timeout for external calls
+
+### Referencing in ResourceSet
+
+```yaml
+spec:
+  inputsFrom:
+    - name: github-prs                    # by name
+    - selector:
+        matchLabels:
+          app: preview                     # by label selector
+```
+
+## Use Cases
+
+### Multi-Component Orchestration (D2 Pattern)
+
+The D2 reference architecture uses a chain of ResourceSets:
+1. **policies** — Creates ValidatingAdmissionPolicies (no inputs needed)
+2. **infra** — Creates per-component namespaces + OCIRepository + Kustomization for infrastructure (cert-manager, monitoring)
+3. **apps** — Creates per-tenant namespaces + OCIRepository + Kustomization for applications (frontend, backend)
+
+Dependencies: policies → infra → apps. Each ResourceSet waits for the previous one to be Ready.
+
+### Preview Environments from Pull Requests
+
+```yaml
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: preview-prs
+spec:
+  type: GitHubPullRequest
+  url: https://github.com/org/app
+  secretRef:
+    name: github-token
+  filter:
+    labels: [deploy-preview]
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: previews
+spec:
+  inputsFrom:
+    - name: preview-prs
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "preview-<< inputs.id >>"
+    # ... deploy app at the PR's commit SHA
+```
+
+### Image Automation with ResourceSets
+
+Use a ResourceSet to deploy ImageRepository + ImagePolicy + ImageUpdateAutomation across
+multiple component repositories:
+
+```yaml
+spec:
+  inputs:
+    - namespace: "apps"
+      repository: "https://github.com/org/apps.git"
+      pushBranch: "image-updates"
+    - namespace: "infra"
+      repository: "https://github.com/org/infra.git"
+      pushBranch: "image-updates"
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      metadata:
+        name: << inputs.namespace >>
+        namespace: << inputs.namespace >>
+      spec:
+        url: << inputs.repository >>
+        ref:
+          branch: main
+    - apiVersion: image.toolkit.fluxcd.io/v1
+      kind: ImageUpdateAutomation
+      metadata:
+        name: << inputs.namespace >>
+        namespace: << inputs.namespace >>
+      spec:
+        sourceRef:
+          kind: GitRepository
+          name: << inputs.namespace >>
+        git:
+          push:
+            branch: << inputs.pushBranch >>
+        update:
+          path: "./components"
+          strategy: Setters
+```
