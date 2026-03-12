@@ -53,7 +53,7 @@ flux check  # Verify upgrade success
 
 ## Operator-Based Upgrade
 
-### Step 1: Update Flux Operator to v0.31.0+
+### Step 1: Update Flux Operator to v0.43.0+
 
 Update the operator via OperatorHub, Terraform/OpenTofu, or HelmRelease.
 
@@ -63,7 +63,7 @@ Same as CLI Step 1 — update manifests in Git with `flux migrate -f .`
 
 ### Step 3: Update FluxInstance manifest
 
-Set the distribution version to `2.7.x` or later:
+Set the distribution version to `2.8.x` or later:
 
 ```yaml
 apiVersion: fluxcd.controlplane.io/v1
@@ -73,7 +73,7 @@ metadata:
   namespace: flux-system
 spec:
   distribution:
-    version: "2.7.x"
+    version: "2.8.x"
     registry: "ghcr.io/fluxcd"
 ```
 

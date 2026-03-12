@@ -1,10 +1,11 @@
 ---
 name: gitops-cluster-debug
 description: >
-  Debug, troubleshoot, diagnose, inspect, and investigate GitOps pipelines on live Kubernetes clusters.
-  Use this skill when users ask about Flux status, HelmRelease failures, Kustomization errors,
-  reconciliation issues, pod logs, controller problems, or cluster debugging — even if they
-  don't explicitly say "debug".
+  Debug and troubleshoot Flux CD on live Kubernetes clusters (not local repo files) via the Flux MCP
+  server — inspects Flux resource status, reads controller logs, traces dependency chains, and performs
+  installation health checks. Use when users report failing, stuck, or not-ready Flux resources on a
+  cluster, reconciliation errors, controller issues, artifact pull failures, or need live cluster
+  Flux Operator troubleshooting.
 allowed-tools: mcp__flux-operator-mcp__*
 license: Apache-2.0
 compatibility: Requires flux-operator-mcp

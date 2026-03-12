@@ -1,11 +1,10 @@
 ---
 name: gitops-repo-audit
 description: >
-  Audit Flux CD GitOps repositories for structure, security, API compliance,
-  and best practices. Use this skill whenever the user asks to audit, analyze, review,
-  validate, or check a GitOps repository. Also use it when users mention
-  Flux repo structure, GitOps best practices, manifest validation, deprecated APIs,
-  security review, or repository organization — even if they don't explicitly say "audit".
+  Audit and validate Flux CD GitOps repositories by scanning local repo files (not live clusters) —
+  runs Kubernetes schema validation, detects deprecated Flux APIs, reviews RBAC/multi-tenancy/secrets
+  management, and produces a prioritized GitOps report. Use when users ask to audit, analyze,
+  validate, review, or security-check a GitOps repo.
 allowed-tools: Read Glob Grep Bash(scripts/discover.sh:*) Bash(scripts/validate.sh:*) Bash(scripts/check-deprecated.sh:*)
 license: Apache-2.0
 compatibility: Requires awk, git, kustomize, kubeconform, flux, yq
