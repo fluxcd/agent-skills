@@ -30,17 +30,14 @@ Each skill has an `evals/evals.json` file with evaluation scenarios. When asked 
 1. Read `evals/evals.json` to get the list of eval prompts and their expectations
 2. For each eval, spawn a sub-agent with this prompt template:
    ```
-   You are a [skill role]. Follow the instructions in `skills/{skill-name}/SKILL.md`
+   You are a [skill role]. load the skill from `skills/{skill-name}/SKILL.md`
    exactly — read it first, then follow the workflow phases.
 
    Your task: [eval prompt from evals.json]
 
    Important:
-   - Read `skills/{skill-name}/SKILL.md` first to understand the full workflow
-   - Run the bundled scripts as instructed by the SKILL.md
-   - Read the reference files as instructed by the SKILL.md
-   - Read the actual YAML files in the test fixture
-   - Produce the full structured report as specified in the workflow
+   - Do not seach the web, use only the skill references and your own reasoning
+   - Produce the full structured report as specified in the workflow if there is one
    ```
 3. Score each eval output against the `expectations` array — each expectation is a pass/fail check
 4. Report results as a scorecard: eval id, pass/fail counts, and any missed expectations
@@ -62,3 +59,5 @@ The sub-agent should not be told the expectations — it must produce the correc
 5. Add test fixtures in `tests/{skill-name}/` covering distinct scenarios
 6. Register the skill in `.claude-plugin/marketplace.json` under `plugins[0].skills`
 7. If the skill uses schemas, add its schema directory to `SCHEMAS_DIRS` in the `Makefile`
+8. Document the skill in `README.md` with example prompts and usage instructions
+
