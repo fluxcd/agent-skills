@@ -425,7 +425,7 @@
               "type": "boolean"
             },
             "strategy": {
-              "description": "Strategy defines the install strategy to use for this HelmRelease.\nDefaults to 'RemediateOnFailure'.",
+              "description": "Strategy defines the install strategy to use for this HelmRelease.\nDefaults to 'RemediateOnFailure', or 'RetryOnFailure' when the\nDefaultToRetryOnFailure feature gate is enabled.",
               "properties": {
                 "name": {
                   "description": "Name of the install strategy.",
@@ -866,7 +866,7 @@
               "type": "string"
             },
             "strategy": {
-              "description": "Strategy defines the upgrade strategy to use for this HelmRelease.\nDefaults to 'RemediateOnFailure'.",
+              "description": "Strategy defines the upgrade strategy to use for this HelmRelease.\nDefaults to 'RemediateOnFailure', or 'RetryOnFailure' when the\nDefaultToRetryOnFailure feature gate is enabled.",
               "properties": {
                 "name": {
                   "description": "Name of the upgrade strategy.",
