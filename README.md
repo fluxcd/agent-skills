@@ -8,8 +8,8 @@ auditing repository structure, security, operational readiness, and debugging li
 cluster installations.
 
 > [!IMPORTANT]
-> This project is under active development. Skill definitions, reference files,
-> and evaluation criteria may change in a backwards incompatible manner.
+> These are the official Agent Skills for Flux CD, developed and maintained by the Flux project maintainers.
+> We do not endorse or take responsibility for any third-party skills that claim to provide Flux to GitOps expertise.
 
 ## Install
 
@@ -151,11 +151,10 @@ claude mcp add --scope project --transport stdio flux-operator-mcp \
 Note that the `--read-only` flag is will prevent the Agent from making any changes to the cluster.
 The MCP server masks Kubernetes Secrets, the Agent receives only the data key names without values.
 
-## Skill Structure
 
-Each skill follows the [Agent Skills Open Standard](https://agentskills.io/):
+## 3rd-Party Indexing
 
-- `SKILL.md` - Instructions for the agent
-- `scripts/` - Helper scripts for automation
-- `references/` - Supporting documentation
-- `assets/` - OpenAPI schemas, templates, and other data files
+The Flux skills are indexed by various 3rd-party services:
+
+- [tessl.io/registry/skills/github/fluxcd/agent-skills](https://tessl.io/registry/skills/github/fluxcd/agent-skills)
+- [skills.sh/fluxcd/agent-skills](https://skills.sh/fluxcd/agent-skills)
