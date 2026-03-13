@@ -8,9 +8,10 @@ Kubernetes, and GitOps best practices for generating manifests, answering Flux q
 auditing repository structure, security, operational readiness, and debugging live
 cluster installations.
 
-> [!IMPORTANT]
-> These are the official Agent Skills for Flux CD, developed and maintained by the Flux project maintainers.
-> Be cautious of random "GitOps Skills" you may find online that are not from this repository — they may be outdated, inaccurate, or even malicious.
+> [!NOTE]
+> These are the official AI Skills for Flux CD, developed by the Flux project maintainers.
+> We are looking for users to try them out and provide feedback on accuracy, usefulness, and any gaps when steering Agents through GitOps tasks.
+> If you have suggestions for improvements or new skills, please [open an issue](https://github.com/fluxcd/agent-skills/issues/new).
 
 ## Install
 
@@ -22,9 +23,12 @@ Navigate to your GitOps repository root and run:
 flux-operator skills install ghcr.io/fluxcd/agent-skills --agent claude-code
 ```
 
-The operator CLI verifies the cosign signature and installs the skills in the repo root
-at `.agents/skills`. The `--agent` flag creates per-skill symlinks from agent-specific
-directories to the canonical location.
+The operator CLI verifies the cosign signature
+(validating that the OCI artifact is published by the Flux team)
+and extracts the skills in the repo root at `.agents/skills`.
+
+The `--agent` flag creates per-skill symlinks from agent-specific directories to the canonical
+location. If your agent supports the conventional `.agents/skills` path, you can omit the `--agent` flag.
 
 To update the skills run `flux-operator skills update`.
 
@@ -33,7 +37,7 @@ To update the skills run `flux-operator skills update`.
 Install the skills with Vercel's skills tool:
 
 ```shell
-npx skills add https://github.com/fluxcd/agent-skills
+npx skills add fluxcd/agent-skills
 ```
 
 ### Using Claude Code
