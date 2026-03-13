@@ -1,6 +1,7 @@
 # GitOps Agent Skills
 
-[![license](https://img.shields.io/github/license/fluxcd/skills.svg)](https://github.com/fluxcd/skills/blob/main/LICENSE)
+[![release](https://img.shields.io/github/release/fluxcd/agent-skills/all.svg)](https://github.com/fluxcd/agent-skills/releases)
+[![license](https://img.shields.io/github/license/fluxcd/agent-skills.svg)](https://github.com/fluxcd/agent-skills/blob/main/LICENSE)
 
 A collection of reusable skills that give AI Agents expertise in Flux CD,
 Kubernetes, and GitOps best practices for generating manifests, answering Flux questions,
@@ -9,7 +10,7 @@ cluster installations.
 
 > [!IMPORTANT]
 > These are the official Agent Skills for Flux CD, developed and maintained by the Flux project maintainers.
-> We do not endorse or take responsibility for any third-party skills that claim to provide Flux to GitOps expertise.
+> Be cautious of random "GitOps Skills" you may find online that are not from this repository — they may be outdated, inaccurate, or even malicious.
 
 ## Install
 
@@ -150,7 +151,6 @@ claude mcp add --scope project --transport stdio flux-operator-mcp \
 
 Note that the `--read-only` flag is will prevent the Agent from making any changes to the cluster.
 The MCP server masks Kubernetes Secrets, the Agent receives only the data key names without values.
-
 
 ## 3rd-Party Indexing
 
