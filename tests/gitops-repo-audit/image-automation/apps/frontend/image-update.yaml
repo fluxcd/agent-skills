@@ -1,0 +1,25 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  interval: 30m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcdbot
+        email: fluxcdbot@example.com
+      messageTemplate: "update frontend to {{range .Changed.Changes}}{{.NewValue}}{{end}}"
+    push:
+      branch: main
+  update:
+    path: ./apps/frontend
+    strategy: Setters

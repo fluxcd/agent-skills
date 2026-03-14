@@ -25,12 +25,15 @@ clean-schemas: ## Remove downloaded schemas
 	done
 
 test-discover: ## Run discovery script on the test fixtures
-	$(DISCOVER_SCRIPT) -d $(TEST_DIR)/multi-repo-structure
 	$(DISCOVER_SCRIPT) -d $(TEST_DIR)/monorepo-structure
+	$(DISCOVER_SCRIPT) -d $(TEST_DIR)/multi-repo-structure
+	$(DISCOVER_SCRIPT) -d $(TEST_DIR)/image-automation
+	$(DISCOVER_SCRIPT) -d $(TEST_DIR)/mixed-issues
 
 test-validate: ## Run validation script on the test fixtures
-	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/multi-repo-structure
 	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/monorepo-structure
+	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/multi-repo-structure
+	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/image-automation
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-20s %s\n", $$1, $$2}'

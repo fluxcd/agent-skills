@@ -1,0 +1,25 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  interval: 30m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcdbot
+        email: fluxcdbot@example.com
+      messageTemplate: "update podinfo to {{range .Changed.Changes}}{{.NewValue}}{{end}}"
+    push:
+      branch: staging/image-updates
+  update:
+    path: ./apps/podinfo
+    strategy: Setters

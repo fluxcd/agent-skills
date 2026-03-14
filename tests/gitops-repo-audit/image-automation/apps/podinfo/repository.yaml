@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  interval: 12h
+  url: oci://ghcr.io/stefanprodan/charts/podinfo
+  ref:
+    semver: ">=6.5.0"

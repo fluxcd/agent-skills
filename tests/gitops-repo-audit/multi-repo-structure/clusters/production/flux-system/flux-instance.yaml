@@ -1,0 +1,41 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.x"
+    registry: "ghcr.io/fluxcd"
+    artifact: "oci://ghcr.io/example/flux-operator-manifests:latest"
+  components:
+    - source-controller
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    size: large
+    multitenant: true
+    tenantDefaultServiceAccount: flux
+    networkPolicy: true
+    domain: "cluster.local"
+  sync:
+    kind: OCIRepository
+    url: "oci://ghcr.io/example/fleet-manifests"
+    ref: "latest-stable"
+    path: "clusters/production"
+    pullSecret: "ghcr-auth"
+  kustomize:
+    patches:
+      - target:
+          kind: OCIRepository
+          name: flux-system
+        patch: |
+          - op: add
+            path: /spec/verify
+            value:
+              provider: cosign
+              matchOIDCIdentity:
+              - issuer: ^https://token\.actions\.githubusercontent\.com$
+                subject: ^https://github\.com/example/fleet/\.github/workflows/push-artifact\.yaml@refs/tags/v\d+\.\d+\.\d+$

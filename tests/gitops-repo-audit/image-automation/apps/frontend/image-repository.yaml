@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  interval: 5m
+  image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/frontend

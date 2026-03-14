@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - podinfo.yaml
+  - redis.yaml
+secretGenerator:
+  - name: db-credentials
+    namespace: podinfo
+    literals:
+      - DB_HOST=postgres.internal
+      - DB_USER=admin
+      - DB_PASSWORD=p@ssw0rd!2024
+      - CONNECTION_STRING=postgresql://admin:p@ssw0rd!2024@postgres.internal:5432/appdb
+configMapGenerator:
+  - name: app-config
+    namespace: podinfo
+    literals:
+      - API_ENDPOINT=https://api.example.com
+      - LOG_LEVEL=info

@@ -71,7 +71,7 @@ and `gitops-cluster-debug` for troubleshooting live clusters.
 
 ### gitops-knowledge
 
-Answers questions about Flux CD and generates uo-to-date YAML for all Flux custom resources.
+Answers questions about Flux CD and generates up-to-date YAML for all Flux custom resources.
 Bundled with OpenAPI schemas for every Flux resource and reference documentation covering
 sources, HelmRelease, Kustomization, ResourceSets, image automation, notifications,
 repository patterns, and the Flux Operator APIs.
@@ -83,7 +83,8 @@ What's the recommended GitOps structure for a multi-cluster fleet?
 ```
 
 ```text
-Generate a HelmRelease for oci://ghcr.io/my-org/frontend, and a Kustomization to deploy it in the staging cluster.
+Generate a HelmRelease for oci://ghcr.io/my-org/frontend,
+and a Kustomization to deploy it in the staging cluster.
 ```
 
 ```text
@@ -138,7 +139,7 @@ Check the Flux installation on my current cluster.
 ```
 
 ```text
-Debug the failing HelmRelease podinfo in the apps namespace on my current cluster.
+Debug the failing HelmRelease podinfo in the apps namespace.
 ```
 
 ```text
@@ -153,7 +154,7 @@ claude mcp add --scope project --transport stdio flux-operator-mcp \
   -- flux-operator-mcp serve --read-only
 ```
 
-Note that the `--read-only` flag is will prevent the Agent from making any changes to the cluster.
+Note that the `--read-only` flag will prevent the Agent from making any changes to the cluster.
 The MCP server masks Kubernetes Secrets, the Agent receives only the data key names without values.
 
 ## 3rd-Party Indexing

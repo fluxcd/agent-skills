@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-push-credentials
+  namespace: flux-system
+type: Opaque
+stringData:
+  username: fluxcdbot
+  password: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

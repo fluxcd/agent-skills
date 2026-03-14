@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/frontend:1.0.0 # {"$imagepolicy": "frontend:frontend"}
+          ports:
+            - containerPort: 8080

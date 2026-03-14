@@ -1,0 +1,127 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: infra
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "5m"
+spec:
+  dependsOn:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSet
+      name: policies
+      namespace: flux-system
+      ready: true
+      readyExpr: status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')
+  inputs:
+    - tenant: "cert-manager"
+      tag: "${ARTIFACT_TAG}"
+      environment: "${ENVIRONMENT}"
+      artifactSubjectWorkflow: "${ARTIFACT_SUBJECT_WORKFLOW}"
+      artifactSubjectGitRef: "${ARTIFACT_SUBJECT_GIT_REF}"
+    - tenant: "monitoring"
+      tag: "${ARTIFACT_TAG}"
+      environment: "${ENVIRONMENT}"
+      artifactSubjectWorkflow: "${ARTIFACT_SUBJECT_WORKFLOW}"
+      artifactSubjectGitRef: "${ARTIFACT_SUBJECT_GIT_REF}"
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: << inputs.tenant >>
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: flux-runtime-info
+        namespace: << inputs.tenant >>
+        annotations:
+          fluxcd.controlplane.io/copyFrom: "flux-system/flux-runtime-info"
+        labels:
+          reconcile.fluxcd.io/watch: Enabled
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ghcr-auth
+        namespace: << inputs.tenant >>
+        annotations:
+          fluxcd.controlplane.io/copyFrom: "flux-system/ghcr-auth"
+      type: kubernetes.io/dockerconfigjson
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: flux
+        namespace: << inputs.tenant >>
+      imagePullSecrets:
+        - name: ghcr-auth
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: flux-infra-<< inputs.tenant >>
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+        - kind: ServiceAccount
+          name: flux
+          namespace: << inputs.tenant >>
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: infra
+        namespace: << inputs.tenant >>
+      spec:
+        interval: 5m
+        serviceAccountName: flux
+        url: "oci://ghcr.io/example/infra/<< inputs.tenant >>"
+        ref:
+          tag: << inputs.tag >>
+        verify:
+          provider: cosign
+          matchOIDCIdentity:
+          - issuer: ^https://token\.actions\.githubusercontent\.com$
+            subject: ^https://github\.com/example/infra/\.github/workflows/<< inputs.artifactSubjectWorkflow >>\.yaml@<< inputs.artifactSubjectGitRef >>$
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: infra-controllers
+        namespace: << inputs.tenant >>
+      spec:
+        targetNamespace: << inputs.tenant >>
+        serviceAccountName: flux
+        interval: 30m
+        retryInterval: 5m
+        wait: true
+        timeout: 5m
+        sourceRef:
+          kind: OCIRepository
+          name: infra
+        path: "./controllers/<< inputs.environment >>"
+        prune: true
+        postBuild:
+          substituteFrom:
+            - kind: ConfigMap
+              name: flux-runtime-info
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: infra-configs
+        namespace: << inputs.tenant >>
+      spec:
+        dependsOn:
+          - name: infra-controllers
+        targetNamespace: << inputs.tenant >>
+        serviceAccountName: flux
+        interval: 30m
+        retryInterval: 5m
+        wait: true
+        timeout: 5m
+        sourceRef:
+          kind: OCIRepository
+          name: infra
+        path: "./configs/<< inputs.environment >>"
+        prune: true
+        postBuild:
+          substituteFrom:
+            - kind: ConfigMap
+              name: flux-runtime-info
