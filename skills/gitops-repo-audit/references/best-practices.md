@@ -45,6 +45,7 @@ not all apply to every repo. Judge based on the repo's complexity and maturity.
 - [ ] **Tenant labels**: Use `toolkit.fluxcd.io/tenant` labels on namespaces for multi-tenancy grouping
 - [ ] **`targetNamespace` on Kustomizations**: Set when the source manifests don't include namespace metadata for apps
 - [ ] **Namespace created by Kustomization or ResourceSet**: Verify that target namespaces are created as part of the Kustomization or ResourceSet that deploys the component. Flag usage of `targetNamespace` or `createNamespace` in HelmRelease — these bypass proper namespace lifecycle management. The namespace should exist before the HelmRelease runs, created by the parent Kustomization or ResourceSet template.
+- [ ] **No workloads in the default namespace**: HelmReleases and Kustomizations should deploy to a dedicated namespace, not the `default` namespace
 
 ## Security & Multi-Tenancy
 
