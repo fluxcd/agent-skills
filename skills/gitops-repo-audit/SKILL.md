@@ -5,7 +5,6 @@ description: >
   runs Kubernetes schema validation, detects deprecated Flux APIs, reviews RBAC/multi-tenancy/secrets
   management, and produces a prioritized GitOps report. Use when users ask to audit, analyze,
   validate, review, or security-check a GitOps repo.
-allowed-tools: Read Glob Grep Bash(scripts/discover.sh:*) Bash(scripts/validate.sh:*) Bash(scripts/check-deprecated.sh:*)
 license: Apache-2.0
 compatibility: Requires awk, git, kustomize, kubeconform, flux, yq
 ---

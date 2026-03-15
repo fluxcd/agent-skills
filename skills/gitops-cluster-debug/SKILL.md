@@ -6,7 +6,6 @@ description: >
   installation health checks. Use when users report failing, stuck, or not-ready Flux resources on a
   cluster, reconciliation errors, controller issues, artifact pull failures, or need live cluster
   Flux Operator troubleshooting.
-allowed-tools: mcp__flux-operator-mcp__*
 license: Apache-2.0
 compatibility: Requires flux-operator-mcp
 ---
