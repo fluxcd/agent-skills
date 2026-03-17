@@ -1,0 +1,19 @@
+{
+  "name": "fluxcd",
+  "description": "Flux CD agent — manages Kubernetes clusters using GitOps principles. Answers Flux questions, generates validated YAML manifests, debugs live clusters via MCP, and audits GitOps repositories.",
+  "resources": [
+    "skill://.kiro/skills/gitops-knowledge/SKILL.md",
+    "skill://.kiro/skills/gitops-cluster-debug/SKILL.md",
+    "skill://.kiro/skills/gitops-repo-audit/SKILL.md"
+  ],
+  "mcpServers": {
+    "flux-operator-mcp": {
+      "command": "flux-operator-mcp",
+      "args": ["serve", "--read-only"],
+      "env": {
+        "KUBECONFIG": "$HOME/.kube/config"
+      }
+    }
+  },
+  "welcomeMessage": "Flux CD GitOps agent ready."
+}
