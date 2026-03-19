@@ -1,0 +1,20 @@
+apiVersion: source.extensions.fluxcd.io/v1beta1
+kind: ArtifactGenerator
+metadata:
+  name: monorepo
+  namespace: flux-system
+spec:
+  sources:
+    - alias: monorepo
+      kind: GitRepository
+      name: flux-system
+  artifacts:
+    - name: infrastructure
+      copy:
+        - from: "@monorepo/infrastructure/**"
+          to: "@artifact/"
+    - name: apps
+      copy:
+        - from: "@monorepo/apps/**"
+          to: "@artifact/"
+          overwrite: true

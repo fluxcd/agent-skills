@@ -2,8 +2,9 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: podinfo
-  namespace: podinfo
 spec:
+  releaseName: podinfo
+  targetNamespace: podinfo
   interval: 1h
   timeout: 5m
   chartRef:

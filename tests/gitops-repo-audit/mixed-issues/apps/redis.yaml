@@ -13,7 +13,9 @@ spec:
         kind: HelmRepository
         name: bitnami
         namespace: flux-system
-      interval: 10m
+  valuesFrom:
+    - kind: ConfigMap
+      name: redis-config
   values:
     auth:
       enabled: true

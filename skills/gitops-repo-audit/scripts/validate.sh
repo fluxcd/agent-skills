@@ -12,8 +12,10 @@
 # - kustomize >= 5.8
 # - kubeconform >= 0.7
 
-set -o errexit
 set -o pipefail
+
+# track validation failures
+errors=0
 
 # resolve the skill root directory (parent of scripts/)
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -206,7 +208,10 @@ validate_yaml_syntax() {
     if is_excluded_dir "$dir"; then
       continue
     fi
-    yq e 'true' "$file" > /dev/null
+    if ! yq e 'true' "$file" > /dev/null 2>&1; then
+      echo "ERROR - Invalid YAML syntax in $file" >&2
+      errors=$((errors + 1))
+    fi
   done < <(find_files '*.yaml')
 }
 
@@ -217,7 +222,9 @@ validate_kubernetes_manifests() {
     if is_excluded_dir "$dir"; then
       continue
     fi
-    kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}"
+    if ! kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}"; then
+      errors=$((errors + 1))
+    fi
   done < <(find_files '*.yaml')
 }
 
@@ -231,7 +238,7 @@ validate_kustomize_overlays() {
     kustomize build "${file/%$kustomize_config}" "${kustomize_flags[@]}" | \
       kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}"
     if [[ ${PIPESTATUS[0]} != 0 || ${PIPESTATUS[1]} != 0 ]]; then
-      exit 1
+      errors=$((errors + 1))
     fi
   done < <(find_files "$kustomize_config")
 }
@@ -244,4 +251,8 @@ detect_excluded_dirs
 validate_yaml_syntax
 validate_kubernetes_manifests
 validate_kustomize_overlays
+if [[ $errors -gt 0 ]]; then
+  echo "ERROR - Validation failed with $errors error(s)" >&2
+  exit 1
+fi
 echo "INFO - All validations passed"

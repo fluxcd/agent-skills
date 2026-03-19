@@ -62,6 +62,8 @@
         "Detects the plaintext Secret (git-push-credentials) with a GitHub PAT in stringData as unencrypted credentials in Git",
         "Recognizes the SOPS-encrypted Secret (git-credentials) with sops: metadata and ENC[ prefixed values as properly encrypted",
         "Flags the podinfo-values ConfigMap used in HelmRelease valuesFrom as missing the reconcile.fluxcd.io/watch: Enabled label",
+        "Flags the podinfo HelmRelease is missing storageNamespace",
+        "Flags overlapping Kustomization paths: notifications (./notifications) and notifications-dev (./notifications/dev) manage overlapping resources",
         "Detects current notification API (v1beta3) Provider and Alert as properly configured",
         "Notes that the FluxInstance includes image-reflector-controller and image-automation-controller components",
         "Produces a structured report with image automation findings, security findings, and recommendations"
@@ -89,6 +91,7 @@
         "Notes missing remediation/retry strategy on all HelmReleases",
         "Flags the redis HelmRelease for wildcard chart version (version: '*')",
         "Flags the redis HelmRelease for deploying to the default namespace",
+        "Flags the monorepo ArtifactGenerator with invalid overwrite",
         "Flags the runtime-values ConfigMap used in postBuild.substituteFrom as missing the reconcile.fluxcd.io/watch: Enabled label",
         "Flags the kube-prometheus-stack HelmRelease for using targetNamespace and createNamespace instead of creating the namespace in the Kustomization",
         "Clearly conveys the repository has critical or severe issues requiring immediate attention (deprecated APIs, plaintext secrets, insecure sources)",

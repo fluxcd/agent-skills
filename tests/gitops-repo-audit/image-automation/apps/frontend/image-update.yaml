@@ -2,7 +2,6 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
   name: frontend
-  namespace: frontend
 spec:
   interval: 30m
   sourceRef:

@@ -20,6 +20,7 @@ not all apply to every repo. Judge based on the repo's complexity and maturity.
 - [ ] **`wait: true` on dependencies**: Kustomizations and ResourceSets that other resources depend on should set `wait: true` so dependents only start after all resources are healthy
 - [ ] **HelmRelease dependencies**: Use `dependsOn` when one Helm release requires another (e.g., ingress-nginx depends on cert-manager for TLS)
 - [ ] **No circular dependencies**: Verify `dependsOn` chains form a DAG (directed acyclic graph)
+- [ ] **No overlapping Kustomization paths**: Kustomizations sharing the same source must not have paths where one is a prefix of the other — the parent path includes the child's resources, causing apply conflicts and unpredictable pruning
 
 ## Remediation and Reliability
 
@@ -29,6 +30,7 @@ not all apply to every repo. Judge based on the repo's complexity and maturity.
 - [ ] **Timeouts**: Set `timeout` on Kustomizations and HelmReleases
 - [ ] **Drift detection**: Enable `driftDetection.mode: enabled` on production HelmReleases to detect and correct out-of-band changes
 - [ ] **Drift detection ignores**: Use `driftDetection.ignore` for fields that are expected to change (e.g., `/spec/replicas` for HPA-managed deployments, annotation fields set by operators)
+- [ ] **storageNamespace on HelmReleases**: If `targetNamespace` is set and `storageNamespace` is not, flag it and recommend setting `storageNamespace` to match `targetNamespace` to avoid Helm storage being in a different namespace than the deployed resources
 - [ ] **CRD handling**: Set `install.crds: Create` and `upgrade.crds: CreateReplace` on HelmReleases that manage CRDs
 - [ ] **Reactivity**: ConfigMaps and Secrets used in `valuesFrom` and `postBuild.substituteFrom` should be labeled with `reconcile.fluxcd.io/watch: Enabled` to trigger immediate reconciliation on changes instead of waiting for the next interval
 

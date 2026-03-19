@@ -78,9 +78,6 @@ References a Helm chart repository (HTTP/S or OCI).
 **Patterns:**
 - Use for traditional HTTPS Helm chart repositories only.
 
-**Gotchas:**
-- `HelmRepository` with `type: oci` is a legacy pattern. Recommend migrating to `OCIRepository` with `chartRef` on HelmRelease, OCIRepository semver-based tag policies, and layer selection that HelmRepository OCI mode does not.
-
 ### HelmChart (`source.toolkit.fluxcd.io/v1`)
 
 OpenAPI schema: assets/schemas/helmchart-source-v1.json
@@ -154,7 +151,6 @@ Builds and applies Kubernetes manifests from sources using Kustomize.
 - Dependency chains for ordering: `infra-controllers` → `infra-configs` → `apps`. Use `wait: true` on dependencies.
 
 **Gotchas:**
-- Set `prune: true` on all Kustomizations for proper garbage collection.
 - `force: true` causes downtime — use only for immutable field changes.
 
 ### HelmRelease (`helm.toolkit.fluxcd.io/v2`)
@@ -185,10 +181,6 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 **Patterns:**
 - Use `.spec.chartRef` with OCIRepository for OCI charts.
 - Enable `driftDetection.mode: enabled` in production.
-
-**Gotchas:**
-- `install.remediation.retries` and `upgrade.remediation.retries` is the legacy pattern. The new pattern uses `install.strategy` and `upgrade.strategy` with `RetryOnFailure`.
-- If `targetNamespace` is set and `storageNamespace` is not, recommend setting `storageNamespace` to the same value to avoid Helm storage being in a different namespace.
 
 ## Notification API
 
@@ -286,9 +278,6 @@ Automatically updates Git repositories with new image tags selected by ImagePoli
 
 **Patterns:**
 - Add markers in YAML files: `image: nginx:1.0.0 # {"$imagepolicy": "namespace:policy-name"}` or for chart versions: `version: 1.0.0 # {"$imagepolicy": "namespace:policy-name:tag"}`. The automation scans for these markers and updates the values.
-
-**Gotchas:**
-- The push branch can differ from checkout branch to create PRs instead of direct pushes.
 
 ## Common Validation Rules
 
