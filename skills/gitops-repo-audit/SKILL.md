@@ -102,7 +102,7 @@ Focus on the categories most relevant to what you found in discovery:
 
 Structure findings as a markdown report with these sections if applicable:
 
-1. **Summary** — repo name, pattern, clusters, Flux/K8s resource counts, overall status
+1. **Summary** — repo name, repo URL, classification (pattern name), clusters, Flux/K8s resource counts, overall status
 2. **Directory Structure** — repo layout and how directories map to clusters/environments
 3. **Validation Results** — if any errors where found
 4. **API Compliance** — if deprecated API are found include migration steps
