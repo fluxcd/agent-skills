@@ -188,6 +188,7 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 
 **Gotchas:**
 - `install.remediation.retries` and `upgrade.remediation.retries` is the legacy pattern. The new pattern uses `install.strategy` and `upgrade.strategy` with `RetryOnFailure`.
+- If `targetNamespace` is set and `storageNamespace` is not, recommend setting `storageNamespace` to the same value to avoid Helm storage being in a different namespace.
 
 ## Notification API
 
