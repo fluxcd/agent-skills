@@ -6,12 +6,14 @@ metadata:
   annotations:
     fluxcd.controlplane.io/reconcileEvery: "5m"
 spec:
+  inputs:
+    - policyName: "source.policy.fluxcd.io"
   resources:
     - apiVersion: v1
       kind: ConfigMap
       metadata:
         name: flux-allowlist
-        namespace: flux-system
+        namespace: << inputs.provider.namespace >>
         labels:
           fluxcd.controlplane.io/role: "policy"
       data:
@@ -23,7 +25,7 @@ spec:
     - apiVersion: admissionregistration.k8s.io/v1
       kind: ValidatingAdmissionPolicy
       metadata:
-        name: "source.policy.fluxcd.controlplane.io"
+        name: << inputs.policyName >>
       spec:
         failurePolicy: Fail
         matchConstraints:
@@ -55,11 +57,11 @@ spec:
       metadata:
         name: flux-tenant-sources
       spec:
-        policyName: "source.policy.fluxcd.controlplane.io"
+        policyName: << inputs.policyName >>
         validationActions: ["Deny"]
         paramRef:
           name: flux-allowlist
-          namespace: flux-system
+          namespace: << inputs.provider.namespace >>
           parameterNotFoundAction: "Deny"
         matchResources:
           namespaceSelector:

@@ -51,6 +51,7 @@ Generates groups of Kubernetes resources from a matrix of input values with temp
 
 **Gotchas:**
 - Template syntax uses `<< >>` delimiters (not `{{ }}`).
+- `<< inputs.provider.name >>` and `<< inputs.provider.namespace >>` resolve to the ResourceSet's metadata when using inline `inputs`, or to the ResourceSetInputProvider's metadata when using `inputsFrom`.
 - Supports slim-sprig functions (`quote`, `int`, `toYaml`, `nindent`, `get`, `default`, etc.) plus a custom `slugify` function.
 
 ## ResourceSetInputProvider (`fluxcd.controlplane.io/v1`)
