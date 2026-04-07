@@ -77,7 +77,8 @@ For each controller:
    - `git switch release/vX.Y.x`
    - `git pull origin release/vX.Y.x`
 
-9. Create signed tags from the updated release series branch.
+9. Create and push signed tags from the updated release series branch.
+   Push the `api/` tag first — the release tag depends on it.
    - `git tag -s -m "api/vX.Y.Z" api/vX.Y.Z`
    - `git push origin api/vX.Y.Z`
    - `git tag -s -m "vX.Y.Z" vX.Y.Z`
