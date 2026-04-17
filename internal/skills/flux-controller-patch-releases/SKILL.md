@@ -7,6 +7,7 @@ description: >
   preparing a new controller patch release from a release series branch,
   drafting changelog entries, tagging releases, and opening the follow-up
   changelog PRs back to main.
+license: Apache-2.0
 ---
 
 # Flux Controller Patch Releases

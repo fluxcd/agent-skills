@@ -6,6 +6,7 @@ description: >
   or commits the user makes outside your tool calls that surface in the conversation — even without an
   explicit request. Also trigger when the user explicitly asks to tag existing commits in a branch (e.g.
   "add assisted-by to commits in this branch").
+license: Apache-2.0
 allowed-tools: Bash(*/safety-check.sh) Bash(git commit:*) Bash(git log:*)
 ---
 
