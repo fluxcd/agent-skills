@@ -102,6 +102,26 @@
         "The apps ResourceSet inputs include entries for frontend and backend",
         "Generated Kustomizations include spec.prune (required field)"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "I'm bootstrapping Flux Operator on a new EKS cluster named 'staging' with Terraform. The fleet is a private GitHub repo at https://github.com/acme-corp/fleet.git. We authenticate with a GitHub App (app ID, installation owner, and PEM private key passed as Terraform variables). I need: (1) the Terraform module block that loads the FluxInstance manifest from our fleet repo, (2) the managed Secret for GitHub App authentication, (3) a runtime_info entry publishing CLUSTER_REGION=eu-west-2, (4) the FluxInstance YAML with Git sync and a kustomize patch that wires postBuild.substituteFrom to the flux-runtime-info ConfigMap. Show the recommended repo layout too.",
+      "expected_output": "The recommended sibling layout (terraform/ and clusters/ at repo root), a module block using controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes with ${path.root}/../clusters/... paths, a managed Secret containing githubAppID/githubAppInstallationOwner/githubAppPrivateKey, runtime_info with CLUSTER_REGION, and a FluxInstance with Git sync (provider: github) and a kustomize.patches entry adding postBuild.substituteFrom referencing flux-runtime-info.",
+      "files": [],
+      "expectations": [
+        "The Terraform module source is 'controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes'",
+        "The 'instance_yaml' path uses '${path.root}/../clusters/' (NOT '${path.root}/clusters/')",
+        "The repo layout places 'terraform/' and 'clusters/' as siblings at the repo root (clusters/ is NOT nested under terraform/)",
+        "managed_resources.secrets_yaml composes a Secret with stringData keys githubAppID, githubAppInstallationOwner, and githubAppPrivateKey",
+        "The GitHub App Secret name matches the FluxInstance spec.sync.pullSecret (or is 'flux-system' if pullSecret is omitted)",
+        "managed_resources.runtime_info.data contains CLUSTER_REGION with value 'eu-west-2'",
+        "The FluxInstance spec.sync.kind is 'GitRepository' and spec.sync.url points at the GitHub repo",
+        "The FluxInstance spec.sync.provider is 'github' (required for GitHub App auth)",
+        "The FluxInstance spec.kustomize.patches adds postBuild.substituteFrom targeting the flux-system Kustomization and referencing the flux-runtime-info ConfigMap",
+        "The output references or loads the 'terraform-bootstrap.md' reference, OR demonstrates its patterns (sibling layout, ${path.root}/.. paths, managed_resources.runtime_info)",
+        "The output does NOT use the legacy 'fluxcd/flux' Terraform provider or 'flux bootstrap' CLI",
+        "The Terraform variable holding the GitHub App PEM is marked 'sensitive = true'"
+      ]
     }
   ]
 }
