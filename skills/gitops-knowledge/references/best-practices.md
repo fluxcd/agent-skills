@@ -66,7 +66,6 @@ Prescriptive guidance for production Flux deployments with Flux Operator.
 - **Service account impersonation:** Use `serviceAccountName` on Kustomizations and HelmReleases
   with per-namespace ServiceAccounts and RoleBindings for least-privilege access.
 
-
 ## Flux Operator Configuration
 
 - **Cluster sizing:** Match `cluster.size` to workload count — `small` for dev (<50 resources),
@@ -84,8 +83,6 @@ Prescriptive guidance for production Flux deployments with Flux Operator.
 
 - **Alerts on failures:** Create Provider + Alert for Slack/Teams with `eventSeverity: error`
   watching all Kustomizations and HelmReleases. Every cluster should have failure notifications.
-- **Receivers for fast sync:** Set up Receiver webhooks for GitHub/GitLab push events to trigger
-  immediate GitRepository reconciliation instead of waiting for the poll interval.
 - **Intervals:** Use short intervals for sources (`5m`) and longer intervals for appliers
   (`30m`). Receivers handle immediate triggers; intervals are the fallback.
 - **Prune: true:** Always set `prune: true` on Kustomizations to enable garbage collection
@@ -97,3 +94,5 @@ Prescriptive guidance for production Flux deployments with Flux Operator.
   (Dex, Keycloak, Microsoft Entra ID, OpenShift) and can be exposed via Ingress.
 - **Image automation isolation:** Run image automation controllers on a dedicated cluster
   to isolate Git write access from production clusters.
+- **Receivers for fast sync:** Set up Receiver webhooks for GitHub/GitLab push events to trigger
+  immediate GitRepository reconciliation instead of waiting for the poll interval.

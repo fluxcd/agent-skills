@@ -8,7 +8,7 @@ self-service platforms.
 
 ## Canonical YAML
 
-Based on the D2 reference architecture fleet pattern — deploys per-tenant namespaces with
+Based on the Gitless reference architecture fleet pattern — deploys per-tenant namespaces with
 OCIRepository sources and Kustomizations:
 
 ```yaml
@@ -25,7 +25,6 @@ spec:
       kind: ResourceSet
       name: infra
       ready: true
-      readyExpr: "status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')"
   inputs:
     - tenant: "frontend"
       tag: "${ARTIFACT_TAG}"
@@ -195,14 +194,13 @@ spec:
       name: infra
       namespace: flux-system
       ready: true
-      readyExpr: "status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')"
 
     # Wait for a CRD to exist (no readiness check needed)
     - apiVersion: apiextensions.k8s.io/v1
       kind: CustomResourceDefinition
       name: helmreleases.helm.toolkit.fluxcd.io
 
-    # Wait for a Kustomization to be Ready
+    # Wait for a Kustomization to be Ready at creation time (no updates needed after that)
     - apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       name: infra-configs
@@ -368,9 +366,9 @@ spec:
 
 ## Use Cases
 
-### Multi-Component Orchestration (D2 Pattern)
+### Multi-Component Orchestration (Gitless Pattern)
 
-The D2 reference architecture uses a chain of ResourceSets:
+The Gitless reference architecture uses a chain of ResourceSets:
 1. **policies** — Creates ValidatingAdmissionPolicies (no inputs needed)
 2. **infra** — Creates per-component namespaces + OCIRepository + Kustomization for infrastructure (cert-manager, monitoring)
 3. **apps** — Creates per-tenant namespaces + OCIRepository + Kustomization for applications (frontend, backend)

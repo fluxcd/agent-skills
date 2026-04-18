@@ -149,16 +149,12 @@ Without a `secretRef`, the decryption uses Cloud KMS with workload identity (GCP
 
 ## Health Checks
 
-By default, Kustomization checks standard Kubernetes readiness conditions. Custom health checks
-can be defined for resources that don't follow standard patterns:
+By default, Kustomization checks standard Kubernetes readiness conditions when `wait: true`:
 
 ```yaml
 spec:
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: my-app
-      namespace: my-app
+  wait: true
+  timeout: 5m
 ```
 
 Custom health check expressions using CEL (fields: `current` required, `inProgress` and `failed` optional):

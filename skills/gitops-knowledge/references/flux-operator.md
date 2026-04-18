@@ -16,17 +16,18 @@ helm install flux-operator oci://ghcr.io/controlplaneio-fluxcd/charts/flux-opera
 
 **Terraform:**
 ```hcl
-resource "helm_release" "flux_operator" {
-  name             = "flux-operator"
-  namespace        = "flux-system"
-  create_namespace = true
-  repository       = "oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator"
-  chart            = "flux-operator"
+module "flux_operator_bootstrap" {
+  source  = "controlplaneio-fluxcd/flux-operator-bootstrap/kubernetes"
+
+  gitops_resources = {
+    instance_yaml = file("${path.root}/../clusters/${var.cluster_name}/flux-system/flux-instance.yaml")
+  }
 }
 ```
 
-For self-managed installation via Flux itself, use a ResourceSet that depends on the
-HelmRelease CRD:
+For the full Terraform bootstrap workflow — load `references/terraform-bootstrap.md`.
+
+To automatically update the operator when new versions are released:
 
 ```yaml
 apiVersion: fluxcd.controlplane.io/v1
@@ -48,6 +49,9 @@ spec:
       spec:
         interval: 10m
         url: oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+        layerSelector:
+          mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+          operation: copy
         ref:
           semver: '*'
     - apiVersion: helm.toolkit.fluxcd.io/v2
@@ -65,12 +69,10 @@ spec:
         install:
           strategy:
             name: RetryOnFailure
-            retryInterval: 3m
         upgrade:
           force: true
           strategy:
             name: RetryOnFailure
-            retryInterval: 3m
         values:
           multitenancy:
             enabled: true
@@ -119,7 +121,7 @@ spec:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `distribution.version` | string | Semver range (`2.x`, `2.5.x`) or exact version |
+| `distribution.version` | string | Semver range (`2.x`, `2.8.x`) or exact version |
 | `distribution.registry` | string | Container registry (e.g., `ghcr.io/fluxcd`) |
 | `distribution.variant` | string | `upstream-alpine`, `enterprise-alpine`, `enterprise-distroless`, `enterprise-distroless-fips` |
 | `distribution.artifact` | string | OCI artifact URL with distribution manifests |
