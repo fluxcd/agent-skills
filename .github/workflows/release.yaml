@@ -1,0 +1,45 @@
+name: release
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Package skills
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p dist
+          for skill in skills/*/; do
+            name=$(basename "$skill")
+            tar -czf "dist/${name}-${TAG}.tar.gz" -C skills "$name"
+            (cd skills && zip -qr "../dist/${name}-${TAG}.zip" "$name")
+          done
+          (cd dist && sha256sum * > checksums.txt)
+          ls -la dist
+      - name: Attest skill archives
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-checksums: dist/checksums.txt
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --generate-notes \
+            dist/*

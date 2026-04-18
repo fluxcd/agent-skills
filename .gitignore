@@ -4,6 +4,9 @@
 # bin dir
 bin/
 
+# dist dir with release artifacts
+dist/
+
 # local plans
 .local/
 
