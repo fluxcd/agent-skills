@@ -23,7 +23,7 @@ Navigate to your GitOps repository root and run:
 flux-operator skills install ghcr.io/fluxcd/agent-skills --agent claude-code
 ```
 
-The operator CLI verifies the cosign signature
+The [Flux Operator](https://fluxoperator.dev/) CLI verifies the cosign signature
 (validating that the OCI artifact is published by the Flux team)
 and extracts the skills in the repo root at `.agents/skills`.
 
