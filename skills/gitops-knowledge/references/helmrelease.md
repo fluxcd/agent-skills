@@ -55,15 +55,9 @@ spec:
   chartRef:
     kind: OCIRepository
     name: cert-manager-chart
-  install:
-    strategy:
-      name: RetryOnFailure
-      retryInterval: 3m
   upgrade:
-    force: true
     strategy:
       name: RetryOnFailure
-      retryInterval: 3m
   values:
     crds:
       enabled: true

@@ -391,13 +391,25 @@ spec:
         prune: true
 ```
 
-### 6. Image Automation Pipeline
+### 6. Image Automation
 
-Pipeline: ImageRepository → ImagePolicy → ImageUpdateAutomation. Mark images in YAML with
-`# {"$imagepolicy": "namespace:policy-name"}` comment markers for automatic tag updates.
+Flux supports two delivery models for updating container images and Helm chart versions.
+Pick based on whether the team wants Git commits as the audit log for version changes:
 
-For complete YAML examples, tag filtering, commit message templates, and marker formats,
-load `references/image-automation.md`.
+- **Git-based** — `ImageRepository` + `ImagePolicy` + `ImageUpdateAutomation` scan the
+  registry and commit tag bumps back to Git via `$imagepolicy` YAML markers. Requires
+  `image-reflector-controller` and `image-automation-controller` on the cluster. Load
+  `references/image-automation.md`.
+- **Gitless** — `ResourceSet` + `ResourceSetInputProvider` (`type: OCIArtifactTag`)
+  scans the registry and re-renders the `ResourceSet` directly, upgrading the downstream
+  `HelmRelease` or `Kustomization` without touching Git. No bot credentials, no Git
+  poll lag, no extra controllers. Recommended default for Flux Operator deployments.
+  Load `references/gitless-image-automation.md`.
+
+Gitless is the better fit when the tag lives in Helm values, when tags should differ per
+cluster in a fleet, or when the team doesn't want a bot writing to the repo. Git-based is
+the better fit when PR-based approval of version bumps is required or when Git must remain
+the canonical record of every deployed version.
 
 ### 7. Notifications (Slack, GitHub, Webhooks)
 
@@ -464,3 +476,4 @@ Load at most 1-2 reference files per question. Read schemas for field-level vali
 | Web UI, dashboard, SSO, OIDC, Dex, Keycloak, Entra ID, RBAC | `references/web-ui.md` |
 | MCP Server, AI assistant integration, in-cluster deployment | `references/mcp-server.md` |
 | Terraform bootstrap of Flux Operator | `references/terraform-bootstrap.md` |
+| Gitless image automation (ResourceSet + OCIArtifactTag) | `references/gitless-image-automation.md` |
