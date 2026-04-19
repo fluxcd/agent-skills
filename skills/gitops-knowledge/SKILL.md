@@ -4,10 +4,9 @@ description: >
   Flux CD and Flux Operator expert — answers questions and generates schema-validated YAML
   for all Flux CRDs (not repo auditing or live cluster debugging). Use when users ask about
   Flux concepts, want manifests for HelmRelease, Kustomization, GitRepository, OCIRepository,
-  ResourceSet, FluxInstance, or any Flux resource, or need guidance on GitOps repository
-  structure, multi-tenancy, OCI-based delivery, image tag automation, drift detection, preview
-  environments, notifications, or the Flux Web UI and MCP Server. Whenever users mention FluxCD,
-  Flux Operator, or any Flux CRD in a question or manifest generation context, always use this skill.
+  ResourceSet, FluxInstance, or any Flux resource. When user needs guidance on GitOps repository
+  structure, bootstrap Flux with Terraform, multi-tenancy, OCI-based delivery, image tag automation,
+  drift detection, preview environments, notifications, or the Flux Web UI and MCP Server.
 license: Apache-2.0
 ---
 
@@ -19,8 +18,7 @@ to answer questions accurately, generate correct YAML manifests, and explain Flu
 **Rules:**
 - Always use the exact apiVersion/kind combinations from the CRD table below. Never invent API versions.
 - Before generating YAML for any CRD, read its OpenAPI schema from `assets/schemas/` to verify field names, types, and enum values.
-- ResourceSet templates use `<< >>` delimiters, NEVER `{{ }}` (Go templates are only used inside ImageUpdateAutomation commit messages).
-- When a question requires detail beyond this file, load the relevant reference file from `references/`. Load at most 1-2 reference files per question.
+- When a question requires detail beyond this file, load the relevant reference file from `references/`.
 - Prefer Flux Operator (FluxInstance) for cluster setup. Do not reference `flux bootstrap` or legacy `gotk-*` files.
 
 ## What is Flux
@@ -120,7 +118,7 @@ spec:
     - name: infra-controllers  # wait for this Kustomization to be Ready
 ```
 
-ResourceSets support richer dependencies with `readyExpr` (CEL expressions):
+ResourceSets support richer dependencies with `readyExpr` (CEL expressions) and can depend on any type of resource:
 
 ```yaml
 spec:
@@ -163,44 +161,6 @@ references it via `postBuild.substituteFrom` or `valuesFrom` will reconcile imme
 - **Plain YAML or Kustomize overlays** → `Kustomization`
 - **Helm chart** → `HelmRelease`
 - Both can deploy to remote clusters via `kubeConfig` and support `dependsOn`.
-
-### How to Reference Helm Charts (3 Patterns)
-
-**Pattern 1 — HTTPS Helm repository:**
-```yaml
-# HelmRelease creates a HelmChart automatically
-spec:
-  chart:
-    spec:
-      chart: metrics-server
-      version: "3.x"
-      sourceRef:
-        kind: HelmRepository
-        name: metrics-server
-```
-
-**Pattern 2 — OCI registry with chartRef (recommended):**
-```yaml
-# Separate OCIRepository + HelmRelease with chartRef
-spec:
-  chartRef:
-    kind: OCIRepository
-    name: nginx-chart
-```
-
-**Pattern 3 — HelmChart from Git/Bucket source:**
-```yaml
-# Chart stored in Git, HelmRelease references HelmChart
-spec:
-  chart:
-    spec:
-      chart: ./charts/my-app
-      sourceRef:
-        kind: GitRepository
-        name: my-repo
-```
-
-`chart.spec` and `chartRef` are **mutually exclusive** — use one or the other.
 
 ### ResourceSet vs Kustomization?
 
@@ -320,7 +280,6 @@ spec:
   values:
     crds:
       enabled: true
-      keep: false
 ```
 
 ### 4. FluxInstance with OCI Sync (Gitless GitOps)
@@ -458,18 +417,6 @@ load `references/notifications.md`.
 - HelmRelease: `spec.chart.spec` and `spec.chartRef` are mutually exclusive
 - FluxInstance: only one per cluster, must be named `flux`
 
-**Required fields often forgotten:**
-- `Kustomization.spec.prune` — must be set (true or false), controls garbage collection
-- `Kustomization.spec.sourceRef` — must specify kind and name
-- `HelmRelease.spec.interval` — required for reconciliation
-- `Alert.spec.eventSources` — at least one source required
-
-**Wrong API versions:**
-- Alert and Provider use `v1beta3`, not `v1` — `notification.toolkit.fluxcd.io/v1beta3`
-- Receiver uses `v1` — `notification.toolkit.fluxcd.io/v1`
-- HelmRelease uses `v2`, not `v1` or `v2beta1` — `helm.toolkit.fluxcd.io/v2`
-- ImageRepository and ImagePolicy use `v1` — `image.toolkit.fluxcd.io/v1`
-
 **HelmRelease strategy fields:**
 - Install/upgrade strategy is at `spec.install.strategy.name` and `spec.upgrade.strategy.name`
 - Always use `RetryOnFailure` — it retries without rollback or uninstall, avoiding downtime
@@ -482,7 +429,6 @@ load `references/notifications.md`.
     mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
     operation: copy
   ```
-- Without `layerSelector`, the OCIRepository fetches the full OCI artifact, not the extracted chart.
 
 ## Reference Index
 
@@ -517,19 +463,4 @@ Load at most 1-2 reference files per question. Read schemas for field-level vali
 | Best practices, dependency management, remediation, versioning | `references/best-practices.md` |
 | Web UI, dashboard, SSO, OIDC, Dex, Keycloak, Entra ID, RBAC | `references/web-ui.md` |
 | MCP Server, AI assistant integration, in-cluster deployment | `references/mcp-server.md` |
-
-## FluxInstance Enums
-
-**Cluster types:** `kubernetes`, `openshift`, `aws`, `azure`, `gcp`
-
-**Cluster sizes:** `small` (5 concurrency, 512Mi), `medium` (10, 1Gi), `large` (20, 3Gi)
-
-**Components:** `source-controller`, `kustomize-controller`, `helm-controller`,
-`notification-controller`, `image-reflector-controller`, `image-automation-controller`, `source-watcher`
-
-**Sync kinds:** `GitRepository`, `OCIRepository`, `Bucket`
-
-**Distribution variants:** `upstream-alpine`, `enterprise-alpine`, `enterprise-distroless`, `enterprise-distroless-fips`
-
-For enums of other CRDs (HelmRelease strategies, Provider types, ImagePolicy types,
-ResourceSetInputProvider types, etc.), check the relevant reference file or OpenAPI schema.
+| Terraform bootstrap of Flux Operator | `references/terraform-bootstrap.md` |

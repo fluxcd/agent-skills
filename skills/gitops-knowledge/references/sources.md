@@ -21,10 +21,9 @@ spec:
     branch: main
   secretRef:
     name: git-credentials
-  ignore: |
-    # exclude non-deployment files
-    /*
-    !/deploy
+  sparseCheckout:
+    - deploy/
+    - charts/
 ```
 
 **Key spec fields:**
@@ -38,10 +37,10 @@ spec:
 | `ref.semver` | string | Semver constraint (e.g., `>=1.0.0 <2.0.0`) |
 | `ref.commit` | string | Exact commit SHA |
 | `secretRef.name` | string | Secret with credentials |
-| `ignore` | string | `.gitignore`-style patterns to exclude from artifact |
+| `sparseCheckout` | string | List of directories to checkout with Kubernetes mananifest |
 | `recurseSubmodules` | bool | Include Git submodules (default: false) |
 | `insecure` | bool | Skip TLS verification for HTTP URLs |
-| `verify.provider` | string | Signature verification provider (`cosign`) |
+| `verify.secretRef.name` | string | Secret with PGP public keys |
 
 **Authentication secrets:**
 
@@ -50,6 +49,9 @@ For HTTPS — Secret with `username` and `password` (or token) fields:
 stringData:
   username: git
   password: ghp_xxxxxxxxxxxx
+  ca.crt: # Optional CA certificate
+  tls.crt: # Optional TLS certificate for mTLS
+  tls.key: # Optional TLS key for mTLS
 ```
 
 For SSH — Secret with `identity` (private key) and `known_hosts` fields:
@@ -61,7 +63,7 @@ stringData:
   known_hosts: github.com ssh-ed25519 AAAA...
 ```
 
-For GitHub App — Secret with `githubAppID`, `githubAppInstallationID`, `githubAppPrivateKey`.
+For GitHub App — Secret with `githubAppID`, `githubAppPrivateKey` and `githubAppInstallationID` or `githubAppInstallationOwner`.
 
 ## OCIRepository
 
@@ -98,6 +100,7 @@ spec:
 | `ref.semver` | string | Semver constraint for tag selection |
 | `ref.digest` | string | Exact digest (`sha256:...`) |
 | `secretRef.name` | string | Secret of type `kubernetes.io/dockerconfigjson` |
+| `certSecretRef.name` | string | Secret with TLS CA and client certs for mTLS auth |
 | `provider` | string | Cloud OIDC provider for keyless auth: `aws`, `azure`, `gcp` |
 | `layerSelector.mediaType` | string | Filter OCI layers by media type |
 | `layerSelector.operation` | string | `extract` (default) or `copy` |
@@ -155,6 +158,7 @@ spec:
 | `url` | string | Helm repository HTTPS URL |
 | `interval` | duration | How often to fetch the index |
 | `secretRef.name` | string | Secret with `username`/`password` for auth |
+| `certSecretRef.name` | string | Secret with TLS CA and client certs for mTLS auth |
 | `provider` | string | Cloud OIDC provider for keyless auth |
 | `passCredentials` | bool | Pass credentials to chart download URLs |
 | `type` | string | `default` (HTTPS) or `oci` — but prefer `OCIRepository` for OCI registries |
@@ -225,6 +229,7 @@ spec:
 | `region` | string | AWS region (default: `us-east-1`) |
 | `provider` | string | `generic` (default), `aws`, `azure`, `gcp` |
 | `secretRef.name` | string | Secret with `accesskey` and `secretkey` fields |
+| `certSecretRef.name` | string | Secret with TLS CA and client certs for mTLS auth |
 | `insecure` | bool | Use HTTP instead of HTTPS |
 | `prefix` | string | S3 key prefix filter |
 | `ignore` | string | `.gitignore`-style patterns to exclude |

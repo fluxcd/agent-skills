@@ -254,7 +254,7 @@ Clusters:
 
 ### Directory Structure
 
-**Fleet repo (d2-fleet):**
+**Fleet repo:**
 ```
 fleet/
 ├── clusters/
@@ -275,7 +275,7 @@ fleet/
     └── apps.yaml                      # Applications ResourceSet
 ```
 
-**Infrastructure repo (d2-infra):**
+**Infrastructure repo:**
 ```
 infra/
 ├── components/
@@ -296,7 +296,7 @@ infra/
     └── kube-prometheus-stack.yaml
 ```
 
-**Applications repo (d2-apps):**
+**Applications repo:**
 ```
 apps/
 ├── components/
