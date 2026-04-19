@@ -161,25 +161,76 @@ spec:
 
 ### Permute (Cartesian Product)
 
-Computes the Cartesian product of all input sources. Useful when combining
-independent dimensions.
+`Permute` computes the Cartesian product of all input sources. In practice, the
+**primary reason teams use `Permute` is not the cross-product but the namespaced field
+access** it provides: fields from each source are placed under a key named after the
+source object, so values from different providers (or from inline `.spec.inputs`)
+don't collide. The canonical shape uses `limit: 1` on every
+`ResourceSetInputProvider`, yielding exactly one permutation.
+
+**Canonical shape — multiple providers, one permutation.** Combining chart version +
+image tag + image tag for a single `HelmRelease` (see
+`references/gitless-image-automation.md` for the full image-automation pattern):
+
+```yaml
+spec:
+  inputStrategy:
+    name: Permute
+  inputsFrom:
+    - kind: ResourceSetInputProvider
+      name: chart-version      # limit: 1 → exports one tag
+    - kind: ResourceSetInputProvider
+      name: image-tag          # limit: 1 → exports one tag+digest
+  # 1 × 1 = 1 permutation. Inside templates:
+  #   << inputs.chart_version.tag >>
+  #   << inputs.image_tag.tag >>@<< inputs.image_tag.digest >>
+```
+
+Without `Permute`, both providers' fields would merge into a flat `inputs.tag`, which
+would clash. `Permute` keeps them under distinct keys.
+
+**True cross-product — static dimensions × one provider.** When an actual Cartesian
+product is wanted, combine an inline `.spec.inputs` list of dimensions with `limit: 1`
+providers:
 
 ```yaml
 spec:
   inputStrategy:
     name: Permute
   inputs:
-    - region: "us-east"
-    - region: "eu-west"
+    - region: us-east
+    - region: eu-west
   inputsFrom:
-    - name: apps-provider  # provides [{app: "web"}, {app: "api"}]
-  # Produces 4 sets: us-east/web, us-east/api, eu-west/web, eu-west/api
+    - kind: ResourceSetInputProvider
+      name: image-tag          # limit: 1
+  # 2 × 1 = 2 permutations: one HelmRelease per region, both pinned to the current image.
 ```
 
-**Permute field access:** In Permute mode, inputs from different sources are accessed via
-normalized source names. Normalization rules: uppercase → lowercase, spaces/punctuation
-(including `-`) → underscores, non-alphanumeric removed. For example, a provider named
-`git-tags` is accessed as `inputs.git_tags.tag`, not `inputs.tag`.
+**Field access.** Each source's input set is placed under a key derived from the
+*normalized name of the object* providing it — **NOT** under its source fields
+directly. Normalization: uppercase → lowercase; spaces/punctuation (including `-`) →
+underscores; non-alphanumeric removed.
+
+| Object providing inputs | Template key |
+|---|---|
+| `ResourceSetInputProvider` named `image-tag` | `inputs.image_tag` |
+| `ResourceSetInputProvider` named `chart-version` | `inputs.chart_version` |
+| Inline `.spec.inputs` on a `ResourceSet` named `my-apps` | `inputs.my_apps` |
+
+Two always-flat accessors exist alongside the namespaced keys:
+
+- `<< inputs.id >>` — auto-generated unique ID per permutation.
+- `<< inputs.provider.{apiVersion,kind,name,namespace} >>` — metadata about the source.
+
+**Inline inputs under Permute — common gotcha.** When `.spec.inputs` is set and
+`Permute` is on, those inline inputs are keyed under the **ResourceSet's own
+normalized name**. So a ResourceSet named `my-apps` with inline input `{region:
+us-east}` needs `<< inputs.my_apps.region >>`, not `<< inputs.region >>`. This
+differs from `Flatten` (the default), where inline inputs are accessed flat.
+
+**Never omit `limit: 1`.** Exporting multiple tags from a single provider and letting
+`Permute` cross them produces N redundant `HelmRelease`s for the same app — not what
+you want. The operator stalls the `ResourceSet` at 10,000 permutations as a guard.
 
 ## Dependencies
 
@@ -405,43 +456,11 @@ spec:
     # ... deploy app at the PR's commit SHA
 ```
 
-### Image Automation with ResourceSets
+### Gitless Image Automation with ResourceSets
 
-Use a ResourceSet to deploy ImageRepository + ImagePolicy + ImageUpdateAutomation across
-multiple component repositories:
-
-```yaml
-spec:
-  inputs:
-    - namespace: "apps"
-      repository: "https://github.com/org/apps.git"
-      pushBranch: "image-updates"
-    - namespace: "infra"
-      repository: "https://github.com/org/infra.git"
-      pushBranch: "image-updates"
-  resources:
-    - apiVersion: source.toolkit.fluxcd.io/v1
-      kind: GitRepository
-      metadata:
-        name: << inputs.namespace >>
-        namespace: << inputs.namespace >>
-      spec:
-        url: << inputs.repository >>
-        ref:
-          branch: main
-    - apiVersion: image.toolkit.fluxcd.io/v1
-      kind: ImageUpdateAutomation
-      metadata:
-        name: << inputs.namespace >>
-        namespace: << inputs.namespace >>
-      spec:
-        sourceRef:
-          kind: GitRepository
-          name: << inputs.namespace >>
-        git:
-          push:
-            branch: << inputs.pushBranch >>
-        update:
-          path: "./components"
-          strategy: Setters
-```
+`ResourceSet` + `ResourceSetInputProvider` of `type: OCIArtifactTag` implements image
+update automation without committing tag bumps to Git — the provider scans the
+registry, the `ResourceSet` re-renders, and the downstream `HelmRelease` or
+`Kustomization` upgrades directly. For the full pattern (provider filters, Permute
+strategy, `tag@digest` pinning, post-renderers for images not in Helm values) load
+`references/gitless-image-automation.md`.
