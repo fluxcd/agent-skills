@@ -1,12 +1,6 @@
 ---
 name: gitops-knowledge
-description: >
-  Flux CD and Flux Operator expert — answers questions and generates schema-validated YAML
-  for all Flux CRDs (not repo auditing or live cluster debugging). Use when users ask about
-  Flux concepts, want manifests for HelmRelease, Kustomization, GitRepository, OCIRepository,
-  ResourceSet, FluxInstance, or any Flux resource. When user needs guidance on GitOps repository
-  structure, bootstrap Flux with Terraform, multi-tenancy, OCI-based delivery, image tag automation,
-  drift detection, preview environments, notifications, or the Flux Web UI and MCP Server.
+description: "Flux CD and Flux Operator expert — answers questions and generates schema-validated YAML for all Flux CRDs (not repo auditing or live cluster debugging). Use when users ask about Flux concepts, want manifests for HelmRelease, Kustomization, GitRepository, OCIRepository, ResourceSet, FluxInstance, or any Flux resource. When user needs guidance on GitOps repository structure, bootstrap Flux with Terraform, multi-tenancy, OCI-based delivery, image tag automation, drift detection, preview environments, notifications, or the Flux Web UI and MCP Server."
 license: Apache-2.0
 ---
 
@@ -17,16 +11,14 @@ to answer questions accurately, generate correct YAML manifests, and explain Flu
 
 **Rules:**
 - Always use the exact apiVersion/kind combinations from the CRD table below. Never invent API versions.
-- Before generating YAML for any CRD, read its OpenAPI schema from `assets/schemas/` to verify field names, types, and enum values.
+- Before generating YAML for any CRD, read its OpenAPI schema from `assets/schemas/` to verify field names, types, and enum values. After generating, validate the output against the schema — if fields don't match, correct and re-validate before presenting to the user.
 - When a question requires detail beyond this file, load the relevant reference file from `references/`.
 - Prefer Flux Operator (FluxInstance) for cluster setup. Do not reference `flux bootstrap` or legacy `gotk-*` files.
 
 ## What is Flux
 
-Flux is a set of Kubernetes controllers that implement GitOps — the practice of using Git
-(or OCI registries) as the source of truth for declarative infrastructure and applications.
-Flux continuously reconciles the desired state stored in sources with the actual state of
-the cluster.
+Flux is a set of Kubernetes controllers that continuously reconcile desired state from sources
+(Git, OCI, Helm, S3) with live cluster state.
 
 **Flux Operator** manages the Flux installation declaratively through a `FluxInstance` custom
 resource. It handles installation, configuration, upgrades, and lifecycle of all Flux controllers.
@@ -95,17 +87,10 @@ Namespaces, Sources, Kustomizations, HelmReleases, RBAC, ...
 
 ### Reconciliation Loop
 
-Flux controllers run a continuous reconciliation loop:
-
-1. **Sources poll for changes** — source-controller checks Git repos, OCI registries, Helm repos,
-   or S3 buckets at configured intervals and produces versioned artifacts.
-2. **Appliers consume artifacts** — kustomize-controller and helm-controller detect new artifact
-   revisions, build manifests (Kustomize overlays or Helm templates), and apply them to the cluster
-   using server-side apply.
-3. **Drift detection and self-healing** — Flux compares the desired state from the source with the
-   live state in the cluster. When drift is detected, Flux corrects it automatically (if enabled).
-4. **Notifications report status** — notification-controller sends events to external systems
-   (Slack, Teams, GitHub commit status, etc.) based on Alert rules.
+1. **Sources poll** — source-controller fetches from Git/OCI/Helm/S3 at configured intervals, producing versioned artifacts.
+2. **Appliers consume** — kustomize-controller and helm-controller detect new revisions, build manifests, and apply via server-side apply.
+3. **Drift correction** — Flux detects and auto-corrects drift between desired and live state (if enabled).
+4. **Notifications** — notification-controller sends events to external systems based on Alert rules.
 
 ### Dependency Ordering
 
@@ -172,10 +157,12 @@ references it via `postBuild.substituteFrom` or `valuesFrom` will reconcile imme
 
 1. Install Flux Operator (Helm chart or Terraform)
 2. Create a `FluxInstance` named `flux` in the `flux-system` namespace
-3. Configure `.spec.sync` to point to your Git repo or OCI registry
-4. Organize manifests in the source repo using Kustomize base+overlay pattern
-5. Create `Kustomization` resources to apply manifests from the source
-6. Add `Provider` + `Alert` for notifications
+3. **Verify**: `kubectl get fluxinstance flux -n flux-system` — confirm `Ready: True` before proceeding
+4. Configure `.spec.sync` to point to your Git repo or OCI registry
+5. Organize manifests in the source repo using Kustomize base+overlay pattern
+6. Create `Kustomization` resources to apply manifests from the source
+7. **Verify**: `kubectl get kustomizations -n flux-system` — confirm all show `Ready: True`
+8. Add `Provider` + `Alert` for notifications
 
 ## Canonical YAML Patterns
 
