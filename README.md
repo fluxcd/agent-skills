@@ -49,6 +49,76 @@ For Claude Code, add the marketplace and install the skills with:
 /plugin install gitops-skills@fluxcd
 ```
 
+### Using Nix Flake
+
+This repository includes a minimal Nix flake for consumers who want a generic,
+tool-agnostic skills install flow.
+
+Install skills into the default location (`.agents/skills`):
+
+```shell
+nix run github:fluxcd/agent-skills#install
+```
+
+Install for a specific tool path:
+
+```shell
+nix run github:fluxcd/agent-skills#install -- --tool codex
+nix run github:fluxcd/agent-skills#install -- --tool claude-code
+nix run github:fluxcd/agent-skills#install -- --tool gemini
+nix run github:fluxcd/agent-skills#install -- --tool kiro
+```
+
+Install to an explicit directory:
+
+```shell
+nix run github:fluxcd/agent-skills#install -- --target .my-agent/skills
+```
+
+The flake discovers skill directories dynamically from `skills/` at evaluation time,
+so newly added skills are included automatically without hardcoding names.
+
+### As a Flake Input
+
+The flake exposes reusable modules for Home Manager, NixOS, and nix-darwin:
+
+- `homeManagerModules.default`
+- `nixosModules.default`
+- `darwinModules.default`
+
+Home Manager example:
+
+```nix
+{
+  inputs.fluxcd-agent-skills.url = "github:fluxcd/agent-skills";
+
+  outputs = { self, nixpkgs, home-manager, fluxcd-agent-skills, ... }: {
+    homeConfigurations.me = home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs { system = "x86_64-linux"; };
+      modules = [
+        fluxcd-agent-skills.homeManagerModules.default
+        {
+          programs."fluxcd-agent-skills".enable = true;
+          programs."fluxcd-agent-skills".tools = [ "codex" ];
+        }
+      ];
+    };
+  };
+}
+```
+
+NixOS / nix-darwin (without Home Manager) example:
+
+```nix
+{
+  imports = [ fluxcd-agent-skills.nixosModules.default ]; # or darwinModules.default
+  programs."fluxcd-agent-skills".enable = true;
+  programs."fluxcd-agent-skills".targets = [ "/home/alice/.agents/skills" ];
+}
+```
+
+In system modules, `targets` must be absolute paths and the links are created during activation.
+
 ## Prerequisites
 
 The skills in this repository rely on the following tools being available in the environment:

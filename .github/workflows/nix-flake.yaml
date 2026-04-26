@@ -1,0 +1,164 @@
+name: nix-flake
+
+on:
+  pull_request:
+    paths:
+      - "flake.nix"
+      - "flake.lock"
+      - "README.md"
+      - "skills/**"
+      - "agents/**"
+      - ".github/workflows/nix-flake.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "flake.nix"
+      - "flake.lock"
+      - "README.md"
+      - "skills/**"
+      - "agents/**"
+      - ".github/workflows/nix-flake.yaml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v21
+
+
+      - name: Evaluate flake outputs
+        run: |
+          set -euo pipefail
+
+          nix flake show --all-systems
+          nix eval .#lib.skillNames
+          nix eval .#lib.agentProfileNames
+          nix eval .#lib.supportedTools
+
+          test "$(nix eval --raw --apply 'x: if builtins.isFunction x then "true" else "false"' .#homeManagerModules.default)" = "true"
+          test "$(nix eval --raw --apply 'x: if builtins.isFunction x then "true" else "false"' .#nixosModules.default)" = "true"
+          test "$(nix eval --raw --apply 'x: if builtins.isFunction x then "true" else "false"' .#darwinModules.default)" = "true"
+
+      - name: Smoke test installer
+        run: |
+          set -euo pipefail
+
+          expected="$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+          tmp="$(mktemp -d)"
+
+          nix run .#install -- --target "$tmp/.agents/skills"
+          actual_agents="$(find "$tmp/.agents/skills" -mindepth 1 -maxdepth 1 \( -type l -o -type d \) | wc -l | tr -d ' ')"
+
+          nix run .#install -- --tool codex --target "$tmp/.codex/skills"
+          actual_codex="$(find "$tmp/.codex/skills" -mindepth 1 -maxdepth 1 \( -type l -o -type d \) | wc -l | tr -d ' ')"
+
+          test "$actual_agents" = "$expected"
+          test "$actual_codex" = "$expected"
+
+          test -f "$tmp/.agents/skills/gitops-knowledge/SKILL.md"
+          test -f "$tmp/.agents/skills/gitops-repo-audit/SKILL.md"
+          test -f "$tmp/.agents/skills/gitops-cluster-debug/SKILL.md"
+
+      - name: Consumer flake evals (HM + NixOS + nix-darwin)
+        run: |
+          set -euo pipefail
+
+          repo_path="$PWD"
+          tmp_root="$(mktemp -d)"
+
+          hm_dir="$tmp_root/hm"
+          mkdir -p "$hm_dir"
+          cat > "$hm_dir/flake.nix" <<HM
+          {
+            inputs = {
+              nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+              home-manager.url = "github:nix-community/home-manager/release-25.11";
+              home-manager.inputs.nixpkgs.follows = "nixpkgs";
+              fluxcd-agent-skills.url = "path:${repo_path}";
+            };
+
+            outputs = { nixpkgs, home-manager, fluxcd-agent-skills, ... }: {
+              homeConfigurations.test = home-manager.lib.homeManagerConfiguration {
+                pkgs = import nixpkgs { system = "x86_64-linux"; };
+                modules = [
+                  fluxcd-agent-skills.homeManagerModules.default
+                  {
+                    home.username = "test";
+                    home.homeDirectory = "/tmp/test-home";
+                    home.stateVersion = "25.11";
+                    programs."fluxcd-agent-skills".enable = true;
+                    programs."fluxcd-agent-skills".tools = [ "codex" ];
+                  }
+                ];
+              };
+            };
+          }
+          HM
+
+          nix eval "$hm_dir#homeConfigurations.test.activationPackage.drvPath"
+
+          nixos_dir="$tmp_root/nixos"
+          mkdir -p "$nixos_dir"
+          cat > "$nixos_dir/flake.nix" <<NIXOS
+          {
+            inputs = {
+              nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+              fluxcd-agent-skills.url = "path:${repo_path}";
+            };
+
+            outputs = { nixpkgs, fluxcd-agent-skills, ... }: {
+              nixosConfigurations.test = nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  fluxcd-agent-skills.nixosModules.default
+                  {
+                    system.stateVersion = "25.11";
+                    boot.loader.grub.devices = [ "nodev" ];
+                    fileSystems."/" = {
+                      device = "/dev/disk/by-label/nixos";
+                      fsType = "ext4";
+                    };
+                    programs."fluxcd-agent-skills".enable = true;
+                    programs."fluxcd-agent-skills".targets = [ "/tmp/agent-skills" ];
+                  }
+                ];
+              };
+            };
+          }
+          NIXOS
+
+          test "$(nix eval --json "$nixos_dir#nixosConfigurations.test.config.programs.\"fluxcd-agent-skills\".enable")" = "true"
+
+          darwin_dir="$tmp_root/darwin"
+          mkdir -p "$darwin_dir"
+          cat > "$darwin_dir/flake.nix" <<DARWIN
+          {
+            inputs = {
+              nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+              nix-darwin.url = "github:LnL7/nix-darwin";
+              nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+              fluxcd-agent-skills.url = "path:${repo_path}";
+            };
+
+            outputs = { nix-darwin, fluxcd-agent-skills, ... }: {
+              darwinConfigurations.test = nix-darwin.lib.darwinSystem {
+                system = "aarch64-darwin";
+                modules = [
+                  fluxcd-agent-skills.darwinModules.default
+                  {
+                    system.stateVersion = 6;
+                    programs."fluxcd-agent-skills".enable = true;
+                    programs."fluxcd-agent-skills".targets = [ "/Users/test/.agents/skills" ];
+                  }
+                ];
+              };
+            };
+          }
+          DARWIN
+
+          test "$(nix eval --json "$darwin_dir#darwinConfigurations.test.config.programs.\"fluxcd-agent-skills\".enable")" = "true"
