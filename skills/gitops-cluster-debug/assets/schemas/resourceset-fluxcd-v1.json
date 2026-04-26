@@ -79,6 +79,10 @@
         "inputStrategy": {
           "description": "InputStrategy defines how the inputs are combined when multiple\ninput provider objects are used. Defaults to flattening all inputs\nfrom all providers into a single list of input sets.",
           "properties": {
+            "includeEmptyProviders": {
+              "description": "IncludeEmptyProviders controls how input providers that export no\ninputs are treated. Only applies when Name is Permute. When true, if\nany provider has zero inputs the resulting permutation set is empty\n(mathematically correct Cartesian product behavior). When false or\nunset (default), providers with zero inputs are silently skipped and\nthe remaining providers still permute among themselves.",
+              "type": "boolean"
+            },
             "name": {
               "description": "Name defines how the inputs are combined when multiple\ninput provider objects are used. Supported values are:\n- Flatten: all inputs sets from all input provider objects are\n  flattened into a single list of input sets.\n- Permute: all inputs sets from all input provider objects are\n  combined using a Cartesian product, resulting in a list of input sets\n  that contains every possible combination of input values.\n  For example, if provider A has inputs [{x: 1}, {x: 2}] and provider B has\n  inputs [{y: \"a\"}, {y: \"b\"}], the resulting input sets will be:\n  [{x: 1, y: \"a\"}, {x: 1, y: \"b\"}, {x: 2, y: \"a\"}, {x: 2, y: \"b\"}].\n  This strategy can lead to a large number of input sets and should be\n  used with caution. Users should use filtering features from\n  ResourceSetInputProvider to limit the amount of exported inputs.",
               "enum": [
@@ -92,6 +96,12 @@
             "name"
           ],
           "type": "object",
+          "x-kubernetes-validations": [
+            {
+              "message": "includeEmptyProviders only applies when name is Permute",
+              "rule": "!has(self.includeEmptyProviders) || self.name == 'Permute'"
+            }
+          ],
           "additionalProperties": false
         },
         "inputs": {
@@ -270,6 +280,13 @@
             ],
             "type": "object",
             "additionalProperties": false
+          },
+          "type": "array"
+        },
+        "externalChecksumRefs": {
+          "description": "ExternalChecksumRefs lists the ConfigMap and Secret references\ndiscovered in checksumFrom annotations on the last reconciliation\nthat point to objects not rendered by this ResourceSet. Each entry\nhas the form \"Kind/namespace/name\". It is used to trigger a\nreconciliation when one of the referenced objects changes.",
+          "items": {
+            "type": "string"
           },
           "type": "array"
         },
