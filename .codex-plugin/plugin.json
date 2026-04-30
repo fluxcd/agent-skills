@@ -1,0 +1,25 @@
+{
+  "author": {
+    "email": "cncf-flux-dev@lists.cncf.io",
+    "name": "The Flux authors",
+    "url": "https://github.com/fluxcd"
+  },
+  "description": "Skills to transform AI Agents into GitOps Engineers",
+  "homepage": "https://github.com/fluxcd/agent-skills",
+  "interface": {
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "category": "Developer Tools",
+    "displayName": "FluxCD GitOps Skills",
+    "longDescription": "Collection of reusable AI skills for Flux CD workflows, manifest generation, repository auditing, and cluster debugging.",
+    "shortDescription": "Skills to transform AI Agents into GitOps Engineers",
+    "websiteURL": "https://fluxcd.io/"
+  },
+  "license": "Apache-2.0",
+  "name": "gitops-skills",
+  "repository": "https://github.com/fluxcd/agent-skills",
+  "skills": "./skills/",
+  "version": "0.0.3"
+}
