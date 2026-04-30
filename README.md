@@ -49,6 +49,31 @@ For Claude Code, add the marketplace and install the skills with:
 /plugin install gitops-skills@fluxcd
 ```
 
+### Using Codex
+
+To include this plugin in Codex, add it to a marketplace file:
+`$REPO_ROOT/.agents/plugins/marketplace.json` (repo-scoped) or
+`~/.agents/plugins/marketplace.json` (personal) under `plugins[]`.
+
+```json
+{
+  "name": "gitops-skills",
+  "category": "Productivity",
+  "source": {
+    "source": "url",
+    "url": "https://github.com/fluxcd/agent-skills.git",
+    "ref": "main"
+  },
+  "policy": {
+    "installation": "AVAILABLE",
+    "authentication": "ON_INSTALL"
+  }
+}
+```
+
+After updating `marketplace.json`, restart Codex and verify the plugin appears
+in the plugin directory.
+
 ## Prerequisites
 
 The skills in this repository rely on the following tools being available in the environment:
