@@ -162,6 +162,9 @@
             "AzureDevOpsBranch",
             "AzureDevOpsTag",
             "AzureDevOpsPullRequest",
+            "AWSCodeCommitBranch",
+            "AWSCodeCommitTag",
+            "AWSCodeCommitPullRequest",
             "GiteaBranch",
             "GiteaTag",
             "GiteaPullRequest",
@@ -197,8 +200,12 @@
           "rule": "!self.type.startsWith('Git') || self.url.startsWith('http')"
         },
         {
-          "message": "spec.url must start with 'http://' or 'https://' when spec.type is a Git provider",
-          "rule": "!self.type.startsWith('AzureDevOps') || self.url.startsWith('http')"
+          "message": "spec.url must start with 'http://' or 'https://' when spec.type is an AzureDevOps provider",
+          "rule": "!self.type.startsWith('AzureDevOps') || self.url.startsWith('http://') || self.url.startsWith('https://')"
+        },
+        {
+          "message": "spec.url must start with 'https://' when spec.type is a AWSCodeCommit provider",
+          "rule": "!self.type.startsWith('AWSCodeCommit') || self.url.startsWith('https://')"
         },
         {
           "message": "spec.url must start with 'oci://' when spec.type is an OCI provider",
@@ -217,16 +224,16 @@
           "rule": "self.type != 'ExternalService' || !self.url.startsWith('http://') || (has(self.insecure) && self.insecure)"
         },
         {
-          "message": "cannot specify spec.serviceAccountName when spec.type is not one of AzureDevOps* or *ArtifactTag",
-          "rule": "!has(self.serviceAccountName) || self.type.startsWith('AzureDevOps') || self.type.endsWith('ArtifactTag')"
+          "message": "cannot specify spec.serviceAccountName when spec.type is not one of AzureDevOps*, AWSCodeCommit* or *ArtifactTag",
+          "rule": "!has(self.serviceAccountName) || self.type.startsWith('AzureDevOps') || self.type.startsWith('AWSCodeCommit') || self.type.endsWith('ArtifactTag')"
         },
         {
-          "message": "cannot specify spec.certSecretRef when spec.type is one of Static, AzureDevOps*, ACRArtifactTag, ECRArtifactTag or GARArtifactTag",
-          "rule": "!has(self.certSecretRef) || !(self.url == 'Static' || self.type.startsWith('AzureDevOps') || (self.type.endsWith('ArtifactTag') && self.type != 'OCIArtifactTag'))"
+          "message": "cannot specify spec.certSecretRef when spec.type is one of Static, AzureDevOps*, AWSCodeCommit*, ACRArtifactTag, ECRArtifactTag or GARArtifactTag",
+          "rule": "!has(self.certSecretRef) || !(self.url == 'Static' || self.type.startsWith('AzureDevOps') || self.type.startsWith('AWSCodeCommit') || (self.type.endsWith('ArtifactTag') && self.type != 'OCIArtifactTag'))"
         },
         {
-          "message": "cannot specify spec.secretRef when spec.type is one of Static, ACRArtifactTag, ECRArtifactTag or GARArtifactTag",
-          "rule": "!has(self.secretRef) || !(self.url == 'Static' || (self.type.endsWith('ArtifactTag') && self.type != 'OCIArtifactTag'))"
+          "message": "cannot specify spec.secretRef when spec.type is one of Static, AWSCodeCommit*, ACRArtifactTag, ECRArtifactTag or GARArtifactTag",
+          "rule": "!has(self.secretRef) || !(self.url == 'Static' || self.type.startsWith('AWSCodeCommit') || (self.type.endsWith('ArtifactTag') && self.type != 'OCIArtifactTag'))"
         }
       ],
       "additionalProperties": false
