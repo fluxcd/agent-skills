@@ -13,9 +13,11 @@
       "type": "object"
     },
     "spec": {
+      "additionalProperties": false,
       "description": "ResourceSetSpec defines the desired state of ResourceSet",
       "properties": {
         "commonMetadata": {
+          "additionalProperties": false,
           "description": "CommonMetadata specifies the common labels and annotations that are\napplied to all resources. Any existing label or annotation will be\noverridden if its key matches a common one.",
           "properties": {
             "annotations": {
@@ -33,12 +35,12 @@
               "type": "object"
             }
           },
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "dependsOn": {
           "description": "DependsOn specifies the list of Kubernetes resources that must\nexist on the cluster before the reconciliation process starts.",
           "items": {
+            "additionalProperties": false,
             "description": "Dependency defines a ResourceSet dependency on a Kubernetes resource.",
             "properties": {
               "apiVersion": {
@@ -71,12 +73,12 @@
               "kind",
               "name"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "inputStrategy": {
+          "additionalProperties": false,
           "description": "InputStrategy defines how the inputs are combined when multiple\ninput provider objects are used. Defaults to flattening all inputs\nfrom all providers into a single list of input sets.",
           "properties": {
             "includeEmptyProviders": {
@@ -101,8 +103,7 @@
               "message": "includeEmptyProviders only applies when name is Permute",
               "rule": "!has(self.includeEmptyProviders) || self.name == 'Permute'"
             }
-          ],
-          "additionalProperties": false
+          ]
         },
         "inputs": {
           "description": "Inputs contains the list of ResourceSet inputs.",
@@ -118,6 +119,7 @@
         "inputsFrom": {
           "description": "InputsFrom contains the list of references to input providers.\nWhen set, the inputs are fetched from the providers and concatenated\nwith the in-line inputs defined in the ResourceSet.",
           "items": {
+            "additionalProperties": false,
             "description": "InputProviderReference defines a reference to an input provider resource\nin the same namespace as the ResourceSet.",
             "properties": {
               "apiVersion": {
@@ -139,11 +141,13 @@
                 "type": "string"
               },
               "selector": {
+                "additionalProperties": false,
                 "description": "Selector is a label selector to filter the input provider resources\nas an alternative to the Name field.",
                 "properties": {
                   "matchExpressions": {
                     "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
                     "items": {
+                      "additionalProperties": false,
                       "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
                       "properties": {
                         "key": {
@@ -167,8 +171,7 @@
                         "key",
                         "operator"
                       ],
-                      "type": "object",
-                      "additionalProperties": false
+                      "type": "object"
                     },
                     "type": "array",
                     "x-kubernetes-list-type": "atomic"
@@ -182,8 +185,7 @@
                   }
                 },
                 "type": "object",
-                "x-kubernetes-map-type": "atomic",
-                "additionalProperties": false
+                "x-kubernetes-map-type": "atomic"
               }
             },
             "type": "object",
@@ -196,8 +198,7 @@
                 "message": "cannot set both name and selector for input provider references",
                 "rule": "!has(self.name) || !has(self.selector)"
               }
-            ],
-            "additionalProperties": false
+            ]
           },
           "type": "array"
         },
@@ -221,15 +222,16 @@
           "type": "boolean"
         }
       },
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     },
     "status": {
+      "additionalProperties": false,
       "description": "ResourceSetStatus defines the observed state of ResourceSet.",
       "properties": {
         "conditions": {
           "description": "Conditions contains the readiness conditions of the object.",
           "items": {
+            "additionalProperties": false,
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
               "lastTransitionTime": {
@@ -278,8 +280,7 @@
               "status",
               "type"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
@@ -293,6 +294,7 @@
         "history": {
           "description": "History contains the reconciliation history of the ResourceSet\nas a list of snapshots ordered by the last reconciled time.",
           "items": {
+            "additionalProperties": false,
             "description": "Snapshot represents a point-in-time record of a group of resources reconciliation,\nincluding timing information, status, and a unique digest identifier.",
             "properties": {
               "digest": {
@@ -338,17 +340,18 @@
               "lastReconciledStatus",
               "totalReconciliations"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "inventory": {
+          "additionalProperties": false,
           "description": "Inventory contains a list of Kubernetes resource object references\nlast applied on the cluster.",
           "properties": {
             "entries": {
               "description": "Entries of Kubernetes resource object references.",
               "items": {
+                "additionalProperties": false,
                 "description": "ResourceRef contains the information necessary to locate a resource within a cluster.",
                 "properties": {
                   "id": {
@@ -364,8 +367,7 @@
                   "id",
                   "v"
                 ],
-                "type": "object",
-                "additionalProperties": false
+                "type": "object"
               },
               "type": "array"
             }
@@ -373,8 +375,7 @@
           "required": [
             "entries"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "lastAppliedRevision": {
           "description": "LastAppliedRevision is the digest of the\ngenerated resources that were last reconcile.",
@@ -385,8 +386,7 @@
           "type": "string"
         }
       },
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     }
   },
   "type": "object"

@@ -13,9 +13,11 @@
       "type": "object"
     },
     "spec": {
+      "additionalProperties": false,
       "description": "FluxReportSpec defines the observed state of a Flux installation.",
       "properties": {
         "cluster": {
+          "additionalProperties": false,
           "description": "Cluster is the version information of the Kubernetes cluster.",
           "properties": {
             "nodes": {
@@ -35,12 +37,12 @@
             "platform",
             "serverVersion"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "components": {
           "description": "ComponentsStatus is the status of the Flux controller deployments.",
           "items": {
+            "additionalProperties": false,
             "description": "FluxComponentStatus defines the observed state of a Flux component.",
             "properties": {
               "image": {
@@ -66,12 +68,12 @@
               "ready",
               "status"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "distribution": {
+          "additionalProperties": false,
           "description": "Distribution is the version information of the Flux installation.",
           "properties": {
             "entitlement": {
@@ -95,10 +97,10 @@
             "entitlement",
             "status"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "operator": {
+          "additionalProperties": false,
           "description": "Operator is the version information of the Flux Operator.",
           "properties": {
             "apiVersion": {
@@ -119,12 +121,12 @@
             "platform",
             "version"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "reconcilers": {
           "description": "ReconcilersStatus is the list of Flux reconcilers and\ntheir statistics grouped by API kind.",
           "items": {
+            "additionalProperties": false,
             "description": "FluxReconcilerStatus defines the observed state of a Flux reconciler.",
             "properties": {
               "apiVersion": {
@@ -136,6 +138,7 @@
                 "type": "string"
               },
               "stats": {
+                "additionalProperties": false,
                 "description": "Stats is the reconcile statics of the Flux resource kind.",
                 "properties": {
                   "failing": {
@@ -160,20 +163,19 @@
                   "running",
                   "suspended"
                 ],
-                "type": "object",
-                "additionalProperties": false
+                "type": "object"
               }
             },
             "required": [
               "apiVersion",
               "kind"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "sync": {
+          "additionalProperties": false,
           "description": "SyncStatus is the status of the cluster sync\nSource and Kustomization resources.",
           "properties": {
             "id": {
@@ -202,22 +204,22 @@
             "ready",
             "status"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "required": [
         "distribution"
       ],
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     },
     "status": {
+      "additionalProperties": false,
       "description": "FluxReportStatus defines the readiness of a FluxReport.",
       "properties": {
         "conditions": {
           "description": "Conditions contains the readiness conditions of the object.",
           "items": {
+            "additionalProperties": false,
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
               "lastTransitionTime": {
@@ -266,8 +268,7 @@
               "status",
               "type"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
@@ -276,8 +277,7 @@
           "type": "string"
         }
       },
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     }
   },
   "type": "object",

@@ -13,9 +13,11 @@
       "type": "object"
     },
     "spec": {
+      "additionalProperties": false,
       "description": "ResourceSetInputProviderSpec defines the desired state of ResourceSetInputProvider",
       "properties": {
         "certSecretRef": {
+          "additionalProperties": false,
           "description": "CertSecretRef specifies the Kubernetes Secret containing either or both of\n\n- a PEM-encoded CA certificate (`ca.crt`)\n- a PEM-encoded client certificate (`tls.crt`) and private key (`tls.key`)\n\nWhen connecting to a Git, OCI, or ExternalService provider that uses self-signed certificates,\nthe CA certificate must be set in the Secret under the 'ca.crt' key to establish the trust relationship.\nWhen connecting to a provider that supports client certificates (mTLS), the client certificate\nand private key must be set in the Secret under the 'tls.crt' and 'tls.key' keys, respectively.",
           "properties": {
             "name": {
@@ -26,8 +28,7 @@
           "required": [
             "name"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "defaultValues": {
           "additionalProperties": {
@@ -37,6 +38,7 @@
           "type": "object"
         },
         "filter": {
+          "additionalProperties": false,
           "description": "Filter defines the filter to apply to the input provider response.",
           "properties": {
             "excludeBranch": {
@@ -80,8 +82,7 @@
               "type": "string"
             }
           },
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "insecure": {
           "description": "Insecure allows connecting to an ExternalService or OCIArtifactTag provider\nover plain HTTP without TLS. When not set, the URL must use HTTPS.",
@@ -90,6 +91,7 @@
         "schedule": {
           "description": "Schedule defines the schedules for the input provider to run.",
           "items": {
+            "additionalProperties": false,
             "description": "Schedule defines a schedule for something to run.",
             "properties": {
               "cron": {
@@ -111,12 +113,12 @@
             "required": [
               "cron"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "secretRef": {
+          "additionalProperties": false,
           "description": "SecretRef specifies the Kubernetes Secret containing the credentials\nto access the input provider.\nWhen connecting to a Git provider, the secret must contain the keys\n'username' and 'password', and the password should be a personal access token\nthat grants read-only access to the repository.\nWhen connecting to an OCI provider, the secret must contain a Kubernetes\nImage Pull Secret, as if created by `kubectl create secret docker-registry`.\nWhen connecting to an ExternalService provider, the secret must contain either\na 'token' key for bearer token authentication, or 'username' and 'password'\nkeys for basic authentication.",
           "properties": {
             "name": {
@@ -127,14 +129,14 @@
           "required": [
             "name"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "serviceAccountName": {
           "description": "ServiceAccountName specifies the name of the Kubernetes ServiceAccount\nused for authentication with AWS, Azure or GCP services through\nworkload identity federation features. If not specified, the\nauthentication for these cloud providers will use the ServiceAccount\nof the operator (or any other environment authentication configuration).",
           "type": "string"
         },
         "skip": {
+          "additionalProperties": false,
           "description": "Skip defines whether we need to skip input provider response updates.",
           "properties": {
             "labels": {
@@ -145,8 +147,7 @@
               "type": "array"
             }
           },
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "type": {
           "description": "Type specifies the type of the input provider.",
@@ -235,15 +236,16 @@
           "message": "cannot specify spec.secretRef when spec.type is one of Static, AWSCodeCommit*, ACRArtifactTag, ECRArtifactTag or GARArtifactTag",
           "rule": "!has(self.secretRef) || !(self.url == 'Static' || self.type.startsWith('AWSCodeCommit') || (self.type.endsWith('ArtifactTag') && self.type != 'OCIArtifactTag'))"
         }
-      ],
-      "additionalProperties": false
+      ]
     },
     "status": {
+      "additionalProperties": false,
       "description": "ResourceSetInputProviderStatus defines the observed state of ResourceSetInputProvider.",
       "properties": {
         "conditions": {
           "description": "Conditions contains the readiness conditions of the object.",
           "items": {
+            "additionalProperties": false,
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
               "lastTransitionTime": {
@@ -292,8 +294,7 @@
               "status",
               "type"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
@@ -321,6 +322,7 @@
           "type": "string"
         },
         "nextSchedule": {
+          "additionalProperties": false,
           "description": "NextSchedule is the next schedule when the input provider will run.",
           "properties": {
             "cron": {
@@ -348,12 +350,10 @@
             "cron",
             "when"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     }
   },
   "type": "object"

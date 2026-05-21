@@ -13,9 +13,11 @@
       "type": "object"
     },
     "spec": {
+      "additionalProperties": false,
       "description": "FluxInstanceSpec defines the desired state of FluxInstance",
       "properties": {
         "cluster": {
+          "additionalProperties": false,
           "description": "Cluster holds the specification of the Kubernetes cluster.",
           "properties": {
             "domain": {
@@ -82,10 +84,10 @@
               "message": ".objectLevelWorkloadIdentity must be set to true when .multitenantWorkloadIdentity is set to true",
               "rule": "(has(self.objectLevelWorkloadIdentity) && self.objectLevelWorkloadIdentity) || !has(self.multitenantWorkloadIdentity) || !self.multitenantWorkloadIdentity"
             }
-          ],
-          "additionalProperties": false
+          ]
         },
         "commonMetadata": {
+          "additionalProperties": false,
           "description": "CommonMetadata specifies the common labels and annotations that are\napplied to all resources. Any existing label or annotation will be\noverridden if its key matches a common one.",
           "properties": {
             "annotations": {
@@ -103,8 +105,7 @@
               "type": "object"
             }
           },
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "components": {
           "description": "Components is the list of controllers to install.\nDefaults to the core Flux controllers:\n  - source-controller\n  - kustomize-controller\n  - helm-controller\n  - notification-controller",
@@ -124,6 +125,7 @@
           "type": "array"
         },
         "distribution": {
+          "additionalProperties": false,
           "description": "Distribution specifies the version and container registry to pull images from.",
           "properties": {
             "artifact": {
@@ -162,15 +164,16 @@
             "registry",
             "version"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "kustomize": {
+          "additionalProperties": false,
           "description": "Kustomize holds a set of patches that can be applied to the\nFlux installation, to customize the way Flux operates.",
           "properties": {
             "patches": {
               "description": "Strategic merge and JSON patches, defined as inline YAML objects,\ncapable of targeting objects based on kind, label and annotation selectors.",
               "items": {
+                "additionalProperties": false,
                 "description": "Patch contains an inline StrategicMerge or JSON6902 patch, and the target the patch should\nbe applied to.",
                 "properties": {
                   "patch": {
@@ -178,6 +181,7 @@
                     "type": "string"
                   },
                   "target": {
+                    "additionalProperties": false,
                     "description": "Target points to the resources that the patch document should be applied to.",
                     "properties": {
                       "annotationSelector": {
@@ -209,21 +213,18 @@
                         "type": "string"
                       }
                     },
-                    "type": "object",
-                    "additionalProperties": false
+                    "type": "object"
                   }
                 },
                 "required": [
                   "patch"
                 ],
-                "type": "object",
-                "additionalProperties": false
+                "type": "object"
               },
               "type": "array"
             }
           },
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "migrateResources": {
           "default": true,
@@ -231,6 +232,7 @@
           "type": "boolean"
         },
         "sharding": {
+          "additionalProperties": false,
           "description": "Sharding holds the specification of the sharding configuration.",
           "properties": {
             "key": {
@@ -258,10 +260,10 @@
           "required": [
             "shards"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "storage": {
+          "additionalProperties": false,
           "description": "Storage holds the specification of the source-controller\npersistent volume claim.",
           "properties": {
             "class": {
@@ -277,10 +279,10 @@
             "class",
             "size"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "sync": {
+          "additionalProperties": false,
           "description": "Sync specifies the source for the cluster sync operation.\nWhen set, a Flux source (GitRepository, OCIRepository or Bucket)\nand Flux Kustomization are created to sync the cluster state\nwith the source repository.",
           "properties": {
             "interval": {
@@ -353,8 +355,7 @@
               "message": "sync.provider 'github' is only supported for GitRepository",
               "rule": "!has(self.provider) || self.provider != 'github' || self.kind == 'GitRepository'"
             }
-          ],
-          "additionalProperties": false
+          ]
         },
         "wait": {
           "default": true,
@@ -365,15 +366,16 @@
       "required": [
         "distribution"
       ],
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     },
     "status": {
+      "additionalProperties": false,
       "description": "FluxInstanceStatus defines the observed state of FluxInstance",
       "properties": {
         "components": {
           "description": "Components contains the container images used by the components.",
           "items": {
+            "additionalProperties": false,
             "description": "ComponentImage represents a container image used by a component.",
             "properties": {
               "digest": {
@@ -398,14 +400,14 @@
               "repository",
               "tag"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "conditions": {
           "description": "Conditions contains the readiness conditions of the object.",
           "items": {
+            "additionalProperties": false,
             "description": "Condition contains details for one aspect of the current state of this API Resource.",
             "properties": {
               "lastTransitionTime": {
@@ -454,14 +456,14 @@
               "status",
               "type"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "history": {
           "description": "History contains the reconciliation history of the FluxInstance\nas a list of snapshots ordered by the last reconciled time.",
           "items": {
+            "additionalProperties": false,
             "description": "Snapshot represents a point-in-time record of a group of resources reconciliation,\nincluding timing information, status, and a unique digest identifier.",
             "properties": {
               "digest": {
@@ -507,17 +509,18 @@
               "lastReconciledStatus",
               "totalReconciliations"
             ],
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           },
           "type": "array"
         },
         "inventory": {
+          "additionalProperties": false,
           "description": "Inventory contains a list of Kubernetes resource object references\nlast applied on the cluster.",
           "properties": {
             "entries": {
               "description": "Entries of Kubernetes resource object references.",
               "items": {
+                "additionalProperties": false,
                 "description": "ResourceRef contains the information necessary to locate a resource within a cluster.",
                 "properties": {
                   "id": {
@@ -533,8 +536,7 @@
                   "id",
                   "v"
                 ],
-                "type": "object",
-                "additionalProperties": false
+                "type": "object"
               },
               "type": "array"
             }
@@ -542,8 +544,7 @@
           "required": [
             "entries"
           ],
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         },
         "lastAppliedRevision": {
           "description": "LastAppliedRevision is the version and digest of the\ndistribution config that was last reconcile.",
@@ -566,8 +567,7 @@
           "type": "string"
         }
       },
-      "type": "object",
-      "additionalProperties": false
+      "type": "object"
     }
   },
   "type": "object",
