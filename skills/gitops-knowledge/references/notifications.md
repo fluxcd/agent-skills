@@ -44,7 +44,7 @@ stringData:
 | `googlechat` | `address` (webhook URL) | — | Google Chat |
 | `telegram` | `token` | `https://api.telegram.org` | Channel is chat ID |
 | `matrix` | `token` | Matrix homeserver URL | Channel is room ID |
-| `rocketchat` | `address` (webhook URL) | — | |
+| `rocket` | `address` (webhook URL) | — | Rocket.Chat (type is `rocket`, not `rocketchat`) |
 | `lark` | `address` (webhook URL) | — | |
 | `webex` | `token` | — | Channel is room ID |
 
@@ -57,15 +57,15 @@ stringData:
 | `sentry` | `address` (DSN) | — | |
 | `datadog` | `token` (API key) | DataDog endpoint | |
 | `opsgenie` | `token` (API key) | OpsGenie endpoint | |
-| `pagerduty` | `token` (routing key) | — | |
+| `pagerduty` | — (none required) | `https://events.pagerduty.com` | Integration routing key set in `spec.channel`, not a secret |
 
 **Event streaming:**
 
 | Type | Secret Field | Address | Notes |
 |------|-------------|---------|-------|
 | `googlepubsub` | `token` (JSON key) | — | Channel is topic ID |
-| `azureeventhub` | `address` (connection string) | — | Channel is hub name |
-| `nats` | `password` | NATS server URL | Channel is subject |
+| `azureeventhub` | `address` (SAS connection string, SAS auth only) | hub name in `spec.address` | `spec.channel` = Event Hubs namespace; `spec.address` = hub name. Managed identity uses `spec.channel`/`spec.address` directly |
+| `nats` | `creds` / `nkey` / `username`+`password` (priority order) | NATS server URL | Channel is subject |
 
 **Git commit status:**
 
@@ -125,8 +125,7 @@ spec:
     - kind: OCIRepository
       name: "*"
   exclusionList:
-    - "waiting for"
-    - "no change"
+    - "waiting.*socket"
 ```
 
 ### Key Spec Fields
@@ -154,7 +153,7 @@ spec:
     - kind: HelmRelease
       name: nginx
 
-    # Resources in another namespace
+    # Resources in another namespace (blocked when multitenant is enabled)
     - kind: Kustomization
       name: "*"
       namespace: apps
@@ -230,9 +229,9 @@ stringData:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `type` | string | yes | `github`, `gitlab`, `gitea`, `bitbucket`, `azuredevops`, `generic`, `generic-hmac` |
+| `type` | string | yes | `generic`, `generic-hmac`, `github`, `gitlab`, `bitbucket`, `harbor`, `dockerhub`, `quay`, `gcr`, `nexus`, `acr`, `cdevents` (no `gitea`/`azuredevops` Receiver type — Gitea uses the `github` type) |
 | `events` | array | yes | Event types to accept (e.g., `push`, `ping`, `pull_request`) |
-| `secretRef.name` | string | yes | Secret with `token` for HMAC webhook verification |
+| `secretRef.name` | string | yes | Secret with `token` for HMAC webhook verification. The Secret should carry the label `reconcile.fluxcd.io/watch: Enabled` so the controller reconciles the Receiver when it changes |
 | `resources` | array | yes | Resources to trigger reconciliation on |
 | `suspend` | bool | no | Pause the receiver |
 

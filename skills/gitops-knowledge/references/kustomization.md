@@ -40,13 +40,13 @@ spec:
 |-------|------|----------|-------------|
 | `sourceRef.kind` | string | yes | `GitRepository`, `OCIRepository`, `Bucket`, or `ExternalArtifact` |
 | `sourceRef.name` | string | yes | Source resource name |
-| `sourceRef.namespace` | string | no | Cross-namespace reference (disabled by default in multi-tenant) |
+| `sourceRef.namespace` | string | no | Cross-namespace reference (enabled by default; platform admins can disable it via the controller `--no-cross-namespace-refs=true` flag) |
 | `path` | string | no | Path within the source artifact (default: `.`) |
 | `interval` | duration | yes | Reconciliation interval (e.g., `10m`) |
-| `retryInterval` | duration | no | Interval between retries on failure |
+| `retryInterval` | duration | no | Interval between retries on failure (defaults to `interval` when unset) |
 | `prune` | bool | yes | Delete resources removed from the source (garbage collection) |
-| `wait` | bool | no | Wait for all resources to become ready (default: false) |
-| `timeout` | duration | no | Timeout for the apply operation (default: `5m`) |
+| `wait` | bool | no | Wait for all resources to become ready (default: false). When `true`, `.spec.healthChecks` is ignored |
+| `timeout` | duration | no | Timeout for apply/health-check/prune operations (defaults to `interval` when unset; no fixed `5m` default) |
 | `targetNamespace` | string | no | Override namespace for all resources |
 | `serviceAccountName` | string | no | Service account for impersonation (multi-tenancy) |
 | `force` | bool | no | Recreate resources that cannot be patched (default: false) |
@@ -231,7 +231,7 @@ status:
         v: v1
 ```
 
-The inventory record format is `<namespace>_<name>_<group>_<kind>` and `v` is the API version.
+The inventory record id format is `<namespace>_<name>_<group>_<kind>` and `v` is the API version (without group).
 
 The inventory enables garbage collection — resources in the inventory but not in the
 current build are deleted when `prune: true`.

@@ -110,19 +110,28 @@ Default OIDC scopes requested: `openid`, `offline_access`, `profile`, `email`, `
 
 ### SSO Providers
 
-**Dex** — lightweight OIDC provider supporting static users, GitHub, GitLab, LDAP connectors:
+**Dex** — lightweight OIDC provider supporting static users, GitHub, GitLab, LDAP connectors.
+Supply the client credentials inline (as shown above), or keep them out of the manifest using
+a Kubernetes Secret with **hyphenated** keys consumed through the HelmRelease `valuesFrom` +
+`targetPath`:
 ```yaml
-# Create Secret with OIDC credentials
-apiVersion: v1
-kind: Secret
-metadata:
-  name: flux-web-oidc
-  namespace: flux-system
-stringData:
-  clientID: flux-web
-  clientSecret: flux-web-secret
-  issuerURL: https://dex.example.com
+# Create the Secret with: kubectl -n flux-system create secret generic flux-web-client \
+#   --from-literal=client-id=flux-web --from-literal=client-secret=<secret>
+# Then map its keys onto the web config in the Flux Operator HelmRelease:
+valuesFrom:
+  - kind: Secret
+    name: flux-web-client
+    valuesKey: client-id
+    targetPath: web.config.authentication.oauth2.clientID
+  - kind: Secret
+    name: flux-web-client
+    valuesKey: client-secret
+    targetPath: web.config.authentication.oauth2.clientSecret
 ```
+Alternatively, reference an existing Secret via `web.configSecretName`, where the Secret holds a
+`config.yaml` key containing the full Web Config spec (`apiVersion: web.fluxcd.controlplane.io/v1`,
+`kind: Config`). There is no Secret read directly by the UI with camelCase `clientID`/`clientSecret`
+keys.
 
 **Keycloak** — create an OpenID Connect client in Keycloak admin console with
 Standard flow enabled and redirect URI set to `https://flux.example.com/callback`.
@@ -132,7 +141,11 @@ Standard flow enabled and redirect URI set to `https://flux.example.com/callback
 issuerURL: https://login.microsoftonline.com/<TENANT-ID>/v2.0
 ```
 
-**OpenShift** — configure via OLM Subscription with `WEB_CONFIG_SECRET_NAME` environment variable.
+With the Flux Operator Helm chart, the authentication config is supplied either inline via the
+`web.config` Helm value (the Web Config spec) or via `web.configSecretName`, which references an
+existing Secret in the deployment namespace containing a `config.yaml` key. With OLM/OpenShift
+installations, set the `WEB_CONFIG_SECRET_NAME` environment variable in the Subscription
+`config.env` to point the operator at the same kind of Secret.
 
 ### Claims Mapping and CEL Expressions
 

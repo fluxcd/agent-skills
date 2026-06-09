@@ -29,15 +29,15 @@ Prescriptive guidance for production Flux deployments with Flux Operator.
 - **Install/upgrade strategies:** Always use `RetryOnFailure` — it retries without
   uninstalling or rolling back, avoiding downtime and data loss on transient failures.
 - **Set `retryInterval`:** Configure retry intervals on Kustomizations (`retryInterval: 5m`)
-  and HelmReleases (`strategy.retryInterval: 3m`) for faster recovery from transient failures.
+  and HelmReleases (`strategy.retryInterval: 5m`) for faster recovery from transient failures.
 - **Drift detection:** Enable `driftDetection.mode: enabled` on HelmReleases for critical
   applications to prevent manual cluster changes from diverging. Ignore HPA-managed fields
   like `/spec/replicas`.
 - **Timeouts:** Set explicit `timeout` on Kustomizations and HelmReleases to prevent
   indefinite hanging during apply operations.
 - **CRD handling:** Use `install.crds: Create` and `upgrade.crds: CreateReplace` for
-  HelmReleases that manage CRDs. Set `keep: false` for CRDs that should be cleaned up
-  on uninstall.
+  HelmReleases that manage CRDs. Note that CRDs installed via a Helm chart are **not**
+  deleted on uninstall — Helm has no native support for removing CRDs.
 - **Reactivity:** Add `reconcile.fluxcd.io/watch: Enabled` label to ConfigMaps and Secrets
   that feed into `postBuild.substituteFrom` or `valuesFrom` — this triggers immediate
   reconciliation when values change instead of waiting for the next interval.

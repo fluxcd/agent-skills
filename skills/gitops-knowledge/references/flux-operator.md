@@ -146,7 +146,7 @@ Optional components:
 | `cluster.type` | string | `kubernetes` | `kubernetes`, `openshift`, `aws`, `azure`, `gcp` |
 | `cluster.size` | string | `medium` | Affects controller resource limits and concurrency |
 | `cluster.multitenant` | bool | false | Enable multi-tenancy lockdown |
-| `cluster.tenantDefaultServiceAccount` | string | — | Default SA for tenant reconcilers |
+| `cluster.tenantDefaultServiceAccount` | string | `default` | Default SA for tenant reconcilers when multitenant lockdown is enabled and the field is omitted |
 | `cluster.networkPolicy` | bool | true | Restrict network access to Flux controllers |
 | `cluster.domain` | string | `cluster.local` | Kubernetes cluster domain |
 
@@ -280,8 +280,12 @@ spec:
 Read-only resource reflecting the observed state of the Flux installation. Auto-generated
 and updated by the operator at regular intervals (default: every 5 minutes).
 
+All report data is stored under `.spec` (not `.status`). The `.status` subresource holds
+only reconciliation conditions (the `Ready` condition). Query report data via `.spec.*`
+paths — e.g. `.spec.sync.ready`, **not** `.status.sync.ready`.
+
 ```yaml
-status:
+spec:
   distribution:
     version: "2.5.0"
     status: "Installed"

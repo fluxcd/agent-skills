@@ -43,24 +43,11 @@ fleet/
 
 ### FluxInstance with Git Sync
 
+Configure `FluxInstance.spec.sync` to apply the cluster directory from the fleet repo
+(full FluxInstance spec in `references/flux-operator.md`):
+
 ```yaml
-apiVersion: fluxcd.controlplane.io/v1
-kind: FluxInstance
-metadata:
-  name: flux
-  namespace: flux-system
 spec:
-  distribution:
-    version: "2.x"
-    registry: "ghcr.io/fluxcd"
-  components:
-    - source-controller
-    - kustomize-controller
-    - helm-controller
-    - notification-controller
-  cluster:
-    type: kubernetes
-    size: medium
   sync:
     kind: GitRepository
     url: "https://github.com/org/fleet.git"
@@ -354,23 +341,11 @@ All patterns use the same approach for cluster-specific configuration:
 
 ### Runtime Info ConfigMap
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: flux-runtime-info
-  namespace: flux-system
-  labels:
-    toolkit.fluxcd.io/runtime: "true"
-    reconcile.fluxcd.io/watch: Enabled
-  annotations:
-    kustomize.toolkit.fluxcd.io/ssa: "Merge"
-data:
-  ENVIRONMENT: production        # staging, production
-  CLUSTER_NAME: prod-eu-1
-  CLUSTER_DOMAIN: prodeu1.example.com
-  ARTIFACT_TAG: latest-stable    # latest, latest-stable
-```
+Each cluster carries a `flux-runtime-info` ConfigMap in `flux-system` with
+cluster-specific variables, e.g. `ENVIRONMENT: production`, `CLUSTER_NAME: prod-eu-1`,
+`CLUSTER_DOMAIN: prodeu1.example.com`, `ARTIFACT_TAG: latest-stable`. The canonical
+manifest — including the `reconcile.fluxcd.io/watch: Enabled` label and the
+`kustomize.toolkit.fluxcd.io/ssa: "Merge"` annotation — is in `references/flux-operator.md`.
 
 Variables are consumed by:
 - `postBuild.substituteFrom` in Kustomizations → `${ENVIRONMENT}`, `${CLUSTER_DOMAIN}`
