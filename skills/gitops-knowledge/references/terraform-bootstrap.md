@@ -218,9 +218,9 @@ Split by authority:
   `ENVIRONMENT`, `CLUSTER_NAME`. Reconciled by Flux from a `ConfigMap` in
   `clusters/<name>/flux-system/runtime-info.yaml`.
 
-The Git-managed `ConfigMap` must set `kustomize.toolkit.fluxcd.io/ssa: "Merge"` so
-kustomize-controller merges its fields instead of replacing the whole `ConfigMap`,
-preserving the fields Terraform owns:
+The Git-managed `ConfigMap` (the canonical manifest is in `references/flux-operator.md`)
+must set `kustomize.toolkit.fluxcd.io/ssa: "Merge"` so kustomize-controller merges its
+fields instead of replacing the whole `ConfigMap`, preserving the fields Terraform owns:
 
 ```yaml
 apiVersion: v1
@@ -234,10 +234,10 @@ metadata:
   annotations:
     kustomize.toolkit.fluxcd.io/ssa: "Merge"
 data:
+  # Git-owned keys only — Terraform-owned keys (CLUSTER_REGION, ACCOUNT_ID, ...)
+  # are set via managed_resources and never appear here
   ARTIFACT_TAG: latest
   ENVIRONMENT: staging
-  CLUSTER_NAME: staging-1
-  CLUSTER_DOMAIN: staging.example.com
 ```
 
 Because Terraform and kustomize-controller act as different SSA field managers, each

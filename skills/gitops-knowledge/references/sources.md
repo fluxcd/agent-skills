@@ -36,19 +36,28 @@ spec:
 | `ref.tag` | string | Tag name |
 | `ref.semver` | string | Semver constraint (e.g., `>=1.0.0 <2.0.0`) |
 | `ref.commit` | string | Exact commit SHA |
+| `ref.name` | string | Arbitrary Git reference (e.g., `refs/pull/420/head`, `refs/heads/main`) |
 | `secretRef.name` | string | Secret with credentials |
-| `sparseCheckout` | string | List of directories to checkout with Kubernetes mananifest |
+| `provider` | string | Keyless auth provider: `generic` (default), `aws` (CodeCommit IAM), `azure` (Azure DevOps Workload Identity), `github` (GitHub App) |
+| `sparseCheckout` | []string | List of directories to checkout when cloning; only the contents of the listed directories appear in the produced artifact |
 | `recurseSubmodules` | bool | Include Git submodules (default: false) |
-| `insecure` | bool | Skip TLS verification for HTTP URLs |
-| `verify.secretRef.name` | string | Secret with PGP public keys |
+| `verify.mode` | string | Which Git object(s) to verify: `HEAD`, `Tag`, or `TagAndHEAD` |
+| `verify.secretRef.name` | string | Secret with PGP public keys (e.g., data keys `author1.asc`) |
+
+When no `ref` field is set, source-controller checks out the `master` branch. Ref precedence
+when multiple are set: `commit` > `name` > `semver` > `tag` > `branch`. There is no
+`spec.insecure` field on GitRepository — TLS/CA trust for HTTPS is controlled via the auth
+Secret (`ca.crt` for a custom CA, `tls.crt`/`tls.key` for mTLS).
 
 **Authentication secrets:**
 
-For HTTPS — Secret with `username` and `password` (or token) fields:
+For HTTPS — Secret with `username` and `password` (or token) fields. HTTP bearer-token auth
+is also supported via a `bearerToken` data key (instead of `username`/`password`):
 ```yaml
 stringData:
   username: git
   password: ghp_xxxxxxxxxxxx
+  # bearerToken: <token>  # Alternative to username/password
   ca.crt: # Optional CA certificate
   tls.crt: # Optional TLS certificate for mTLS
   tls.key: # Optional TLS key for mTLS
@@ -226,9 +235,10 @@ spec:
 |-------|------|-------------|
 | `bucketName` | string | Bucket name |
 | `endpoint` | string | S3 endpoint (e.g., `s3.amazonaws.com`, `minio.example.com`) |
-| `region` | string | AWS region (default: `us-east-1`) |
+| `region` | string | Object storage region (optional, no default; some endpoints require it) |
 | `provider` | string | `generic` (default), `aws`, `azure`, `gcp` |
-| `secretRef.name` | string | Secret with `accesskey` and `secretkey` fields |
+| `secretRef.name` | string | Secret with credentials. Keys are provider-dependent: `generic`/`aws` use `accesskey`+`secretkey`; `gcp` uses `serviceaccount` (JSON key); `azure` uses Entra ID / `accountKey` / `sasKey` credentials |
+| `serviceAccountName` | string | Workload identity for `aws`/`azure`/`gcp` (keyless). Mutually exclusive with `secretRef` |
 | `certSecretRef.name` | string | Secret with TLS CA and client certs for mTLS auth |
 | `insecure` | bool | Use HTTP instead of HTTPS |
 | `prefix` | string | S3 key prefix filter |
@@ -247,8 +257,10 @@ metadata:
   namespace: flux-system
 ```
 
-ExternalArtifact has no spec fields to configure — its `status.artifact` is populated by
-an external controller (like ArtifactGenerator). Kustomization and HelmRelease can reference
+ExternalArtifact has an optional `spec.sourceRef` (with `apiVersion`, `kind`, `name`, and
+`namespace` — namespace defaults to the ExternalArtifact's namespace) pointing to the
+custom resource the artifact is based on. Its `status.artifact` is populated by an external
+controller (like ArtifactGenerator). Kustomization and HelmRelease can reference
 ExternalArtifact via `sourceRef`.
 
 ## ArtifactGenerator

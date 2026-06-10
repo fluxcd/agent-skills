@@ -301,13 +301,27 @@ For Secrets, you must also set the `type` field.
 
 ### resourcesTemplate
 
-Instead of inline `resources`, reference a ConfigMap containing the template:
+Alternative to inline `resources`: a Go template string rendered as multi-document YAML
+(documents separated by `---`), useful for `<<- range >>` and `<<- if >>` constructs that
+the structured `resources` list cannot express:
 
 ```yaml
 spec:
-  resourcesTemplate:
-    name: my-template
+  inputs:
+    - tenant: team1
+    - tenant: team2
+  resourcesTemplate: |
+    <<- range $input := .inputs >>
+    ---
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: << $input.tenant >>
+    <<- end >>
 ```
+
+When both `resources` and `resourcesTemplate` are set, the generated objects are merged,
+with the `resources` entries taking precedence on duplicates.
 
 ### Deduplication
 
@@ -320,8 +334,7 @@ Every input entry automatically includes:
 
 | Field | Description |
 |-------|-------------|
-| `inputs._index` | Zero-based index of the input entry |
-| `inputs._id` | Unique identifier (Adler-32 checksum of input values) |
+| `inputs.id` | Unique identifier for the input set amongst all sets generated for the ResourceSet. Value depends on provider type: Adler-32 checksum of the branch/tag name for Git branches, Git tags and OCI tags (checksum of the provider UID for Static), the PR/MR number for pull/merge requests |
 | `inputs.provider.apiVersion` | API version of the object providing the inputs |
 | `inputs.provider.kind` | Kind of the object providing the inputs (`ResourceSet` for inline, `ResourceSetInputProvider` for external) |
 | `inputs.provider.name` | Name of the providing object |

@@ -55,6 +55,9 @@ spec:
   chartRef:
     kind: OCIRepository
     name: cert-manager-chart
+  install:
+    strategy:
+      name: RetryOnFailure
   upgrade:
     strategy:
       name: RetryOnFailure
@@ -161,7 +164,7 @@ Detects and optionally corrects configuration drift between the Helm release and
 ```yaml
 spec:
   driftDetection:
-    mode: enabled            # enabled or disabled
+    mode: enabled            # disabled (default), warn, or enabled
     ignore:
       - paths:
           - /spec/replicas
