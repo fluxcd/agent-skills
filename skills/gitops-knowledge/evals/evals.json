@@ -84,7 +84,7 @@
     {
       "id": 5,
       "prompt": "I'm setting up a new production Kubernetes cluster with Flux. I want to use the OCI-based (gitless) GitOps model. My fleet manifests are at oci://ghcr.io/acme-corp/fleet-prod. The cluster should be multi-tenant with medium sizing. I need two ResourceSets: 'infra' for deploying cert-manager and monitoring, and 'apps' for deploying frontend and backend services. The apps ResourceSet should wait for infra to be Ready before deploying. Each component gets its own namespace with an OCIRepository + Kustomization. Generate the FluxInstance and both ResourceSets.",
-      "expected_output": "A FluxInstance named 'flux' in flux-system with OCI sync, multi-tenancy enabled, medium cluster size. Two ResourceSets using << >> delimiters with dependsOn chain and readyExpr CEL expressions.",
+      "expected_output": "A FluxInstance named 'flux' in flux-system with OCI sync, multi-tenancy enabled, medium cluster size. Two ResourceSets using << >> delimiters with a dependsOn chain using ready: true.",
       "files": [],
       "expectations": [
         "The FluxInstance uses apiVersion fluxcd.controlplane.io/v1",
@@ -97,7 +97,7 @@
         "Both ResourceSets use apiVersion fluxcd.controlplane.io/v1",
         "Both ResourceSets use << >> template delimiters (not {{ }})",
         "The apps ResourceSet has spec.dependsOn referencing the infra ResourceSet",
-        "The dependsOn includes ready: true and a readyExpr with a CEL expression",
+        "The dependsOn includes ready: true (a readyExpr CEL expression is optional, not required)",
         "The infra ResourceSet inputs include entries for cert-manager and monitoring",
         "The apps ResourceSet inputs include entries for frontend and backend",
         "Generated Kustomizations include spec.prune (required field)"
@@ -121,6 +121,26 @@
         "The output references or loads the 'terraform-bootstrap.md' reference, OR demonstrates its patterns (sibling layout, ${path.root}/.. paths, managed_resources.runtime_info)",
         "The output does NOT use the legacy 'fluxcd/flux' Terraform provider or 'flux bootstrap' CLI",
         "The Terraform variable holding the GitHub App PEM is marked 'sensitive = true'"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Our team wants to adopt Gitless GitOps with Flux. We keep rendered Kubernetes manifests in a GitHub repo at https://github.com/acme-corp/k8s-infra under ./deploy. I need: (1) a GitHub Actions workflow that on push to main and on version tags packages ./deploy as an OCI artifact in ghcr.io, applies our channel tagging conventions (immutable build tags, 'latest' for main, 'latest-stable' for releases), and signs the artifact with keyless Cosign; (2) the Flux CLI command to push the artifact manually with the Git origin metadata embedded; (3) the OCIRepository and Kustomization manifests for the production cluster that pull the 'latest-stable' channel, enforce Cosign signature verification of the GitHub Actions identity, and deploy to the 'apps' namespace.",
+      "expected_output": "A GitHub Actions workflow with packages:write and id-token:write permissions, using the Flux CLI or the controlplaneio-fluxcd push action and cosign-installer, signing the pushed digest with 'cosign sign --yes'. Tag conventions: immutable build tags plus 'latest' (main) and 'latest-stable' (releases). A 'flux push artifact' command with --path, --source, and --revision in '<branch>@sha1:<commit>' format. An OCIRepository (source.toolkit.fluxcd.io/v1) with ref.tag latest-stable and verify.provider cosign with matchOIDCIdentity, plus a Kustomization (kustomize.toolkit.fluxcd.io/v1) with prune and targetNamespace apps.",
+      "files": [],
+      "expectations": [
+        "The GitHub Actions workflow grants 'id-token: write' permission (required for keyless Cosign signing)",
+        "The GitHub Actions workflow grants 'packages: write' permission (required for pushing to ghcr.io)",
+        "The workflow uses the controlplaneio-fluxcd/distribution push action",
+        "The workflow installs Cosign (e.g. sigstore/cosign-installer) and signs the pushed artifact digest with 'cosign sign --yes'",
+        "The tagging follows the channel conventions: 'latest' for main branch builds and 'latest-stable' for release tags, alongside immutable build tags (commit SHA or version)",
+        "The manual CLI command is 'flux push artifact oci://...' with a --path flag pointing at the manifests directory",
+        "The 'flux push artifact' command sets --source with the Git URL and --revision in '<branch-or-tag>@sha1:<commit>' format",
+        "The OCIRepository uses apiVersion source.toolkit.fluxcd.io/v1",
+        "The OCIRepository url starts with 'oci://' and ref.tag is 'latest-stable'",
+        "The OCIRepository spec.verify.provider is 'cosign' with matchOIDCIdentity matching the GitHub Actions OIDC issuer (token.actions.githubusercontent.com) and the repo's workflow subject",
+        "The Kustomization uses apiVersion kustomize.toolkit.fluxcd.io/v1 with sourceRef kind OCIRepository",
+        "The Kustomization includes spec.prune and targetNamespace 'apps'"
       ]
     }
   ]

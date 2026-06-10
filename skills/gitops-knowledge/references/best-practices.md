@@ -21,8 +21,9 @@ Prescriptive guidance for production Flux deployments with Flux Operator.
   is fully rolled out before dependents proceed.
 - **CRDs before CRs:** Deploy CRD-installing HelmReleases in a separate Kustomization
   that runs before the Kustomization applying custom resources.
-- **ResourceSet dependency chains:** Use `ready: true` with `readyExpr` CEL expressions
-  for cross-ResourceSet dependencies (policies → infra → apps).
+- **ResourceSet dependency chains:** Use `ready: true` for cross-ResourceSet
+  dependencies (policies → infra → apps). Optionally add a `readyExpr` CEL expression
+  to replace the built-in readiness check with a custom one.
 
 ## Remediation and Reliability
 
