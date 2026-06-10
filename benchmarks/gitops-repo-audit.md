@@ -1,5 +1,26 @@
 # gitops-repo-audit
 
+## v0.0.4 (2026-06-11)
+
+Model: `claude-fable-5`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| Monorepo structure | 14/14 (100%) | 11/14 (79%) | +21% |
+| Multi-repo fleet | 15/16 (94%) | 15/16 (94%) | 0% |
+| Image automation | 14/14 (100%) | 12/14 (86%) | +14% |
+| Mixed issues | 21/21 (100%) | 15/21 (71%) | +29% |
+| **Overall** | **64/65 (98%)** | **53/65 (82%)** | **+16%** |
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 212s | 209s |
+| Mean tokens | 53.5k | 33.4k |
+
 ## v0.0.2 (2026-03-20)
 
 Model: `claude-opus-4-6`

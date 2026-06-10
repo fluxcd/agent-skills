@@ -1,5 +1,29 @@
 # gitops-knowledge
 
+## v0.0.4 (2026-06-10)
+
+Model: `claude-fable-5`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| OCI Helm chart | 11/11 (100%) | 9/11 (82%) | +18% |
+| ResourceSet preview envs | 12/12 (100%) | 12/12 (100%) | 0% |
+| Notifications | 16/16 (100%) | 14/16 (88%) | +12% |
+| Image automation | 9/9 (100%) | 9/9 (100%) | 0% |
+| FluxInstance + ResourceSets | 14/14 (100%) | 14/14 (100%) | 0% |
+| Terraform bootstrap | 12/12 (100%) | 7/12 (58%) | +42% |
+| Gitless publish pipeline | 12/12 (100%) | 11/12 (92%) | +8% |
+| **Overall** | **86/86 (100%)** | **76/86 (88%)** | **+12%** |
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 112s | 82s |
+| Mean tokens | 36.3k | 18.4k |
+
 ## v0.0.2 (2026-03-20)
 
 Model: `claude-opus-4-6`
