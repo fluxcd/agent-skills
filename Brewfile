@@ -1,12 +1,13 @@
 # Kubernetes
 brew "kubectl"
 brew "kustomize"
-brew "kubeconform"
-brew "yq"
 
 # Flux
 tap "fluxcd/tap"
 brew "fluxcd/tap/flux"
+
+# flux-schema plugin (manifest discovery and validation):
+#   flux plugin install schema
 
 # Flux Operator
 tap "controlplaneio-fluxcd/tap"

@@ -55,10 +55,11 @@ Use this when you need to understand CRD fields, status conditions, or common fa
 
 **Purpose**: Reflects the state of a Flux installation, providing cluster-wide summary.
 
-**Key status fields**:
-- `.spec.distribution` — Installed Flux version and components
-- `.spec.conditions` — Aggregated health across all Flux resources
-- `.spec.resources` — Summary of Flux resource counts and statuses
+**Key fields**:
+- `.spec.distribution` — Installed Flux version and entitlement status
+- `.spec.components` — Status of the Flux controller deployments
+- `.spec.reconcilers` — Flux resource statistics (failing, running, suspended) grouped by kind
+- `.status.conditions` — Readiness of the report object itself
 
 **Common failures**:
 - Report not generated (FluxInstance not installed or not ready)

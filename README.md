@@ -15,12 +15,18 @@ cluster installations.
 
 ## Install
 
-### Using Flux Operator CLI
+### Using Flux CLI
+
+Install the operator plugin with:
+
+```shell
+flux plugin install operator
+```
 
 Navigate to your GitOps repository root and run:
 
 ```shell
-flux-operator skills install ghcr.io/fluxcd/agent-skills --agent claude-code
+flux operator skills install ghcr.io/fluxcd/agent-skills --agent claude-code
 ```
 
 The [Flux Operator](https://fluxoperator.dev/) CLI verifies the cosign signature
@@ -30,7 +36,7 @@ and extracts the skills in the repo root at `.agents/skills`.
 The `--agent` flag creates per-skill symlinks from agent-specific directories to the canonical
 location. If your agent supports the conventional `.agents/skills` path, you can omit the `--agent` flag.
 
-To update the skills run `flux-operator skills update`.
+To update the skills run `flux operator skills update`.
 
 ### Using NPX
 
@@ -79,10 +85,8 @@ in the plugin directory.
 The skills in this repository rely on the following tools being available in the environment:
 
 - `flux` for dry running and manifest generation
-- `awk` for text processing and data extraction
-- `yq` for YAML parsing and validation
-- `kustomize` for building kustomize overlays
-- `kubeconform` for validating Kubernetes manifests against OpenAPI schemas
+- `flux-schema` for discovering and validating Kubernetes manifests (install with `flux plugin install schema`)
+- `kustomize` (or `kubectl`, which embeds kustomize) for building kustomize overlays
 - `flux-operator-mcp` for debugging Flux on live Kubernetes clusters (required by `gitops-cluster-debug`)
 
 A [Brewfile](https://raw.githubusercontent.com/fluxcd/agent-skills/refs/heads/main/Brewfile) is provided for easy installation of the prerequisites on macOS.

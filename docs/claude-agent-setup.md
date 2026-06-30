@@ -24,10 +24,8 @@ so ensure it can run Git and Bash commands, and has access to the necessary tool
 
 - `flux` for dry running and manifest generation
 - `flux-operator` for building and validating Flux Operator manifests
-- `awk` for text processing and data extraction
-- `yq` for YAML parsing and validation
-- `kustomize` for building kustomize overlays
-- `kubeconform` for validating Kubernetes manifests against OpenAPI schemas
+- `flux-schema` for discovering and validating Kubernetes manifests (install with `flux plugin install schema`)
+- `kustomize` (or `kubectl`, which embeds kustomize) for building kustomize overlays
 - `flux-operator-mcp` for debugging Flux on live Kubernetes clusters (required by `gitops-cluster-debug`)
 
 > On macOS and Linux you can install the CLIs using this [Brewfile](https://raw.githubusercontent.com/fluxcd/agent-skills/refs/heads/main/Brewfile).

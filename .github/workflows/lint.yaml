@@ -23,8 +23,6 @@ jobs:
         with:
           plugins: |
             schema
-      - name: Setup kustomize
-        uses: fluxcd/pkg/actions/kustomize@main
       - name: Check skills
         run: gh skill publish --dry-run
         env:

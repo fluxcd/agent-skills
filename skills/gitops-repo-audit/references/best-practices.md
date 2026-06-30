@@ -68,7 +68,7 @@ network policies, and image automation security.
 - [ ] **Alerts configured**: At minimum, error-severity Alerts with a Provider (Slack, Teams, etc.) for production clusters
 - [ ] **Receivers for webhooks**: Configure Receivers to trigger immediate reconciliation on Git push instead of waiting for polling interval
 - [ ] **Appropriate intervals**: Sources polled frequently (5m-15m), reconciliation intervals longer (30m-1h), drift detection at reconciliation interval
-- [ ] **CI validation pipeline**: Run `validate.sh` (YAML syntax + kubeconform + kustomize build) in CI before merging
+- [ ] **CI validation pipeline**: Run `validate.sh` (flux-schema strict + CEL validation + kustomize build) in CI before merging
 - [ ] **`prune: true` on all Kustomizations**: Enables garbage collection of resources removed from source
 - [ ] **Image automation**: For container images that need automatic updates, configure ImageRepository + ImagePolicy + ImageUpdateAutomation
 - [ ] **Monitoring**: Deploy kube-prometheus-stack or similar with ServiceMonitors/PodMonitors for Flux controllers

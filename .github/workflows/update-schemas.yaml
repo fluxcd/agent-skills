@@ -19,12 +19,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup flux
         uses: fluxcd/flux2/action@main
-      - name: Setup kubeconform
-        uses: fluxcd/pkg/actions/kubeconform@main
-      - name: Setup kustomize
-        uses: fluxcd/pkg/actions/kustomize@main
-      - name: Setup yq
-        uses: fluxcd/pkg/actions/yq@main
+        with:
+          plugins: |
+            schema
       - name: Download schemas
         run: make download-schemas
       - name: Run validation tests
@@ -40,6 +37,6 @@ jobs:
           commit-message: Update Flux OpenAPI schemas
           title: Update Flux OpenAPI schemas
           body: |
-            Update the Flux OpenAPI schemas used for kubeconform validation.
+            Update the Flux OpenAPI schemas used as agent field reference.
           labels: |
             dependencies
