@@ -1,0 +1,33 @@
+name: lint
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - 'main'
+  push:
+    branches:
+      - 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup flux
+        uses: fluxcd/flux2/action@main
+        with:
+          plugins: |
+            schema
+      - name: Setup kustomize
+        uses: fluxcd/pkg/actions/kustomize@main
+      - name: Check skills
+        run: gh skill publish --dry-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Check scripts
+        run: shellcheck skills/gitops-repo-audit/scripts/*.sh
