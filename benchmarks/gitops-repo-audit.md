@@ -2,9 +2,7 @@
 
 ## v0.1.0 (2026-07-01)
 
-Adds two effective-state evals (`overlay-effects`, `overlay-stress`) that plant
-security regressions in Kustomize overlays, invisible in the base manifests — so the
-suite grows from 65 to 76 assertions.
+Suite grows from 65 to 76 assertions with new evals: `overlay-effects`, `overlay-stress`.
 
 Model: `claude-opus-4-8`
 
@@ -42,12 +40,6 @@ Model: `claude-sonnet-5`
 | Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
 | Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
 | **Overall** | **72/76 (95%)** | **57/76 (75%)** | **+20%** |
-
-The overlay evals do not discriminate on this model — Sonnet 5 renders overlays on
-its own, so both arms score 100%; they act as regression guards. Image automation
-remains the weakest eval: the skill run missed the frontend/podinfo `ImagePolicy`
-`filterTags` checks, the overlapping `notifications` Kustomization paths, and the
-FluxInstance image-controller components.
 
 **Costs**
 

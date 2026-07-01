@@ -118,6 +118,8 @@ spec:
 | `inputsFrom` | array | References to ResourceSetInputProvider resources |
 | `inputStrategy.name` | string | `Flatten` (default) or `Permute` (Cartesian product) |
 | `resources` | array | Templated Kubernetes resource definitions |
+| `resourcesTemplate` | string | Go-template string rendered as multi-document YAML (alternative to `resources`) |
+| `steps` | array | Ordered, named reconciliation steps — each applied and health-checked before the next (mutually exclusive with `resources`/`resourcesTemplate`) |
 | `commonMetadata` | object | Labels/annotations applied to all generated resources |
 | `dependsOn` | array | Prerequisites with optional readiness checks |
 
@@ -143,6 +145,24 @@ Template functions come from slim-sprig (a subset of Go's sprig template functio
 
 **Important:** Template expressions are evaluated per input entry. For each entry in
 `inputs`, the entire `resources` array is rendered once.
+
+## Testing ResourceSets Locally
+
+Render the generated Kubernetes objects without a cluster using the Flux CLI:
+
+```shell
+# Inline inputs (spec.inputs) — renders directly
+flux operator build resourceset -f resourceset.yaml
+
+# Inputs from a provider (spec.inputsFrom) — supply the exported inputs from a file
+flux operator build resourceset -f resourceset.yaml --inputs-from inputs.yaml
+
+# Or supply Static ResourceSetInputProvider manifests
+flux operator build resourceset -f resourceset.yaml --inputs-from-provider providers.yaml
+
+# Validate the generated objects against the Flux/Kubernetes schemas
+flux operator build resourceset -f resourceset.yaml --inputs-from inputs.yaml | flux schema validate
+```
 
 ## Input Strategies
 
@@ -265,6 +285,67 @@ Common patterns:
 - `status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')` — standard Ready check
 - `status.observedGeneration >= 0` — resource has been reconciled at least once
 
+## Step-Based Reconciliation
+
+`spec.steps` replaces the flat `resources` list with an **ordered sequence of named steps**.
+Each step's resources are applied and health-checked to completion before the next step starts,
+giving in-ResourceSet ordering without splitting the work across multiple `dependsOn`-linked
+ResourceSets. `steps` is mutually exclusive with `resources` and `resourcesTemplate`, but each
+step carries its own `resources` or `resourcesTemplate` (with the same `<< >>` templating and
+per-input rendering):
+
+```yaml
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: platform
+  namespace: flux-system
+spec:
+  inputs:
+    - tenant: team1
+  wait: true
+  steps:
+    - name: tenant             # step 1: create the tenant namespace + RBAC, wait until applied
+      timeout: 1m
+      resources:
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: << inputs.tenant >>
+    - name: sources            # step 2: only after step 1 is healthy
+      timeout: 3m
+      resources:
+        - apiVersion: source.toolkit.fluxcd.io/v1
+          kind: OCIRepository
+          metadata:
+            name: apps
+            namespace: << inputs.tenant >>
+          spec:
+            interval: 5m
+            url: "oci://ghcr.io/my-org/apps/<< inputs.tenant >>"
+            ref:
+              tag: latest
+    - name: apps               # step 3: only after sources are healthy
+      timeout: 5m
+      resources:
+        - apiVersion: kustomize.toolkit.fluxcd.io/v1
+          kind: Kustomization
+          metadata:
+            name: apps
+            namespace: << inputs.tenant >>
+          spec:
+            interval: 30m
+            wait: true
+            sourceRef:
+              kind: OCIRepository
+              name: apps
+            path: "./"
+```
+
+Step names must be unique and DNS-label formatted max 63 chars.
+Use `steps` when a single tenant/app's resources have internal ordering requirements;
+use `dependsOn` across ResourceSets when whole ResourceSets must be ordered relative to each other.
+
 ## Advanced Features
 
 ### Conditional Reconciliation
@@ -302,23 +383,34 @@ For Secrets, you must also set the `type` field.
 ### resourcesTemplate
 
 Alternative to inline `resources`: a Go template string rendered as multi-document YAML
-(documents separated by `---`), useful for `<<- range >>` and `<<- if >>` constructs that
-the structured `resources` list cannot express:
+(documents separated by `---`). Like `resources`, it is rendered **once per input**, with the
+current input exposed as `inputs`. Its value over the structured `resources` list is the
+`<<- range >>` and `<<- if >>` constructs — in particular, ranging over an **array field
+within an input** to emit a variable number of objects per input (which the fixed `resources`
+list cannot express):
 
 ```yaml
 spec:
   inputs:
     - tenant: team1
+      components: [frontend, backend]
     - tenant: team2
+      components: [api]
   resourcesTemplate: |
-    <<- range $input := .inputs >>
+    <<- range $component := inputs.components >>
     ---
     apiVersion: v1
     kind: Namespace
     metadata:
-      name: << $input.tenant >>
+      name: << inputs.tenant >>-<< $component >>
+      labels:
+        tenant: << inputs.tenant >>
     <<- end >>
 ```
+
+Rendered per input: `team1` yields namespaces `team1-frontend` and `team1-backend`, `team2`
+yields `team2-api`. Reference input fields as `<< inputs.field >>` and the loop variable as
+`<< $field >>` (no leading dot).
 
 When both `resources` and `resourcesTemplate` are set, the generated objects are merged,
 with the `resources` entries taking precedence on duplicates.
@@ -445,29 +537,64 @@ Dependencies: policies → infra → apps. Each ResourceSet waits for the previo
 apiVersion: fluxcd.controlplane.io/v1
 kind: ResourceSetInputProvider
 metadata:
-  name: preview-prs
+  name: app-previews
+  namespace: preview               # the dedicated preview namespace, not flux-system
 spec:
   type: GitHubPullRequest
   url: https://github.com/org/app
   secretRef:
-    name: github-token
+    name: github-app-auth
   filter:
     labels: [deploy-preview]
 ---
 apiVersion: fluxcd.controlplane.io/v1
 kind: ResourceSet
 metadata:
-  name: previews
+  name: app-previews
+  namespace: preview
 spec:
+  serviceAccountName: flux     # scoped: admin within the preview namespace only
   inputsFrom:
-    - name: preview-prs
+    - name: app-previews
   resources:
-    - apiVersion: v1
-      kind: Namespace
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
       metadata:
-        name: "preview-<< inputs.id >>"
-    # ... deploy app at the PR's commit SHA
+        name: "app-<< inputs.id >>"
+        namespace: preview
+      spec:
+        interval: 2m
+        url: https://github.com/org/app.git
+        ref:
+          commit: << inputs.sha >>   # pin to the PR head commit
+        provider: github
+        secretRef:
+          name: github-app-auth
+    - apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: "app-<< inputs.id >>"
+        namespace: preview
+      spec:
+        serviceAccountName: flux
+        targetNamespace: preview
+        nameSuffix: "-pr<< inputs.id >>"   # isolate this PR's workloads in the shared namespace
+        interval: 10m
+        prune: true
+        wait: true
+        timeout: 5m
+        retryInterval: 2m
+        sourceRef:
+          kind: GitRepository
+          name: "app-<< inputs.id >>"
+        path: ./deploy/preview
+        images:
+          - name: ghcr.io/org/app
+            newTag: preview-<< inputs.sha >>   # the image CI built for this PR commit
 ```
+
+Provision the `preview` namespace once with the `flux` ServiceAccount and a RoleBinding
+to the built-in `admin` — scoping `flux` to `preview` so PR content can't escalate beyond it.
 
 ### Gitless Image Automation with ResourceSets
 

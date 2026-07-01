@@ -107,6 +107,7 @@ These are **mutually exclusive** — use one or the other, never both.
 | `targetNamespace` | string | no | Namespace for the Helm release |
 | `serviceAccountName` | string | no | Service account for impersonation |
 | `timeout` | duration | no | Timeout for Helm operations |
+| `waitStrategy.name` | string | no | Readiness wait engine: `poller` (default, uses kstatus polling) or `legacy` (Helm v3 waiting logic) |
 | `suspend` | bool | no | Pause reconciliation |
 
 ## Values
@@ -132,6 +133,20 @@ spec:
       name: app-secrets
       valuesKey: db-password
       targetPath: database.password
+```
+
+**Literal values (`helm --set-literal`):** set `literal: true` together with `targetPath`
+to merge the referenced value verbatim, without interpreting Helm's `--set` syntax (commas,
+brackets, dots, equal signs). Use this when a value contains characters Helm would otherwise
+split, such as a JSON blob or a comma-separated string:
+```yaml
+spec:
+  valuesFrom:
+    - kind: ConfigMap
+      name: app-config
+      valuesKey: allowed-origins   # e.g. "https://a.com,https://b.com"
+      targetPath: cors.origins
+      literal: true                # merged as a single literal string
 ```
 
 Merge order: `valuesFrom` entries are merged in order, then `values` inline is merged on top.
@@ -216,6 +231,19 @@ spec:
 ```
 
 Post-renderers are applied in order. Each renderer's output feeds into the next.
+
+**Hook handling (`postRenderStrategy`):** controls whether Helm hooks are passed through
+the post-renderers. This matters for Helm 4, where hooks are rendered alongside templates:
+
+```yaml
+spec:
+  postRenderStrategy: combined   # nohooks | combined | separate
+```
+
+- `combined` (default) — hooks and templates are sent to post-renderers together (Helm CLI default)
+- `nohooks` — hooks are NOT sent to post-renderers (Helm 3 behavior; also the default when the
+  `UseHelm3Defaults` feature gate is enabled)
+- `separate` — hooks and templates are sent in separate streams
 
 ## Test Configuration
 

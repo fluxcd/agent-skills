@@ -218,25 +218,25 @@ Suspend a single provider to pause updates for one artifact without freezing the
 of the app:
 
 ```shell
-flux-operator -n apps suspend rsip redis-image
-flux-operator -n apps resume rsip redis-image
+flux operator -n apps suspend rsip redis-image
+flux operator -n apps resume rsip redis-image
 ```
 
 Suspend the `ResourceSet` to freeze the entire deployment workflow:
 
 ```shell
-flux-operator -n apps suspend rset podinfo
+flux operator -n apps suspend rset podinfo
 ```
 
 Force an immediate registry scan:
 
 ```shell
-flux-operator -n apps reconcile rsip podinfo-image
+flux operator -n apps reconcile rsip podinfo-image
 ```
 
 Dry-run the `ResourceSet` locally with mock inputs to verify the template renders:
 
 ```shell
-flux-operator build rset -f podinfo-resourceset.yaml \
+flux operator build rset -f podinfo-resourceset.yaml \
   --inputs-from-provider static-inputs.yaml
 ```

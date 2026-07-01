@@ -52,6 +52,7 @@ spec:
 | `force` | bool | no | Recreate resources that cannot be patched (default: false) |
 | `suspend` | bool | no | Pause reconciliation |
 | `deletionPolicy` | string | no | `MirrorPrune` (default), `Delete`, `WaitForTermination`, `Orphan` |
+| `ignore` | list | no | Server-side apply field ignore rules — exclude specific JSON pointer paths from drift detection and apply |
 | `commonMetadata.labels` | map | no | Labels applied to all managed resources |
 | `commonMetadata.annotations` | map | no | Annotations applied to all managed resources |
 | `namePrefix` | string | no | Prefix added to all resource names |
@@ -131,6 +132,33 @@ entries are merged in order (later entries override earlier).
 
 To use `${VAR}` literally without substitution, escape with `$$`: `$${VAR}` renders as `${VAR}`.
 
+## Ignore Rules (Server-Side Apply Field Exclusion)
+
+`spec.ignore` excludes specific fields from both drift detection and apply, so Flux never
+manages or reverts them. Each rule lists JSON Pointer (RFC 6901) `paths` and an optional
+`target` selector. This is the Kustomization-level equivalent of the HelmRelease
+`driftDetection.ignore` rules — use it for fields owned by other controllers (HPA replica
+counts, mutating webhooks injecting sidecars, cloud-provisioned annotations):
+
+```yaml
+spec:
+  ignore:
+    # Ignore replicas on all Deployments (managed by HPA)
+    - paths: ["/spec/replicas"]
+      target:
+        kind: Deployment
+    # Ignore an injected annotation on one Service
+    - paths: ["/metadata/annotations/service.beta.kubernetes.io~1aws-load-balancer-arn"]
+      target:
+        kind: Service
+        name: my-service
+```
+
+If `target` is omitted, the paths are ignored on every object in the Kustomization. The
+`target` selector supports `group`, `version`, `kind`, `name`, `namespace`, `labelSelector`,
+and `annotationSelector`. Unlike the `kustomize.toolkit.fluxcd.io/ssa: Ignore` annotation
+(which skips an entire object), `ignore` rules exclude only the listed fields.
+
 ## SOPS Decryption
 
 Decrypt SOPS-encrypted files during build:
@@ -143,9 +171,30 @@ spec:
       name: sops-age  # Secret with decryption keys
 ```
 
-The Secret should contain Age private keys (`.agekey` suffix), OpenPGP keys (`.asc` suffix).
+The Secret referenced by `secretRef` can hold Age private keys (`.agekey` suffix), OpenPGP keys
+(`.asc` suffix), cloud KMS credentials, and a `sops.vault-token` for HashiCorp Vault / OpenBao.
+Age decryption also supports the post-quantum cipher for SOPS-encrypted files.
 
-Without a `secretRef`, the decryption uses Cloud KMS with workload identity (GCP, AWS, Azure).
+**Secret-less authentication.** By default the controller authenticates using its **own
+ServiceAccount** (controller-level workload identity) — no `serviceAccountName` field and no
+feature gate required. This covers:
+- **Cloud KMS** (AWS KMS, GCP KMS, Azure Key Vault) via the controller's cloud workload identity, and
+- **Vault / OpenBao** via the Kubernetes auth method, using the kustomize-controller's SA token.
+
+Setting `decryption.serviceAccountName` switches authentication from controller-level to
+**object-level** — the named per-Kustomization ServiceAccount is used instead (e.g. for
+multi-tenancy). This requires the `ObjectLevelWorkloadIdentity` feature gate on kustomize-controller:
+
+```yaml
+spec:
+  decryption:
+    provider: sops
+    serviceAccountName: tenant-sa   # object-level identity; needs ObjectLevelWorkloadIdentity gate
+```
+
+For Vault/OpenBao specifically, the authentication precedence is: a static `sops.vault-token`
+in the `secretRef` Secret **>** the Kubernetes auth method (controller or object-level SA) **>**
+a global `VAULT_TOKEN` environment variable patched onto the controller Deployment.
 
 ## Health Checks
 

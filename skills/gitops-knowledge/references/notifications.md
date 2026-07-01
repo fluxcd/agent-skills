@@ -229,9 +229,10 @@ stringData:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `type` | string | yes | `generic`, `generic-hmac`, `github`, `gitlab`, `bitbucket`, `harbor`, `dockerhub`, `quay`, `gcr`, `nexus`, `acr`, `cdevents` (no `gitea`/`azuredevops` Receiver type — Gitea uses the `github` type) |
+| `type` | string | yes | `generic`, `generic-hmac`, `generic-oidc`, `github`, `gitlab`, `bitbucket`, `harbor`, `dockerhub`, `quay`, `gcr`, `nexus`, `acr`, `cdevents` (no `gitea`/`azuredevops` Receiver type — Gitea uses the `github` type) |
 | `events` | array | yes | Event types to accept (e.g., `push`, `ping`, `pull_request`) |
-| `secretRef.name` | string | yes | Secret with `token` for HMAC webhook verification. The Secret should carry the label `reconcile.fluxcd.io/watch: Enabled` so the controller reconciles the Receiver when it changes |
+| `secretRef.name` | string | no | Secret with `token` for HMAC webhook verification (required except for `generic-oidc`). The Secret should carry the label `reconcile.fluxcd.io/watch: Enabled` so the controller reconciles the Receiver when it changes |
+| `oidcProviders` | array | no | OIDC issuers that authenticate incoming requests when `type: generic-oidc` (secret-less) |
 | `resources` | array | yes | Resources to trigger reconciliation on |
 | `suspend` | bool | no | Pause the receiver |
 
@@ -287,6 +288,40 @@ spec:
 
 The `req` object exposes the webhook payload fields and `res` provides the resource metadata
 (`res.metadata.name`, `res.metadata.labels`, `res.metadata.annotations`).
+
+### Secret-less OIDC-Secured Receiver
+
+`type: generic-oidc` authenticates incoming requests with a signed OIDC/JWT bearer token
+instead of a shared HMAC secret — no webhook secret to provision or rotate. The controller
+verifies the token's signature, expiry, and audience against the provider whose `issuerURL`
+matches the token's `iss` claim, then evaluates optional CEL `validations` against the claims.
+Ideal for callers that already have a workload identity token (CI runners, cloud services):
+
+```yaml
+apiVersion: notification.toolkit.fluxcd.io/v1
+kind: Receiver
+metadata:
+  name: ci-trigger
+  namespace: flux-system
+spec:
+  type: generic-oidc
+  events:
+    - push
+  oidcProviders:
+    - issuerURL: https://token.actions.githubusercontent.com
+      audience: flux-notification-controller     # expected 'aud' claim (defaults to 'notification-controller')
+      validations:
+        # only accept tokens from a specific repo's workflows
+        - "claims.repository == 'my-org/my-app'"
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      name: my-app
+```
+
+`validations` are CEL booleans over `claims` (the token claims); the request is accepted only
+if all pass. `variables` can define named CEL expressions exposed as `vars.<name>` for reuse
+inside validations. No `secretRef` is needed for `generic-oidc`.
 
 ## Common Patterns
 
