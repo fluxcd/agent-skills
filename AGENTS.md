@@ -8,7 +8,7 @@ Skills follow the [Agent Skills Open Standard](https://agentskills.io/specificat
 ```
 skills/{skill-name}/
 ├── SKILL.md                          # Agent instructions (frontmatter + workflow)
-├── scripts/                          # Helper scripts (bash, awk-only where possible)
+├── scripts/                          # Helper scripts (thin bash wrappers around flux/flux-schema)
 ├── references/                       # On-demand reference docs (checklists, API summaries)
 ├── assets/schemas/                   # Bundled OpenAPI schemas for Flux CRDs
 └── evals/evals.json                  # Evaluation scenarios with expected behavior
@@ -16,6 +16,11 @@ tests/{skill-name}/                   # Test fixtures for offline evaluation
 .claude-plugin/marketplace.json       # Skill registry for distribution
 Makefile                              # Schema downloads and test targets
 ```
+
+> `skills/gitops-repo-audit/scripts/validate.sh` is vendored from the
+> [flux-schema action](https://github.com/fluxcd/flux-schema/tree/main/actions/validate)
+> (the single source of truth). Don't edit it here — run `make sync-validate` to
+> refresh it, and send changes upstream.
 
 ## Working on Existing Skills
 
@@ -53,7 +58,7 @@ The sub-agent should not be told the expectations — it must produce the correc
    - Workflows are explicit step-by-step, not open-ended
    - Reference docs are actionable checklists and lookup tables, not tutorials
    - Edge cases section prevents false positives on common patterns
-   - Scripts output structured data (JSON) and avoid dependencies beyond awk
+   - Scripts output structured data (JSON) and prefer the `flux` and `flux-schema` CLIs over ad-hoc parsing
    - OpenAPI schemas are for validating generated YAML, not for general reference
 4. Add evaluation scenarios in `evals/evals.json` with specific expectations
 5. Add test fixtures in `tests/{skill-name}/` covering distinct scenarios
