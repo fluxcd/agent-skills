@@ -1,5 +1,57 @@
 # gitops-knowledge
 
+## v0.1.0 (2026-07-02)
+
+Suite grows from 86 to 103 assertions with new eval `airgapped-2.9-fields`; `preview-envs` rewritten for the least-privilege pattern, `gitless` gained a `flux schema validate` assertion.
+
+Model: `claude-opus-4-8`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| OCI Helm chart | 11/11 (100%) | 9/11 (82%) | +18% |
+| ResourceSet preview envs | 15/15 (100%) | 9/15 (60%) | +40% |
+| Notifications | 16/16 (100%) | 15/16 (94%) | +6% |
+| Image automation | 9/9 (100%) | 6/9 (67%) | +33% |
+| FluxInstance + ResourceSets | 15/15 (100%) | 12/15 (80%) | +20% |
+| Terraform bootstrap | 12/12 (100%) | 6/12 (50%) | +50% |
+| Gitless publish pipeline | 14/14 (100%) | 13/14 (93%) | +7% |
+| Air-gapped 2.9 fields | 11/11 (100%) | 5/11 (45%) | +55% |
+| **Overall** | **103/103 (100%)** | **75/103 (73%)** | **+27%** |
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 50s | 63s |
+| Mean tokens | 39.9k | 21.2k |
+
+---
+
+Model: `claude-sonnet-5`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| OCI Helm chart | 11/11 (100%) | 8/11 (73%) | +27% |
+| ResourceSet preview envs | 15/15 (100%) | 10/15 (67%) | +33% |
+| Notifications | 16/16 (100%) | 15/16 (94%) | +6% |
+| Image automation | 9/9 (100%) | 6/9 (67%) | +33% |
+| FluxInstance + ResourceSets | 15/15 (100%) | 11/15 (73%) | +27% |
+| Terraform bootstrap | 12/12 (100%) | 6/12 (50%) | +50% |
+| Gitless publish pipeline | 14/14 (100%) | 12/14 (86%) | +14% |
+| Air-gapped 2.9 fields | 11/11 (100%) | 5/11 (45%) | +55% |
+| **Overall** | **103/103 (100%)** | **73/103 (71%)** | **+29%** |
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 70s | 70s |
+| Mean tokens | 53.1k | 28.3k |
+
 ## v0.0.4 (2026-06-10)
 
 Model: `claude-fable-5`

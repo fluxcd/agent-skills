@@ -130,6 +130,9 @@ spec:
       readyExpr: "status.conditions.filter(e, e.type == 'Ready').all(e, e.status == 'True')"
 ```
 
+For ordering *within* a single ResourceSet, use `spec.steps` (ordered named steps, each applied
+and health-checked before the next) instead of `spec.resources` — see `references/resourcesets.md`.
+
 ### Reactivity with Watch Labels
 
 By default, Flux controllers poll sources at the configured interval. To react immediately
@@ -412,6 +415,10 @@ load `references/notifications.md`.
     mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
     operation: copy
   ```
+
+**Drift control — pick the right knob:**
+- Kustomization `spec.ignore` — exclude specific JSON-pointer fields from drift detection/apply (e.g. HPA `replicas`). Distinct from the `kustomize.toolkit.fluxcd.io/ssa: Ignore` annotation, which skips a whole object.
+- HelmRelease `spec.driftDetection.ignore` — the HelmRelease equivalent, only active when `driftDetection.mode` is `warn`/`enabled`.
 
 ## Reference Index
 

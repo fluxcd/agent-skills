@@ -258,6 +258,33 @@ metadata:
     reconcile.fluxcd.io/watch: Enabled
 ```
 
+### Controller Sharding
+
+`spec.sharding` horizontally partitions reconciliation across multiple controller replicas.
+Each shard runs a dedicated set of controllers that only process resources carrying a matching
+shard label, spreading load on clusters with very large numbers of Flux resources.
+
+```yaml
+spec:
+  sharding:
+    key: sharding.fluxcd.io/key   # label key selecting a shard (default)
+    shards:
+      - shard1
+      - shard2
+    storage: ephemeral            # ephemeral (default) or persistent
+```
+
+Assign a resource to a shard by labelling it, e.g. `sharding.fluxcd.io/key: shard1`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sharding.key` | string | Label key used to shard resources (default `sharding.fluxcd.io/key`) |
+| `sharding.shards` | []string | Shard names (at least one) |
+| `sharding.storage` | string | `ephemeral` (emptyDir, default) or `persistent` (PVC). When `persistent`, the top-level `spec.storage` must also be set |
+
+Invalid sharding configurations — such as `storage: persistent` without a `spec.storage`
+PVC spec — are rejected by the operator's admission validation.
+
 ### Kustomize Patches
 
 Customize Flux controller Deployments, ServiceAccounts, or other resources created by the operator:
@@ -313,14 +340,3 @@ spec:
 Configure FluxReport with annotations on the resource:
 - `fluxcd.controlplane.io/reconcile: enabled|disabled` — enable/disable reporting
 - `fluxcd.controlplane.io/reconcileEvery: 5m` — reporting interval
-
-## Reconciliation Annotations
-
-Trigger immediate reconciliation:
-```yaml
-metadata:
-  annotations:
-    reconcile.fluxcd.io/requestedAt: "2024-01-01T00:00:00Z"  # any unique value
-```
-
-Works on FluxInstance, FluxReport, ResourceSet, and ResourceSetInputProvider.

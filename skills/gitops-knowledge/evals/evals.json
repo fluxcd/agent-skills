@@ -22,22 +22,25 @@
     },
     {
       "id": 2,
-      "prompt": "We use GitHub pull requests for our app at https://github.com/acme-corp/web-platform. I need a ResourceSet that automatically creates preview environments for PRs labeled 'preview'. Each preview should get its own namespace named 'preview-<PR-ID>', a GitRepository pointing to the repo with the PR's commit SHA as the ref, and a Kustomization deploying from that source. The ResourceSetInputProvider should check every 2 minutes. Generate the complete manifests.",
-      "expected_output": "A ResourceSetInputProvider of type GitHubPullRequest with filter for 'preview' label and reconcileEvery annotation, plus a ResourceSet with inputsFrom referencing the provider. Templates must use << >> delimiters.",
+      "prompt": "We use GitHub pull requests for our app at https://github.com/acme-corp/web-platform. Set up preview environments for every PR labeled 'deploy-preview'. Requirements: (1) preview code is untrusted, so it must run under least privilege; use a namespace-scoped ServiceAccount named 'flux'. (2) Deploy all previews into a single shared 'preview' namespace. (3) The repo is private; authenticate with a GitHub App using a Secret named 'github-app-auth'. (4) Our CI builds and pushes an image tagged 'preview-<commit-sha>' for each PR, and the deployment must use that image. (5) The provider should poll GitHub every 2 minutes. Generate the complete manifests and note the one-time preview namespace and RBAC setup.",
+      "expected_output": "A ResourceSetInputProvider (type GitHubPullRequest, deploy-preview label filter, reconcileEvery 2m annotation) and a ResourceSet both in the 'preview' namespace. The ResourceSet runs under spec.serviceAccountName 'flux' (namespace-scoped, not cluster-admin), templates a GitRepository (provider github, secretRef github-app-auth, ref.commit inputs.sha) and a Kustomization (serviceAccountName flux, targetNamespace preview, nameSuffix per inputs.id, prune, an image override newTag preview-<< inputs.sha >>) into the shared preview namespace. No Namespace object is templated per PR. Uses << >> delimiters.",
       "files": [],
       "expectations": [
-        "The ResourceSetInputProvider uses apiVersion fluxcd.controlplane.io/v1",
         "The ResourceSetInputProvider spec.type is 'GitHubPullRequest' (exact casing)",
-        "The ResourceSetInputProvider has a filter.labels array containing 'preview'",
-        "The ResourceSetInputProvider has annotation fluxcd.controlplane.io/reconcileEvery set to '2m'",
-        "The ResourceSet uses apiVersion fluxcd.controlplane.io/v1",
-        "The ResourceSet uses << >> template delimiters (not {{ }})",
+        "The ResourceSetInputProvider has a filter.labels array containing 'deploy-preview'",
+        "The ResourceSetInputProvider sets its poll cadence via the fluxcd.controlplane.io/reconcileEvery annotation set to '2m' (does not support a spec.interval field)",
+        "Both the ResourceSetInputProvider and the ResourceSet are in the dedicated 'preview' namespace (not flux-system)",
         "The ResourceSet references the input provider via spec.inputsFrom",
-        "The namespace template uses inputs.id (e.g., << inputs.id >>)",
-        "The GitRepository uses apiVersion source.toolkit.fluxcd.io/v1",
-        "The GitRepository ref.commit uses inputs.sha (the PR commit SHA)",
+        "The ResourceSet sets spec.serviceAccountName to 'flux' so previews reconcile under a namespace-scoped identity rather than the kustomize-controller's default cluster-admin",
+        "The ResourceSet does NOT template a per-PR Namespace object — all previews share the single pre-provisioned 'preview' namespace (isolation is by name, not by namespace)",
+        "The GitRepository uses apiVersion source.toolkit.fluxcd.io/v1 and is created in the 'preview' namespace",
+        "The GitRepository ref.commit uses inputs.sha (the PR head commit)",
+        "The GitRepository uses spec.provider 'github' and a secretRef.name 'github-app-auth' for GitHub App authentication",
         "The Kustomization uses apiVersion kustomize.toolkit.fluxcd.io/v1",
-        "The Kustomization includes spec.prune (required field, not omitted)"
+        "The Kustomization sets spec.serviceAccountName to 'flux' (least-privilege, matches the ResourceSet identity)",
+        "The Kustomization sets spec.targetNamespace to 'preview'",
+        "The Kustomization uses spec.nameSuffix templating inputs.id (e.g. '-pr<< inputs.id >>') to isolate each PR's workloads within the shared namespace",
+        "The Kustomization sets spec.images to override the app image with newTag 'preview-<< inputs.sha >>' (the image CI built for the PR commit)"
       ]
     },
     {
@@ -60,7 +63,7 @@
         "The Receiver uses apiVersion notification.toolkit.fluxcd.io/v1 (not v1beta3)",
         "The Receiver spec.type is 'github'",
         "The Receiver has a secretRef pointing to a Secret for webhook validation",
-        "The Receiver spec.resources includes a GitRepository named 'infra'",
+        "The Receiver spec.resources references a resource named 'infra' to reconcile on push — either a GitRepository source or the infra Kustomization is acceptable",
         "The Receiver spec.events includes 'push' or a list of relevant GitHub events"
       ]
     },
@@ -100,7 +103,8 @@
         "The dependsOn includes ready: true (a readyExpr CEL expression is optional, not required)",
         "The infra ResourceSet inputs include entries for cert-manager and monitoring",
         "The apps ResourceSet inputs include entries for frontend and backend",
-        "Generated Kustomizations include spec.prune (required field)"
+        "Because the cluster is multitenant, each generated Kustomization (and OCIRepository) sets spec.serviceAccountName for tenant impersonation, and each tenant namespace is given a ServiceAccount plus RoleBinding — not bare namespaces",
+        "Each component gets its own OCIRepository with a distinct url/path (per-component sources), not a single shared OCIRepository reused across every component"
       ]
     },
     {
@@ -125,13 +129,14 @@
     },
     {
       "id": 7,
-      "prompt": "Our team wants to adopt Gitless GitOps with Flux. We keep rendered Kubernetes manifests in a GitHub repo at https://github.com/acme-corp/k8s-infra under ./deploy. I need: (1) a GitHub Actions workflow that on push to main and on version tags packages ./deploy as an OCI artifact in ghcr.io, applies our channel tagging conventions (immutable build tags, 'latest' for main, 'latest-stable' for releases), and signs the artifact with keyless Cosign; (2) the Flux CLI command to push the artifact manually with the Git origin metadata embedded; (3) the OCIRepository and Kustomization manifests for the production cluster that pull the 'latest-stable' channel, enforce Cosign signature verification of the GitHub Actions identity, and deploy to the 'apps' namespace.",
+      "prompt": "Our team wants to adopt Gitless GitOps with Flux. We keep rendered Kubernetes manifests in a GitHub repo at https://github.com/acme-corp/k8s-infra under ./deploy. I need: (1) a GitHub Actions workflow that on push to main and on version tags validates the manifests against the Flux/Kubernetes schemas, then packages ./deploy as an OCI artifact in ghcr.io, applies our channel tagging conventions (immutable build tags, 'latest' for main, 'latest-stable' for releases), and signs the artifact with keyless Cosign; (2) the Flux CLI command to push the artifact manually with the Git origin metadata embedded; (3) the OCIRepository and Kustomization manifests for the production cluster that pull the 'latest-stable' channel, enforce Cosign signature verification of the GitHub Actions identity, and deploy to the 'apps' namespace.",
       "expected_output": "A GitHub Actions workflow with packages:write and id-token:write permissions, using the Flux CLI or the controlplaneio-fluxcd push action and cosign-installer, signing the pushed digest with 'cosign sign --yes'. Tag conventions: immutable build tags plus 'latest' (main) and 'latest-stable' (releases). A 'flux push artifact' command with --path, --source, and --revision in '<branch>@sha1:<commit>' format. An OCIRepository (source.toolkit.fluxcd.io/v1) with ref.tag latest-stable and verify.provider cosign with matchOIDCIdentity, plus a Kustomization (kustomize.toolkit.fluxcd.io/v1) with prune and targetNamespace apps.",
       "files": [],
       "expectations": [
         "The GitHub Actions workflow grants 'id-token: write' permission (required for keyless Cosign signing)",
         "The GitHub Actions workflow grants 'packages: write' permission (required for pushing to ghcr.io)",
-        "The workflow uses the controlplaneio-fluxcd/distribution push action",
+        "The workflow validates the manifests with the Flux Schema plugin before publishing — via the 'fluxcd/flux-schema/actions/validate' action or a 'flux schema validate' step — so a schema-invalid manifest fails the build ahead of the push",
+        "The workflow pushes the OCI artifact to ghcr.io either via the controlplaneio-fluxcd/distribution push action OR via the Flux CLI ('flux push artifact')",
         "The workflow installs Cosign (e.g. sigstore/cosign-installer) and signs the pushed artifact digest with 'cosign sign --yes'",
         "The tagging follows the channel conventions: 'latest' for main branch builds and 'latest-stable' for release tags, alongside immutable build tags (commit SHA or version)",
         "The manual CLI command is 'flux push artifact oci://...' with a --path flag pointing at the manifests directory",
@@ -140,7 +145,27 @@
         "The OCIRepository url starts with 'oci://' and ref.tag is 'latest-stable'",
         "The OCIRepository spec.verify.provider is 'cosign' with matchOIDCIdentity matching the GitHub Actions OIDC issuer (token.actions.githubusercontent.com) and the repo's workflow subject",
         "The Kustomization uses apiVersion kustomize.toolkit.fluxcd.io/v1 with sourceRef kind OCIRepository",
-        "The Kustomization includes spec.prune and targetNamespace 'apps'"
+        "The Kustomization includes spec.prune and targetNamespace 'apps'",
+        "The keyless Cosign signing targets the artifact's immutable digest (signs the pushed digest), not a mutable channel tag like 'latest-stable'"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "We run an air-gapped on-prem cluster with our own Sigstore stack (self-hosted Fulcio and Rekor). Deploy the podinfo Helm chart from our internal registry at oci://harbor.internal/charts/podinfo (version 6.x), with keyless Cosign verification against our custom Sigstore trusted root, which we stored in a Secret named 'sigstore-trusted-root'. For the HelmRelease: use the kstatus poller wait strategy; we inject an Istio sidecar via a Kustomize post-renderer, but Helm hooks must NOT be passed through the post-renderer (keep the Helm 3 behavior); and feed our comma-separated ALLOWED_HOSTS value ('svc-a.internal,svc-b.internal') into the chart values at config.allowedHosts as a literal string so Helm doesn't split it. Separately, apply our platform addons from oci://harbor.internal/platform/addons with a Kustomization into the 'platform' namespace — an HPA manages the addon Deployment's replicas, so Flux must not revert /spec/replicas during drift detection. Generate all manifests.",
+      "expected_output": "An OCIRepository (source.toolkit.fluxcd.io/v1) for the chart with layerSelector for the Helm media type and verify.provider cosign plus verify.trustedRootSecretRef pointing at 'sigstore-trusted-root'. A HelmRelease (helm.toolkit.fluxcd.io/v2) using chartRef, waitStrategy.name 'poller', postRenderStrategy 'nohooks', a postRenderers kustomize patch for the sidecar, and a valuesFrom entry with literal: true and targetPath config.allowedHosts. A second OCIRepository plus a Kustomization (kustomize.toolkit.fluxcd.io/v1) into the 'platform' namespace with spec.ignore excluding /spec/replicas on the Deployment and spec.prune set.",
+      "files": [],
+      "expectations": [
+        "The chart OCIRepository uses apiVersion source.toolkit.fluxcd.io/v1 with url starting oci:// and a Helm chart layerSelector (mediaType 'application/vnd.cncf.helm.chart.content.v1.tar+gzip', operation 'copy')",
+        "The chart OCIRepository spec.verify.provider is 'cosign'",
+        "The chart OCIRepository spec.verify.trustedRootSecretRef.name is 'sigstore-trusted-root' (custom Sigstore root for air-gapped keyless verification)",
+        "The HelmRelease uses apiVersion helm.toolkit.fluxcd.io/v2 and references the chart via spec.chartRef (not spec.chart.spec)",
+        "The HelmRelease spec.waitStrategy.name is 'poller' (not 'legacy')",
+        "The HelmRelease spec.postRenderStrategy is 'nohooks' (so hooks are not sent to post-renderers)",
+        "The HelmRelease spec.postRenderers contains a kustomize patch injecting the Istio sidecar",
+        "The HelmRelease has a spec.valuesFrom entry with literal: true and targetPath 'config.allowedHosts' (so the comma-separated value is merged verbatim, not split by Helm --set syntax)",
+        "The Kustomization uses apiVersion kustomize.toolkit.fluxcd.io/v1 with sourceRef kind OCIRepository and targetNamespace 'platform'",
+        "The Kustomization spec.ignore contains a rule with paths ['/spec/replicas'] and a target selecting kind Deployment",
+        "The Kustomization does NOT use the 'kustomize.toolkit.fluxcd.io/ssa: Ignore' annotation for this (that would skip the whole object, not just the replicas field)"
       ]
     }
   ]

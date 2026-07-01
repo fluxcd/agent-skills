@@ -41,8 +41,8 @@ spec:
 | `provider` | string | Keyless auth provider: `generic` (default), `aws` (CodeCommit IAM), `azure` (Azure DevOps Workload Identity), `github` (GitHub App) |
 | `sparseCheckout` | []string | List of directories to checkout when cloning; only the contents of the listed directories appear in the produced artifact |
 | `recurseSubmodules` | bool | Include Git submodules (default: false) |
-| `verify.mode` | string | Which Git object(s) to verify: `HEAD`, `Tag`, or `TagAndHEAD` |
-| `verify.secretRef.name` | string | Secret with PGP public keys (e.g., data keys `author1.asc`) |
+| `verify.mode` | string | Which Git object(s) to verify: `HEAD` (default), `Tag`, or `TagAndHEAD` |
+| `verify.secretRef.name` | string | Secret with public keys of trusted authors — PGP keys under `.asc` keys and/or SSH keys under `.sshpub` keys (Flux verifies both PGP- and SSH-signed commits/tags) |
 
 When no `ref` field is set, source-controller checks out the `master` branch. Ref precedence
 when multiple are set: `commit` > `name` > `semver` > `tag` > `branch`. There is no
@@ -115,6 +115,7 @@ spec:
 | `layerSelector.operation` | string | `extract` (default) or `copy` |
 | `verify.provider` | string | Signature verification: `cosign` or `notation` |
 | `verify.matchOIDCIdentity` | array | OIDC issuer/subject patterns for keyless verification |
+| `verify.trustedRootSecretRef.name` | string | Secret with a custom Sigstore `trusted_root.json` — verify against self-hosted Fulcio CA / Rekor (air-gapped keyless) |
 | `serviceAccountName` | string | Service account for image pull (uses imagePullSecrets) |
 | `insecure` | bool | Allow HTTP (non-TLS) connections |
 
@@ -350,10 +351,40 @@ spec:
     name: podinfo-composite
 ```
 
+### Path Pattern Discovery (Monorepos)
+
+Instead of listing every component by hand, `spec.pathPattern` discovers matching directories
+in a source and generates one ExternalArtifact per match. The format is `@<alias>/<pattern>`,
+where named captures (e.g. `{app}`) become placeholders usable in the generated artifact fields:
+
+```yaml
+apiVersion: source.extensions.fluxcd.io/v1beta1
+kind: ArtifactGenerator
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  sources:
+    - alias: mono
+      kind: GitRepository
+      name: monorepo
+  pathPattern: "@mono/apps/{app}/kustomize"   # matches apps/frontend/kustomize, apps/backend/kustomize, ...
+  artifacts:
+    - name: "{app}"                             # one ExternalArtifact per discovered app
+      revision: "@mono"
+      copy:
+        - from: "@mono/apps/{app}/kustomize/**"
+          to: "@artifact/"
+```
+
+This keeps the ArtifactGenerator stable as teams add or remove components — no edit needed
+when a new `apps/<name>/kustomize` directory appears.
+
 **Key spec fields:**
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `pathPattern` | string | `@<alias>/<pattern>` directory-discovery pattern with named captures (e.g. `{app}`) for monorepos |
 | `sources[].alias` | string | Unique alias for referencing in copy operations |
 | `sources[].kind` | string | `GitRepository`, `OCIRepository`, `Bucket`, `HelmChart`, or `ExternalArtifact` |
 | `sources[].name` | string | Source name |
