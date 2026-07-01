@@ -1,5 +1,61 @@
 # gitops-repo-audit
 
+## v0.1.0 (2026-07-01)
+
+Adds two effective-state evals (`overlay-effects`, `overlay-stress`) that plant
+security regressions in Kustomize overlays, invisible in the base manifests — so the
+suite grows from 65 to 76 assertions.
+
+Model: `claude-opus-4-8`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| Monorepo structure | 13/14 (93%) | 11/14 (79%) | +14% |
+| Multi-repo fleet | 16/16 (100%) | 14/16 (88%) | +12% |
+| Image automation | 13/14 (93%) | 10/14 (71%) | +21% |
+| Mixed issues | 21/21 (100%) | 16/21 (76%) | +24% |
+| Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
+| Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
+| **Overall** | **74/76 (97%)** | **62/76 (82%)** | **+16%** |
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 167s | 209s |
+| Mean tokens | 50.9k | 38.8k |
+
+---
+
+Model: `claude-sonnet-5`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| Monorepo structure | 14/14 (100%) | 9/14 (64%) | +36% |
+| Multi-repo fleet | 16/16 (100%) | 11/16 (69%) | +31% |
+| Image automation | 10/14 (71%) | 11/14 (79%) | -7% |
+| Mixed issues | 21/21 (100%) | 15/21 (71%) | +29% |
+| Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
+| Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
+| **Overall** | **72/76 (95%)** | **57/76 (75%)** | **+20%** |
+
+The overlay evals do not discriminate on this model — Sonnet 5 renders overlays on
+its own, so both arms score 100%; they act as regression guards. Image automation
+remains the weakest eval: the skill run missed the frontend/podinfo `ImagePolicy`
+`filterTags` checks, the overlapping `notifications` Kustomization paths, and the
+FluxInstance image-controller components.
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 227s | 202s |
+| Mean tokens | 69.8k | 47.0k |
+
 ## v0.0.4 (2026-06-11)
 
 Model: `claude-fable-5`
