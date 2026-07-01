@@ -249,7 +249,7 @@
               "type": "array"
             },
             "storage": {
-              "description": "Storage defines if the source-controller shards\nshould use an emptyDir or a persistent volume claim for storage.\nAccepted values are 'ephemeral' or 'persistent', defaults to 'ephemeral'.\nFor 'persistent' to take effect, the '.spec.storage' field must be set.",
+              "description": "Storage defines if the source-controller shards\nshould use an emptyDir or a persistent volume claim for storage.\nAccepted values are 'ephemeral' or 'persistent', defaults to 'ephemeral'.\nWhen set to 'persistent', the '.spec.storage' field must be set.",
               "enum": [
                 "ephemeral",
                 "persistent"
@@ -366,7 +366,13 @@
       "required": [
         "distribution"
       ],
-      "type": "object"
+      "type": "object",
+      "x-kubernetes-validations": [
+        {
+          "message": ".spec.storage must be set when .spec.sharding.storage is 'persistent'",
+          "rule": "!has(self.sharding) || !has(self.sharding.storage) || self.sharding.storage != 'persistent' || has(self.storage)"
+        }
+      ]
     },
     "status": {
       "additionalProperties": false,
