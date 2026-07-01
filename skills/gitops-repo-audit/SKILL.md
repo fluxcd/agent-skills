@@ -53,7 +53,7 @@ exiting non-zero with a count of invalid resources and failed builds. Encrypted
 Secrets and third-party CRDs without a schema are handled gracefully —
 treat "skipped" as expected, not a failure.
 
-Use `-e <name>` to exclude additional directories from validation.
+Use `-e <dir>` to exclude additional directories from validation.
 
 ### Phase 3: API Compliance
 

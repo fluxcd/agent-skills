@@ -17,6 +17,11 @@ tests/{skill-name}/                   # Test fixtures for offline evaluation
 Makefile                              # Schema downloads and test targets
 ```
 
+> `skills/gitops-repo-audit/scripts/validate.sh` is vendored from the
+> [flux-schema action](https://github.com/fluxcd/flux-schema/tree/main/actions/validate)
+> (the single source of truth). Don't edit it here — run `make sync-validate` to
+> refresh it, and send changes upstream.
+
 ## Working on Existing Skills
 
 1. Read the skill's `SKILL.md` to understand its workflow and allowed tools
