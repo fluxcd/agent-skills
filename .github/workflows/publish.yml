@@ -16,9 +16,9 @@ jobs:
       id-token: write # for signing with cosign
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Install flux
-        uses: controlplaneio-fluxcd/flux-operator/actions/setup@5836c14559f39a466a7c413e55e0ee35480a0250 # v0.50.0
+        uses: controlplaneio-fluxcd/flux-operator/actions/setup@be9fe84303cf7b8337b74aad1f7e1ccdafa17274 # v0.53.0
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Login to GitHub Container Registry
