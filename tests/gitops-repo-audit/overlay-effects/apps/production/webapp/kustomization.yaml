@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/webapp
+images:
+  - name: ghcr.io/example/webapp
+    newTag: latest
+patches:
+  - path: privileged-patch.yaml
+    target:
+      kind: Deployment
+      name: webapp

@@ -43,15 +43,22 @@ Understand the repository before diving into specifics.
 ### Phase 2: Manifest Validation
 
 Run the bundled validation script to check Kubernetes schemas and Kustomize builds.
+Write the rendered bundle to a temp file (never in the repo) so Phases 4–5 can grep
+the effective manifests; if tmp is not writable, run without it:
 
 ```bash
-scripts/validate.sh -d <repo-root>
+bundle=""
+tmpdir="${TMPDIR:-/tmp}"
+[ -w "$tmpdir" ] && bundle="$tmpdir/flux-audit-bundle.$$.yaml"
+scripts/validate.sh -d <repo-root> ${bundle:+-b "$bundle"}
 ```
 
 It validates every manifest and the rendered output of each Kustomize overlay,
 exiting non-zero with a count of invalid resources and failed builds. Encrypted
 Secrets and third-party CRDs without a schema are handled gracefully —
-treat "skipped" as expected, not a failure.
+treat "skipped" as expected, not a failure. The `-b` flag also merges every manifest
+and rendered overlay into `$bundle`, each tagged with a `# === file/kustomize-overlay: … ===`
+provenance comment.
 
 Use `-e <dir>` to exclude additional directories from validation.
 
@@ -82,6 +89,7 @@ Focus on the categories most relevant to what you found in discovery:
 - Has HelmReleases? Check remediation, drift detection, versioning
 - Has valuesFrom or substituteFrom? Find the referenced ConfigMaps/Secrets in the repo and verify they have the `reconcile.fluxcd.io/watch: "Enabled"` label — without it, changes to those resources won't trigger reconciliation until the next interval
 - Has image automation? Check ImagePolicy semver ranges, update paths
+- Has Kustomize overlays? Grep `$bundle` (if written) to see resources in rendered form — an overlay `patch`/`images` can change the effective manifest; cite line numbers from the raw file
 
 Also check for **consistency** across similar resources. For example, if some
 HelmReleases use the modern `install.strategy` pattern while others use legacy
@@ -107,6 +115,7 @@ Focus on the categories most relevant to what you found in discovery:
 - Multi-tenant? Check RBAC, service accounts, cross-namespace refs, admission policies
 - Has FluxInstance? Check operator security settings (multitenant, network policies)
 - Has image automation? Check push credential separation and branch isolation
+- Has Kustomize overlays? Grep `$bundle` (if written) for post-render security fields — e.g. a `securityContext` weakened or image retagged by an overlay patch, which the base files won't show
 
 ### Phase 6: Report
 

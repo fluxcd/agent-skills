@@ -97,6 +97,33 @@
         "Clearly conveys the repository has critical or severe issues requiring immediate attention (deprecated APIs, plaintext secrets, insecure sources)",
         "Produces a structured report with API compliance, security, best practices, and recommendations sections"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Analyze the tests/gitops-repo-audit/overlay-effects/ directory as a GitOps repository and provide a complete analysis report focusing on security and operational best practices.",
+      "expected_output": "A report catching that the hardened base Deployment (apps/base/webapp) is subverted by the production Kustomize overlay (apps/production/webapp): the rendered manifest runs privileged: true, hostNetwork: true, readOnlyRootFilesystem: false, and a mutable :latest image tag. These issues are visible only in the effective/rendered output, not in the raw base files — the auditor must inspect the rendered overlay (via the validation bundle or kustomize build) to detect them.",
+      "files": [],
+      "expectations": [
+        "Flags the production webapp container image using a mutable ':latest' tag, set by the overlay's images transformer (raw base pins :1.4.2)",
+        "Flags the webapp container running as privileged (privileged: true) in production, set by the overlay patch (raw base has privileged: false)",
+        "Flags hostNetwork: true / host network namespace sharing on the webapp pod, added by the overlay patch (absent in raw base)",
+        "Flags readOnlyRootFilesystem disabled in production, overridden by the overlay patch (raw base has it enabled)",
+        "Demonstrates it inspected the effective/rendered manifests rather than only the raw base files, and does not incorrectly certify the deployment as secure"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Analyze the tests/gitops-repo-audit/overlay-stress/ directory as a GitOps repository and provide a complete analysis report focusing on security and operational best practices.",
+      "expected_output": "A report identifying that among six production app overlays (frontend, backend, cache, payments, analytics, notifications) sharing a hardened base, only the payments overlay is insecure: its rendered Deployment runs privileged: true, hostNetwork: true, readOnlyRootFilesystem: false, and a mutable :latest image tag. The five other overlays are benign. Detecting the payments needle requires rendering every overlay (via the validation bundle or kustomize build), not eyeballing raw base files — which are all hardened and would wrongly read as a clean, secure repo.",
+      "files": [],
+      "expectations": [
+        "Identifies payments specifically as the one insecure app among the six production overlays",
+        "Flags the payments production image using a mutable ':latest' tag (overlay images transformer)",
+        "Flags the payments container running as privileged (privileged: true) in production (overlay patch)",
+        "Flags hostNetwork: true on the payments pod (overlay patch)",
+        "Flags readOnlyRootFilesystem disabled on payments in production (overlay patch)",
+        "Does not certify the repository as secure/PASS on the basis of the hardened raw base files — inspects the rendered overlays for effective state"
+      ]
     }
   ]
 }

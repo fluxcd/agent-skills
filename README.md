@@ -125,9 +125,6 @@ or `CLAUDE.md` with details about your organization's structure, cluster topolog
 and secret management approach. The agent combines the skill's reference files with
 the repository context to generate manifests tailored to your setup.
 
-> [!NOTE]
-> Check the [Claude Code Guide](docs/claude-agent-setup.md) for how to orchestrate Flux CD sub-agents and generate audit reports in HTML format.
-
 ### gitops-repo-audit
 
 Audits Flux GitOps repositories for structure, security, and operational best practices.
@@ -157,6 +154,9 @@ You can also use the skill to audit only the files with changes:
 ```text
 Run a GitOps audit only on the files with changes.
 ```
+
+> [!NOTE]
+> Check the [Claude Code Guide](docs/claude-agent-setup.md) for how to orchestrate Flux CD sub-agents and generate audit reports in HTML format.
 
 ### gitops-cluster-debug
 

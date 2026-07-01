@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments
+  namespace: payments
+spec:
+  replicas: 3
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+        - name: payments
+          securityContext:
+            privileged: true
+            readOnlyRootFilesystem: false

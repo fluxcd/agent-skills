@@ -1,0 +1,17 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.x"
+    registry: "ghcr.io/fluxcd"
+  cluster:
+    type: kubernetes
+    size: small
+  sync:
+    kind: GitRepository
+    url: "https://github.com/example/overlay-stress.git"
+    ref: "refs/heads/main"
+    path: "clusters/production"

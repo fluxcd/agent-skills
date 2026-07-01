@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+  namespace: webapp
+spec:
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+        - name: webapp
+          securityContext:
+            privileged: true
+            readOnlyRootFilesystem: false
