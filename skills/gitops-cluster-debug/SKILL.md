@@ -4,7 +4,8 @@ description: >
   Debug and troubleshoot Flux CD on live Kubernetes clusters (not local repo files) via the Flux MCP
   server — inspects Flux resource status, reads controller logs, traces dependency chains, and performs
   installation health checks. Use when users report failing, stuck, or not-ready Flux resources on a
-  cluster, reconciliation errors, controller issues, artifact pull failures, or need live cluster
+  cluster, reconciliation errors, controller issues, artifact pull failures, image automation
+  not updating tags, alerts or webhooks not being delivered, or need live cluster
   Flux Operator troubleshooting.
 license: Apache-2.0
 compatibility: Requires flux-operator-mcp
@@ -124,7 +125,71 @@ Follow these steps when troubleshooting a ResourceSet:
 7. Create a root cause analysis report. Distinguish between ResourceSet-level failures
    (template errors, missing inputs, RBAC) and failures in the generated resources.
 
-### Workflow 5: Kubernetes Logs Analysis
+### Workflow 5: Source Debugging
+
+Follow these steps when a source (GitRepository, OCIRepository, HelmRepository,
+HelmChart, Bucket) reports `FetchFailed` or downstream resources are stuck on
+an old revision:
+
+1. Call `get_flux_instance` to check the source-controller deployment status and
+   the `apiVersion` of the source kind.
+2. Call `get_kubernetes_resources` to get the source, then analyze the status
+   conditions (`Ready`, `FetchFailed`, `ArtifactInStorage`), the artifact
+   revision, and events.
+3. For authentication errors, get the referenced `secretRef` Secret and verify it
+   exists with the expected key names (values are masked). For cloud registries
+   with no secret, check `.spec.provider` and workload identity.
+4. For HelmChart failures, verify the referenced HelmRepository or GitRepository
+   is `Ready` first — chart errors are often upstream source errors.
+5. Compare the last reconcile time against `.spec.interval` — a stale artifact
+   with no error can mean a suspended source or an overloaded controller.
+6. Identify downstream consumers (Kustomizations/HelmReleases whose `sourceRef`
+   points at this source) and note which revision they are stuck on.
+7. Create a root cause analysis report. Load `references/troubleshooting.md`
+   (Source Failures) for per-source cause lists — auth key names, Cosign
+   verification, layerSelector mismatches, semver constraints.
+
+### Workflow 6: Image Automation Debugging
+
+Follow these steps when image tags are not being detected or no update commits
+appear in Git:
+
+1. Call `get_flux_instance` and verify `image-reflector-controller` and
+   `image-automation-controller` are listed in the components and running.
+2. Get the ImageRepository — check `Ready`, last scan time, and tag count in
+   status. Auth failures point to the `secretRef` or `.spec.provider`.
+3. Get the ImagePolicy — check `Ready` and `status.latestImage`. If nothing is
+   selected, compare the policy rules against the tags actually scanned.
+4. Get the ImageUpdateAutomation — check `Ready`, last push time, and events.
+   Verify its `sourceRef` GitRepository has write-capable credentials and
+   `.spec.git.push.branch` is the branch the user is watching.
+5. If everything is `Ready` but no commits appear: verify manifests under
+   `.spec.update.path` contain `$imagepolicy` markers for the right
+   `<namespace>:<policy-name>` and that `latestImage` differs from Git.
+6. Create a root cause analysis report tracing ImageRepository → ImagePolicy →
+   ImageUpdateAutomation → GitRepository.
+
+### Workflow 7: Notification Debugging
+
+Follow these steps when alerts are not being delivered or a webhook Receiver
+does not trigger reconciliation:
+
+1. Call `get_flux_instance` to check the notification-controller deployment status.
+2. Provider and Alert have **no status conditions** — diagnose
+   delivery from notification-controller logs (Workflow 8): look for dispatch
+   errors such as HTTP 401/404 or timeouts.
+3. Get the Alert and verify `.spec.eventSources` matches the resources expected
+   to produce events and `.spec.eventSeverity` is not filtering them out.
+4. Get the referenced Provider and verify `.spec.type`, `.spec.address`, and the
+   `secretRef` Secret key names.
+5. For Receivers (these do have a `Ready` condition): verify `status.webhookPath`
+   and the webhook Secret, then check logs for incoming requests to that path —
+   none means the external service is not calling the webhook.
+6. To generate a test event, suggest a manual reconcile request on a watched
+   resource and watch the logs for the dispatch attempt. Load
+   `references/troubleshooting.md` (Notification Failures) for cause lists.
+
+### Workflow 8: Kubernetes Logs Analysis
 
 When analyzing logs for any workload:
 
