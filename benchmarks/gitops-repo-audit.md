@@ -1,6 +1,6 @@
 # gitops-repo-audit
 
-## v0.1.0 (2026-07-01)
+## v0.1.0 (2026-07-02)
 
 Suite grows from 65 to 76 assertions with new evals: `overlay-effects`, `overlay-stress`.
 
@@ -34,19 +34,19 @@ Model: `claude-sonnet-5`
 | Eval | With Skill | Baseline | Delta |
 |------|-----------|----------|-------|
 | Monorepo structure | 14/14 (100%) | 9/14 (64%) | +36% |
-| Multi-repo fleet | 16/16 (100%) | 11/16 (69%) | +31% |
-| Image automation | 10/14 (71%) | 11/14 (79%) | -7% |
-| Mixed issues | 21/21 (100%) | 15/21 (71%) | +29% |
+| Multi-repo fleet | 15/16 (94%) | 12/16 (75%) | +19% |
+| Image automation | 12/14 (86%) | 8/14 (57%) | +29% |
+| Mixed issues | 21/21 (100%) | 13/21 (62%) | +38% |
 | Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
 | Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
-| **Overall** | **72/76 (95%)** | **57/76 (75%)** | **+20%** |
+| **Overall** | **73/76 (96%)** | **53/76 (70%)** | **+26%** |
 
 **Costs**
 
 | Metric | With Skill | Baseline |
 |--------|-----------|----------|
-| Mean duration | 227s | 202s |
-| Mean tokens | 69.8k | 47.0k |
+| Mean duration | 186s | 160s |
+| Mean tokens | 68.3k | 45.1k |
 
 ## v0.0.4 (2026-06-11)
 

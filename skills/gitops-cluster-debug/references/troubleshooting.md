@@ -135,6 +135,50 @@ Common failure patterns and debugging procedures for Flux on Kubernetes clusters
 Suggest setting modern `install.strategy.name: RetryOnFailure`
 and `upgrade.strategy.name: RetryOnFailure` instead of the legacy remediation retries pattern.
 
+## Image Automation Failures
+
+### Tags not detected
+
+**Symptoms**: ImageRepository `Ready: False`, or `Ready: True` but ImagePolicy selects no tag.
+
+**Common causes**:
+- **Registry auth error**: Pull secret missing/expired, or `.spec.provider` not set for cloud registries (ECR, ACR, GAR) using workload identity.
+- **Policy matches nothing**: Semver range excludes all published tags, or tags don't parse as semver (use `filterTags` with `extract` to strip prefixes).
+- **Controllers not running**: `image-reflector-controller`/`image-automation-controller` are optional FluxInstance components — verify they are listed and running.
+
+### No commits pushed
+
+**Symptoms**: ImagePolicy has a new `latestImage` but no commits appear in Git.
+
+**Common causes**:
+- **Read-only Git credentials**: The GitRepository `secretRef` used by ImageUpdateAutomation lacks push permission.
+- **Missing markers**: Manifests under `.spec.update.path` have no `$imagepolicy` comment markers, or the marker references the wrong `<namespace>:<policy-name>`.
+- **Wrong branch**: Commits go to `.spec.git.push.branch` — the user may be watching a different branch.
+- **Nothing to update**: The tag in Git already matches `latestImage`.
+
+## Notification Failures
+
+### Alerts not delivered
+
+**Symptoms**: Reconciliation events happen but nothing arrives in Slack/Teams/etc.
+
+Provider and Alert have no status conditions — diagnose from
+notification-controller logs, not object status.
+
+**Common causes**:
+- **Event filtered**: Alert `.spec.eventSeverity: error` drops info events; `.spec.eventSources` doesn't match the resource kind/name/namespace producing the event.
+- **Provider auth/address error**: Wrong or expired token in the `secretRef`, wrong webhook `address` — look for HTTP 401/404/timeout errors in controller logs.
+- **Wrong provider type**: `.spec.type` doesn't match the receiving service's expected payload format.
+
+### Receiver not triggering
+
+**Symptoms**: Pushes to the Git server don't trigger immediate reconciliation.
+
+**Common causes**:
+- **Webhook not reaching the cluster**: No incoming requests in notification-controller logs — wrong URL on the Git server, ingress/firewall blocking, or webhook not configured at all. Verify `status.webhookPath`.
+- **Signature validation failure**: Webhook secret mismatch between the Git server and the Receiver `secretRef`.
+- **Wrong resources list**: `.spec.resources` doesn't include the source/Kustomization that should be reconciled.
+
 ## General Debugging Checklist
 
 Use this checklist when the issue is unclear:

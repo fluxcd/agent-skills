@@ -5,6 +5,8 @@ Terraform module bootstraps Flux Operator and a `FluxInstance` into a Kubernetes
 using a Kubernetes `Job`. Use this module when the cluster is provisioned with Terraform
 and Flux should take over GitOps reconciliation afterwards.
 
+**Contents:** [Ownership Model](#ownership-model) | [Repository Layout](#repository-layout) | [Provider Configuration](#provider-configuration) | [GitOps vs Managed Resources](#gitops-vs-managed-resources) | [Revision and Drift](#revision-and-drift) | [Runtime Info and Variable Substitution](#runtime-info-and-variable-substitution) | [Node Scheduling](#node-scheduling) | [Shared Operator Values File](#shared-operator-values-file) | [Sync Source Authentication](#sync-source-authentication) | [Managed Secrets from External Stores](#managed-secrets-from-external-stores) | [Debugging Failed Bootstraps](#debugging-failed-bootstraps)
+
 ## Ownership Model
 
 The module solves the bootstrap ownership problem by splitting responsibilities:

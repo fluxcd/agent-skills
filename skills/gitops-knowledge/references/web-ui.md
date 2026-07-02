@@ -4,6 +4,8 @@ The Flux Web UI is built into the Flux Operator and provides a browser-based das
 for viewing Flux resources, triggering reconciliations, and managing workloads.
 It is served on port `9080` by the `flux-operator` service.
 
+**Contents:** [Enabling the Web UI](#enabling-the-web-ui) | [Accessing the Web UI](#accessing-the-web-ui) | [Authentication](#authentication) | [Role-Based Access Control](#role-based-access-control) | [User Actions](#user-actions) | [Audit](#audit) | [Standalone Deployment](#standalone-deployment)
+
 ## Enabling the Web UI
 
 The Web UI is enabled by default in the Flux Operator Helm chart. To explicitly configure it:

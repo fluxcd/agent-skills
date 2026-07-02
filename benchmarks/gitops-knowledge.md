@@ -36,21 +36,21 @@ Model: `claude-sonnet-5`
 | Eval | With Skill | Baseline | Delta |
 |------|-----------|----------|-------|
 | OCI Helm chart | 11/11 (100%) | 8/11 (73%) | +27% |
-| ResourceSet preview envs | 15/15 (100%) | 10/15 (67%) | +33% |
+| ResourceSet preview envs | 15/15 (100%) | 6/15 (40%) | +60% |
 | Notifications | 16/16 (100%) | 15/16 (94%) | +6% |
 | Image automation | 9/9 (100%) | 6/9 (67%) | +33% |
-| FluxInstance + ResourceSets | 15/15 (100%) | 11/15 (73%) | +27% |
+| FluxInstance + ResourceSets | 15/15 (100%) | 12/15 (80%) | +20% |
 | Terraform bootstrap | 12/12 (100%) | 6/12 (50%) | +50% |
-| Gitless publish pipeline | 14/14 (100%) | 12/14 (86%) | +14% |
+| Gitless publish pipeline | 14/14 (100%) | 14/14 (100%) | 0% |
 | Air-gapped 2.9 fields | 11/11 (100%) | 5/11 (45%) | +55% |
-| **Overall** | **103/103 (100%)** | **73/103 (71%)** | **+29%** |
+| **Overall** | **103/103 (100%)** | **72/103 (70%)** | **+30%** |
 
 **Costs**
 
 | Metric | With Skill | Baseline |
 |--------|-----------|----------|
-| Mean duration | 70s | 70s |
-| Mean tokens | 53.1k | 28.3k |
+| Mean duration | 73s | 99s |
+| Mean tokens | 53.6k | 31.7k |
 
 ## v0.0.4 (2026-06-10)
 

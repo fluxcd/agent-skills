@@ -44,12 +44,12 @@ Understand the repository before diving into specifics.
 
 Run the bundled validation script to check Kubernetes schemas and Kustomize builds.
 Write the rendered bundle to a temp file (never in the repo) so Phases 4–5 can grep
-the effective manifests; if tmp is not writable, run without it:
+the effective manifests. Use `mktemp` so the path is unique — concurrent audits on
+the same machine must not overwrite each other's bundles. If tmp is not writable,
+`mktemp` fails and the script runs without the bundle:
 
 ```bash
-bundle=""
-tmpdir="${TMPDIR:-/tmp}"
-[ -w "$tmpdir" ] && bundle="$tmpdir/flux-audit-bundle.$$.yaml"
+bundle="$(mktemp "${TMPDIR:-/tmp}/flux-audit-bundle.XXXXXX" 2>/dev/null || true)"
 scripts/validate.sh -d <repo-root> ${bundle:+-b "$bundle"}
 ```
 

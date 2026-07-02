@@ -7,7 +7,12 @@ pushes them to a container registry, and Flux pulls from the registry using
 
 Use this reference when users ask about Flux OCI artifacts, `flux push artifact`,
 GitHub Actions publishing, artifact signing, registry-based promotion, or running Flux in
-clusters that should not access Git.
+clusters that should not access Git. For automatically upgrading workloads when new
+image tags are published (registry scanning), load
+`references/gitless-image-automation.md` instead — this file covers the publish/consume
+pipeline for rendered manifests.
+
+**Contents:** [Why Gitless GitOps](#why-gitless-gitops) | [Artifact Types](#artifact-types) | [Validating Manifests with `flux schema`](#validating-manifests-with-flux-schema) | [Publishing Manifests with `flux push artifact`](#publishing-manifests-with-flux-push-artifact) | [GitHub Actions Publisher](#github-actions-publisher) | [Consuming Manifest Artifacts](#consuming-manifest-artifacts) | [FluxInstance OCI Sync](#fluxinstance-oci-sync) | [Authentication](#authentication) | [Signing and Verification](#signing-and-verification) | [Promotion Patterns](#promotion-patterns) | [Observability and Tracing](#observability-and-tracing)
 
 ## Why Gitless GitOps
 

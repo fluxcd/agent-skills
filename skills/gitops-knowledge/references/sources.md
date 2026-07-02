@@ -4,6 +4,8 @@ All source CRDs are in `apiVersion: source.toolkit.fluxcd.io/v1` (except Artifac
 which uses `source.extensions.fluxcd.io/v1beta1`). Source-controller polls for changes at
 the configured interval and produces versioned artifacts consumed by Kustomization and HelmRelease.
 
+**Contents:** [GitRepository](#gitrepository) | [OCIRepository](#ocirepository) | [HelmRepository](#helmrepository) | [HelmChart](#helmchart) | [Bucket](#bucket) | [ExternalArtifact](#externalartifact) | [ArtifactGenerator](#artifactgenerator)
+
 ## GitRepository
 
 Fetches manifests from a Git repository, producing a tarball artifact.

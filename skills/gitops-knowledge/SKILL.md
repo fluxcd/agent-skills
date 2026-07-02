@@ -81,7 +81,7 @@ Namespaces, Sources, Kustomizations, HelmReleases, RBAC, ...
 | HelmChart | source.toolkit.fluxcd.io/v1 | source-controller | Fetch and package Helm charts |
 | Bucket | source.toolkit.fluxcd.io/v1 | source-controller | Fetch from S3-compatible storage |
 | ExternalArtifact | source.toolkit.fluxcd.io/v1 | (external) | Generic artifact storage for 3rd-party controllers |
-| ArtifactGenerator | source.extensions.fluxcd.io/v1beta1 | source-controller | Compose/decompose artifacts from multiple sources |
+| ArtifactGenerator | source.extensions.fluxcd.io/v1beta1 | source-watcher | Compose/decompose artifacts from multiple sources |
 | Kustomization | kustomize.toolkit.fluxcd.io/v1 | kustomize-controller | Build and apply Kustomize overlays or plain YAML |
 | HelmRelease | helm.toolkit.fluxcd.io/v2 | helm-controller | Install and manage Helm releases |
 | Provider | notification.toolkit.fluxcd.io/v1beta3 | notification-controller | External notification provider config |

@@ -61,7 +61,7 @@ OpenAPI schema: assets/schemas/resourcesetinputprovider-fluxcd-v1.json
 Fetches input values from external services for ResourceSet consumption.
 
 **Key fields:**
-- `.spec.type` — Provider type (see patterns below)
+- `.spec.type` — Provider type. Full list: `Static` (inline inputs), `GitHubBranch`/`GitHubTag`/`GitHubPullRequest`, `GitLabBranch`/`GitLabTag`/`GitLabMergeRequest`/`GitLabEnvironment`, `AzureDevOpsBranch`/`AzureDevOpsTag`/`AzureDevOpsPullRequest`, `AWSCodeCommitBranch`/`AWSCodeCommitTag`/`AWSCodeCommitPullRequest`, `GiteaBranch`/`GiteaTag`/`GiteaPullRequest`, `OCIArtifactTag`/`ACRArtifactTag`/`ECRArtifactTag`/`GARArtifactTag`, `ExternalService` — do not flag a type as invalid without checking this list or the schema
 - `.spec.url` — Repository or registry URL
 - `.spec.filter.labels[]` — Label filter for PRs/MRs
 - `.spec.filter.limit` — Maximum number of inputs to fetch

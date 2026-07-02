@@ -61,13 +61,16 @@ check_deprecated() {
   echo "INFO - Checking for deprecated Flux API versions in ${root_dir}"
   echo "INFO - Using $(flux version --client 2>&1 | head -1)"
 
-  # flux migrate dry-run prints '✚' / '->' lines for each resource that
-  # references a deprecated API version and the version to migrate to.
+  # flux migrate dry-run prints one line per resource that references a
+  # deprecated API version, e.g.:
+  #   ✚ infrastructure/nginx.yaml:11: HelmRelease v2beta2 -> v2
+  # Match the versioned-arrow shape ('vX... -> vY...') rather than any bare
+  # '✚' or '->' so unrelated arrows in flux output can't cause a false positive.
   local output
   output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)" || true
   echo "$output"
 
-  if echo "$output" | grep -qE "✚|->"; then
+  if echo "$output" | grep -qE " v[0-9][a-zA-Z0-9]* -> v[0-9]"; then
     echo "ERROR - deprecated Flux API versions found" >&2
     return 1
   fi

@@ -6,6 +6,8 @@ ResourceSet generates Kubernetes resources from a matrix of input values using a
 approach. It is the primary mechanism for multi-tenant orchestration, fleet management, and
 self-service platforms.
 
+**Contents:** [Canonical YAML](#canonical-yaml) | [Key Spec Fields](#key-spec-fields) | [Template Syntax](#template-syntax) | [Testing ResourceSets Locally](#testing-resourcesets-locally) | [Input Strategies](#input-strategies) | [Dependencies](#dependencies) | [Step-Based Reconciliation](#step-based-reconciliation) | [Advanced Features](#advanced-features) | [Built-in Input Fields](#built-in-input-fields) | [ResourceSetInputProvider](#resourcesetinputprovider) | [Use Cases](#use-cases)
+
 ## Canonical YAML
 
 Based on the Gitless reference architecture fleet pattern — deploys per-tenant namespaces with
