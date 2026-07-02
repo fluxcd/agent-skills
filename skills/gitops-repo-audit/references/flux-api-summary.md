@@ -2,6 +2,8 @@
 
 Condensed reference for the Flux CRDs.
 
+**Contents:** [Source API](#source-api) | [Appliers API](#appliers-api) | [Notification API](#notification-api) | [Image Automation API](#image-automation-api) | [Common Validation Rules](#common-validation-rules) | [Deep Dive API Specs](#deep-dive-api-specs)
+
 ## Source API
 
 ### GitRepository (`source.toolkit.fluxcd.io/v1`)
