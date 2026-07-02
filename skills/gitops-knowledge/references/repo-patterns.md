@@ -3,6 +3,8 @@
 All patterns use Flux Operator with FluxInstance for cluster bootstrap. Each cluster has a
 FluxInstance that syncs from a source and applies manifests via Kustomizations or ResourceSets.
 
+**Contents:** [Monorepo Pattern](#monorepo-pattern) | [Multi-Repo Git-Based Pattern](#multi-repo-git-based-pattern) | [Multi-Repo OCI-Based Pattern (Gitless GitOps)](#multi-repo-oci-based-pattern-gitless-gitops) | [Per-Cluster Configuration](#per-cluster-configuration)
+
 ## Monorepo Pattern
 
 Single Git repository containing all infrastructure and application manifests with

@@ -8,6 +8,8 @@ artifact. It is Flux's primary mechanism for deploying manifests to a cluster.
 **Important:** This is the Flux `Kustomization` CRD, not Kustomize's `kustomization.yaml` file.
 They share the name but are different resources.
 
+**Contents:** [Canonical YAML](#canonical-yaml) | [Key Spec Fields](#key-spec-fields) | [Dependencies](#dependencies) | [PostBuild Variable Substitution](#postbuild-variable-substitution) | [Ignore Rules (Server-Side Apply Field Exclusion)](#ignore-rules-server-side-apply-field-exclusion) | [SOPS Decryption](#sops-decryption) | [Health Checks](#health-checks) | [Remote Cluster Deployment](#remote-cluster-deployment) | [Patches](#patches) | [Status and Inventory](#status-and-inventory) | [Controlling Apply Behavior with Annotations](#controlling-apply-behavior-with-annotations) | [Triggering Reconciliation](#triggering-reconciliation)
+
 ## Canonical YAML
 
 ```yaml

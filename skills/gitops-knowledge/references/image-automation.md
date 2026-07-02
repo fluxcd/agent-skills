@@ -14,6 +14,8 @@ All three resources use `apiVersion: image.toolkit.fluxcd.io/v1`.
 Required controllers: `image-reflector-controller` and `image-automation-controller`
 (add to FluxInstance components only on clusters that run automation).
 
+**Contents:** [ImageRepository](#imagerepository) | [ImagePolicy](#imagepolicy) | [ImageUpdateAutomation](#imageupdateautomation) | [Image Policy Markers](#image-policy-markers) | [Complete End-to-End Pipeline](#complete-end-to-end-pipeline)
+
 ## ImageRepository
 
 Scans a container image repository at regular intervals and stores discovered tags.

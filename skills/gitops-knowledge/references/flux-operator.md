@@ -4,6 +4,8 @@ The Flux Operator manages the Flux installation lifecycle through two CRDs:
 - **FluxInstance** (`fluxcd.controlplane.io/v1`) — declarative Flux installation and configuration
 - **FluxReport** (`fluxcd.controlplane.io/v1`) — read-only observed state of Flux
 
+**Contents:** [Installation](#installation) | [FluxInstance](#fluxinstance) | [FluxReport](#fluxreport)
+
 ## Installation
 
 Install the Flux Operator before creating a FluxInstance.
@@ -176,16 +178,8 @@ When enabled:
 
 Configure FluxInstance to sync manifests from a source repository.
 
-**OCI sync (Gitless GitOps):**
-```yaml
-spec:
-  sync:
-    kind: OCIRepository
-    url: "oci://ghcr.io/my-org/fleet"
-    ref: "latest"
-    path: "clusters/production"
-    pullSecret: "registry-auth"
-```
+**OCI sync (Gitless GitOps):** see the Canonical YAML above — its `spec.sync` block
+(`kind: OCIRepository`, `oci://` url, `ref`, `path`, `pullSecret`) is the complete shape.
 
 **Git sync:**
 ```yaml

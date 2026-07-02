@@ -4,6 +4,8 @@ Flux notification-controller handles both outgoing notifications (Provider + Ale
 incoming webhooks (Receiver). All resources are in the same namespace as the notification
 target or source.
 
+**Contents:** [Provider](#provider) | [Alert](#alert) | [Receiver](#receiver) | [Common Patterns](#common-patterns)
+
 ## Provider
 
 `apiVersion: notification.toolkit.fluxcd.io/v1beta3`

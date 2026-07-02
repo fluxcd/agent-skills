@@ -5,6 +5,8 @@
 HelmRelease installs, upgrades, tests, and manages Helm releases with drift detection
 and automated remediation.
 
+**Contents:** [Canonical YAML — Chart from HTTPS Repo](#canonical-yaml--chart-from-https-repo) | [Canonical YAML — Chart from OCI Registry (Recommended)](#canonical-yaml--chart-from-oci-registry-recommended) | [Chart Source — Mutual Exclusivity](#chart-source--mutual-exclusivity) | [Key Spec Fields](#key-spec-fields) | [Values](#values) | [Install and Upgrade Strategy](#install-and-upgrade-strategy) | [Drift Detection](#drift-detection) | [Post-Renderers](#post-renderers) | [Test Configuration](#test-configuration) | [Dependencies](#dependencies) | [Health Check Expressions](#health-check-expressions) | [Remote Cluster Deployment](#remote-cluster-deployment) | [CRD Lifecycle](#crd-lifecycle) | [Uninstall Configuration](#uninstall-configuration) | [Status](#status)
+
 ## Canonical YAML — Chart from HTTPS Repo
 
 ```yaml
@@ -104,7 +106,7 @@ These are **mutually exclusive** — use one or the other, never both.
 |-------|------|----------|-------------|
 | `interval` | duration | yes | Reconciliation interval |
 | `releaseName` | string | no | Helm release name (defaults to `metadata.name`) |
-| `targetNamespace` | string | no | Namespace for the Helm release |
+| `targetNamespace` | string | no | Namespace for the Helm release. Prefer deploying into `metadata.namespace` and creating that namespace in the parent Kustomization/ResourceSet (see best-practices.md); if set, also set `storageNamespace` to match so the Helm release storage lives with the workloads |
 | `serviceAccountName` | string | no | Service account for impersonation |
 | `timeout` | duration | no | Timeout for Helm operations |
 | `waitStrategy.name` | string | no | Readiness wait engine: `poller` (default, uses kstatus polling) or `legacy` (Helm v3 waiting logic) |
