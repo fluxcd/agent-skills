@@ -2,7 +2,7 @@
 
 ## v0.1.0 (2026-07-02)
 
-Suite grows from 65 to 76 assertions with new evals: `overlay-effects`, `overlay-stress`.
+Suite grows from 65 to 76 assertions with new evals: `overlay-effects`, `overlay-stress`. The `monorepo-structure` fixture gained the `source-watcher` component on its FluxInstances (required by its ArtifactGenerator pipeline).
 
 Model: `claude-opus-4-8`
 
@@ -10,20 +10,20 @@ Model: `claude-opus-4-8`
 
 | Eval | With Skill | Baseline | Delta |
 |------|-----------|----------|-------|
-| Monorepo structure | 13/14 (93%) | 11/14 (79%) | +14% |
-| Multi-repo fleet | 16/16 (100%) | 14/16 (88%) | +12% |
-| Image automation | 13/14 (93%) | 10/14 (71%) | +21% |
-| Mixed issues | 21/21 (100%) | 16/21 (76%) | +24% |
+| Monorepo structure | 14/14 (100%) | 9/14 (64%) | +36% |
+| Multi-repo fleet | 15/16 (94%) | 10/16 (62%) | +32% |
+| Image automation | 12/14 (86%) | 10/14 (71%) | +15% |
+| Mixed issues | 21/21 (100%) | 14/21 (67%) | +33% |
 | Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
 | Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
-| **Overall** | **74/76 (97%)** | **62/76 (82%)** | **+16%** |
+| **Overall** | **73/76 (96%)** | **54/76 (71%)** | **+25%** |
 
 **Costs**
 
 | Metric | With Skill | Baseline |
 |--------|-----------|----------|
-| Mean duration | 167s | 209s |
-| Mean tokens | 50.9k | 38.8k |
+| Mean duration | 203s | 236s |
+| Mean tokens | 58.4k | 42.7k |
 
 ---
 
@@ -33,20 +33,20 @@ Model: `claude-sonnet-5`
 
 | Eval | With Skill | Baseline | Delta |
 |------|-----------|----------|-------|
-| Monorepo structure | 14/14 (100%) | 9/14 (64%) | +36% |
-| Multi-repo fleet | 15/16 (94%) | 12/16 (75%) | +19% |
-| Image automation | 12/14 (86%) | 8/14 (57%) | +29% |
-| Mixed issues | 21/21 (100%) | 13/21 (62%) | +38% |
+| Monorepo structure | 14/14 (100%) | 11/14 (79%) | +21% |
+| Multi-repo fleet | 13/16 (81%) | 11/16 (69%) | +12% |
+| Image automation | 13/14 (93%) | 8/14 (57%) | +36% |
+| Mixed issues | 20/21 (95%) | 13/21 (62%) | +33% |
 | Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
 | Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
-| **Overall** | **73/76 (96%)** | **53/76 (70%)** | **+26%** |
+| **Overall** | **71/76 (93%)** | **54/76 (71%)** | **+22%** |
 
 **Costs**
 
 | Metric | With Skill | Baseline |
 |--------|-----------|----------|
-| Mean duration | 186s | 160s |
-| Mean tokens | 68.3k | 45.1k |
+| Mean duration | 299s | 249s |
+| Mean tokens | 69.5k | 54.8k |
 
 ## v0.0.4 (2026-06-11)
 

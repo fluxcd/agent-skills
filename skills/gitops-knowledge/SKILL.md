@@ -19,6 +19,7 @@ to answer questions accurately, generate correct YAML manifests, and explain Flu
 - Always use the exact apiVersion/kind combinations from the CRD table below. Never invent API versions.
 - Before generating YAML for any CRD, read its OpenAPI schema from `assets/schemas/` to verify field names, types, and enum values.
 - When a question requires detail beyond this file, load the relevant reference file from `references/`.
+- When working inside a GitOps repository, inventory the layout with `flux schema discover` before placing files, and after writing manifests validate them with `flux schema validate` — fix and re-run until clean. Load `references/flux-cli.md` for the full CLI workflow, local rendering, and overlay debugging. If the tools aren't installed, skip validation and say so.
 - Prefer Flux Operator (FluxInstance) for cluster setup. Do not reference `flux bootstrap` or legacy `gotk-*` files.
 
 ## What is Flux
@@ -454,5 +455,6 @@ Load at most 1-2 reference files per question. Read schemas for field-level vali
 | Web UI, dashboard, SSO, OIDC, Dex, Keycloak, Entra ID, RBAC | `references/web-ui.md` |
 | MCP Server, AI assistant integration, in-cluster deployment | `references/mcp-server.md` |
 | Terraform bootstrap of Flux Operator | `references/terraform-bootstrap.md` |
+| Flux CLI and plugins: `flux schema` discover/validate/extract, local rendering with `flux build` and `flux operator build`, overlay debugging | `references/flux-cli.md` |
 | Gitless GitOps, Flux OCI artifacts, `flux push artifact`, registry-based delivery | `references/gitless-gitops.md` |
 | Gitless image automation (ResourceSet + OCIArtifactTag) | `references/gitless-image-automation.md` |

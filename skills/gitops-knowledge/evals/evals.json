@@ -167,6 +167,52 @@
         "The Kustomization spec.ignore contains a rule with paths ['/spec/replicas'] and a target selecting kind Deployment",
         "The Kustomization does NOT use the 'kustomize.toolkit.fluxcd.io/ssa: Ignore' annotation for this (that would skip the whole object, not just the replicas field)"
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "Our fleet GitOps monorepo is at {FIXTURE:tests/gitops-knowledge/add-app-repo} (copy it to a scratch directory first). Add a new app called 'backend' deployed from the Helm chart at oci://ghcr.io/acme-corp/charts/backend - track 1.x releases. It should run in its own 'backend' namespace on both the staging and production clusters; the chart's replicaCount value should be 1 in staging and 3 in production. Follow the repo's existing conventions for structure and style, and make sure everything you leave behind is correct.",
+      "expected_output": "Eight new files mirroring the podinfo base+overlay layout: apps/base/backend with Namespace, OCIRepository (source.toolkit.fluxcd.io/v1, semver 1.x) and HelmRelease (helm.toolkit.fluxcd.io/v2, chartRef, RetryOnFailure), plus staging/production overlays patching replicaCount to 1 and 3. The agent inventories the repo (flux schema discover) before placing files and validates the rendered overlays (kustomize build | flux schema validate) before finishing.",
+      "files": [
+        "tests/gitops-knowledge/add-app-repo"
+      ],
+      "expectations": [
+        "Base directory apps/base/backend exists with a kustomization.yaml, a Namespace, an OCIRepository, and a HelmRelease, mirroring the podinfo layout",
+        "Staging and production overlays exist at apps/staging/backend and apps/production/backend, and 'kustomize build' succeeds for both",
+        "The OCIRepository uses apiVersion source.toolkit.fluxcd.io/v1 with url oci://ghcr.io/acme-corp/charts/backend and a 1.x semver ref (layerSelector optional, matching repo convention)",
+        "The HelmRelease uses apiVersion helm.toolkit.fluxcd.io/v2 with chartRef (the repo's convention) and RetryOnFailure install/upgrade strategy",
+        "Rendered replicaCount is 1 in the staging build output and 3 in the production build output",
+        "The rendered build output of both new overlays passes 'flux schema validate' with zero invalid documents",
+        "The final report states that schema validation (flux schema validate) was run as part of verification"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Flux on our staging cluster reports the Kustomization flux-system/apps as failing - the podinfo app errors with a kustomize build failure. A checkout of our GitOps monorepo is at {FIXTURE:tests/gitops-knowledge/debug-repo} (copy it to a scratch directory first). I don't have cluster access from here. Find and fix what's broken, and while you're in there make sure the rest of the repo's manifests are actually valid so we don't hit another failure right after this one.",
+      "expected_output": "Three planted bugs found and fixed: (1) apps/staging/podinfo/kustomization.yaml patch path typo podinfo-values.yml -> .yaml (kustomize build failure), (2) apps/base/podinfo/release.yaml interval '1 hour' -> valid duration (schema pattern violation that survives the build), (3) infrastructure/controllers/metrics-server/release.yaml sets both spec.chart and spec.chartRef (CEL violation). Agent reproduces the failure locally with kustomize build, fixes, and re-validates the whole repo (overlays via build output, plain dirs directly).",
+      "files": [
+        "tests/gitops-knowledge/debug-repo"
+      ],
+      "expectations": [
+        "The staging podinfo overlay builds again: 'kustomize build apps/staging/podinfo' succeeds and the staging values patch is applied (build output contains 'Hello from staging')",
+        "The base HelmRelease interval is a valid duration again (the '1 hour' schema violation is fixed)",
+        "The metrics-server HelmRelease CEL violation is fixed: it no longer sets both spec.chart and spec.chartRef",
+        "The whole repo is schema-clean: plain-manifest directories validate directly and overlays validate via their build output (--skip-missing-schemas for the third-party ClusterIssuer), with zero invalid documents",
+        "The final report identifies all three distinct issues (broken patch path, invalid interval duration, chart/chartRef conflict)"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "We onboard internal teams onto our platform cluster with Flux Operator. In a scratch directory, create a tenants.yaml with a ResourceSet that, for each tenant (team-alpha and team-bravo), creates: the tenant namespace, a ServiceAccount named 'flux' in it, and a Flux Kustomization in the tenant namespace impersonating that ServiceAccount, applying path ./tenants/<tenant-name> from our existing GitRepository named 'tenants' in flux-system (every 10 minutes, with pruning). Last time we did this by hand a templating typo took down onboarding, so double-check your work before you hand it back.",
+      "expected_output": "A ResourceSet (fluxcd.controlplane.io/v1) with inputs for both tenants templating Namespace, ServiceAccount and Kustomization per tenant using << inputs.* >> delimiters; the Kustomization uses serviceAccountName flux and a cross-namespace sourceRef with namespace flux-system. The agent renders it locally (flux operator build resourceset) and schema-validates the rendered output.",
+      "files": [],
+      "expectations": [
+        "tenants.yaml contains a ResourceSet with apiVersion fluxcd.controlplane.io/v1 and inputs for both team-alpha and team-bravo",
+        "The template uses << inputs.* >> delimiters and contains no Go-template {{ }} expressions",
+        "'flux operator build resourceset -f tenants.yaml' renders successfully and produces 2 Namespaces, 2 ServiceAccounts named 'flux', and 2 Flux Kustomizations",
+        "Rendered Kustomizations are correct: in the tenant namespace, serviceAccountName 'flux', path ./tenants/<tenant>, sourceRef GitRepository 'tenants' with namespace flux-system (cross-namespace ref), interval 10m, prune true",
+        "The rendered build output passes 'flux schema validate' with zero invalid documents",
+        "The final report states the ResourceSet was rendered locally (flux-operator build) and schema-validated as verification"
+      ]
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 ## v0.1.0 (2026-07-02)
 
-Suite grows from 86 to 103 assertions with new eval `airgapped-2.9-fields`; `preview-envs` rewritten for the least-privilege pattern, `gitless` gained a `flux schema validate` assertion.
+Suite grows from 86 to 121 assertions with new evals: `airgapped-2.9-fields`, `add-app-in-repo`, `debug-broken-overlay`, and `resourceset-local-render` — the last three run against repo fixtures and exercise the new `flux-cli` reference (repo discovery, local rendering, and `flux schema validate` as an authoring control loop). `preview-envs` rewritten for the least-privilege pattern, `gitless` gained a `flux schema validate` assertion.
 
 Model: `claude-opus-4-8`
 
@@ -10,22 +10,25 @@ Model: `claude-opus-4-8`
 
 | Eval | With Skill | Baseline | Delta |
 |------|-----------|----------|-------|
-| OCI Helm chart | 11/11 (100%) | 9/11 (82%) | +18% |
-| ResourceSet preview envs | 15/15 (100%) | 9/15 (60%) | +40% |
+| OCI Helm chart | 11/11 (100%) | 8/11 (73%) | +27% |
+| ResourceSet preview envs | 15/15 (100%) | 5/15 (33%) | +67% |
 | Notifications | 16/16 (100%) | 15/16 (94%) | +6% |
 | Image automation | 9/9 (100%) | 6/9 (67%) | +33% |
-| FluxInstance + ResourceSets | 15/15 (100%) | 12/15 (80%) | +20% |
-| Terraform bootstrap | 12/12 (100%) | 6/12 (50%) | +50% |
-| Gitless publish pipeline | 14/14 (100%) | 13/14 (93%) | +7% |
-| Air-gapped 2.9 fields | 11/11 (100%) | 5/11 (45%) | +55% |
-| **Overall** | **103/103 (100%)** | **75/103 (73%)** | **+27%** |
+| FluxInstance + ResourceSets | 15/15 (100%) | 13/15 (87%) | +13% |
+| Terraform bootstrap | 12/12 (100%) | 5/12 (42%) | +58% |
+| Gitless publish pipeline | 14/14 (100%) | 12/14 (86%) | +14% |
+| Air-gapped 2.9 fields | 11/11 (100%) | 6/11 (55%) | +45% |
+| Add app in repo | 7/7 (100%) | 7/7 (100%) | 0% |
+| Debug broken overlay | 5/5 (100%) | 5/5 (100%) | 0% |
+| ResourceSet local render | 6/6 (100%) | 5/6 (83%) | +17% |
+| **Overall** | **121/121 (100%)** | **87/121 (72%)** | **+28%** |
 
 **Costs**
 
 | Metric | With Skill | Baseline |
 |--------|-----------|----------|
-| Mean duration | 50s | 63s |
-| Mean tokens | 39.9k | 21.2k |
+| Mean duration | 122s | 100s |
+| Mean tokens | 47.9k | 25.6k |
 
 ---
 
@@ -36,21 +39,24 @@ Model: `claude-sonnet-5`
 | Eval | With Skill | Baseline | Delta |
 |------|-----------|----------|-------|
 | OCI Helm chart | 11/11 (100%) | 8/11 (73%) | +27% |
-| ResourceSet preview envs | 15/15 (100%) | 6/15 (40%) | +60% |
+| ResourceSet preview envs | 15/15 (100%) | 8/15 (53%) | +47% |
 | Notifications | 16/16 (100%) | 15/16 (94%) | +6% |
 | Image automation | 9/9 (100%) | 6/9 (67%) | +33% |
-| FluxInstance + ResourceSets | 15/15 (100%) | 12/15 (80%) | +20% |
-| Terraform bootstrap | 12/12 (100%) | 6/12 (50%) | +50% |
-| Gitless publish pipeline | 14/14 (100%) | 14/14 (100%) | 0% |
+| FluxInstance + ResourceSets | 15/15 (100%) | 8/15 (53%) | +47% |
+| Terraform bootstrap | 10/12 (83%) | 5/12 (42%) | +41% |
+| Gitless publish pipeline | 14/14 (100%) | 12/14 (86%) | +14% |
 | Air-gapped 2.9 fields | 11/11 (100%) | 5/11 (45%) | +55% |
-| **Overall** | **103/103 (100%)** | **72/103 (70%)** | **+30%** |
+| Add app in repo | 7/7 (100%) | 7/7 (100%) | 0% |
+| Debug broken overlay | 5/5 (100%) | 5/5 (100%) | 0% |
+| ResourceSet local render | 6/6 (100%) | 5/6 (83%) | +17% |
+| **Overall** | **119/121 (98%)** | **84/121 (69%)** | **+29%** |
 
 **Costs**
 
 | Metric | With Skill | Baseline |
 |--------|-----------|----------|
-| Mean duration | 73s | 99s |
-| Mean tokens | 53.6k | 31.7k |
+| Mean duration | 141s | 154s |
+| Mean tokens | 59.5k | 37.1k |
 
 ## v0.0.4 (2026-06-10)
 
