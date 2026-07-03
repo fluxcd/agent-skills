@@ -1,5 +1,35 @@
 # gitops-knowledge
 
+## v0.2.0 (2026-07-03)
+
+The bundled OpenAPI JSON schemas are replaced with greppable field indexes (`assets/schemas/*.fields.txt`, one line per field), shrinking the schema payload by ~45%. Agents grep a dotted field path instead of reading the full JSON. Three-way comparison against the v0.1.0 snapshot (JSON schemas) and the no-skill baseline; 3 runs per eval per configuration, assertion counts pooled across runs. Graded by `claude-opus-4-8`.
+
+Model: `claude-sonnet-5`
+
+**Results**
+
+| Eval | v0.2.0 | v0.1.0 | Baseline | Delta |
+|------|--------|--------|----------|-------|
+| OCI Helm chart | 33/33 (100%) | 33/33 (100%) | 24/33 (73%) | +27% |
+| ResourceSet preview envs | 45/45 (100%) | 45/45 (100%) | 33/45 (73%) | +27% |
+| Notifications | 48/48 (100%) | 48/48 (100%) | 45/48 (94%) | +6% |
+| Image automation | 27/27 (100%) | 27/27 (100%) | 18/27 (67%) | +33% |
+| FluxInstance + ResourceSets | 45/45 (100%) | 45/45 (100%) | 38/45 (84%) | +16% |
+| Terraform bootstrap | 36/36 (100%) | 36/36 (100%) | 18/36 (50%) | +50% |
+| Gitless publish pipeline | 42/42 (100%) | 42/42 (100%) | 39/42 (93%) | +7% |
+| Air-gapped 2.9 fields | 33/33 (100%) | 33/33 (100%) | 15/33 (45%) | +55% |
+| Add app in repo | 21/21 (100%) | 21/21 (100%) | 21/21 (100%) | 0% |
+| Debug broken overlay | 15/15 (100%) | 15/15 (100%) | 15/15 (100%) | 0% |
+| ResourceSet local render | 18/18 (100%) | 18/18 (100%) | 15/18 (83%) | +17% |
+| **Overall** | **363/363 (100%)** | **363/363 (100%)** | **281/363 (77%)** | **+23%** |
+
+**Costs**
+
+| Metric | v0.2.0 | v0.1.0 | Baseline |
+|--------|--------|--------|----------|
+| Mean duration | 193s | 187s | 196s |
+| Mean tokens | 62.2k | 63.1k | 41.8k |
+
 ## v0.1.0 (2026-07-02)
 
 Suite grows from 86 to 121 assertions with new evals: `airgapped-2.9-fields`, `add-app-in-repo`, `debug-broken-overlay`, and `resourceset-local-render` — the last three run against repo fixtures and exercise the new `flux-cli` reference (repo discovery, local rendering, and `flux schema validate` as an authoring control loop). `preview-envs` rewritten for the least-privilege pattern, `gitless` gained a `flux schema validate` assertion.
