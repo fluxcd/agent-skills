@@ -5,7 +5,7 @@ SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas \
 	skills/gitops-cluster-debug/assets/schemas \
 	skills/gitops-knowledge/assets/schemas
 
-# The skills ship greppable field indexes (.txt) instead of the raw OpenAPI
+# The skills ship greppable field indexes (.fields.txt) instead of the raw OpenAPI
 # schemas: agents grep a dotted field path instead of reading the full JSON.
 # The downloaded JSONs are only flattener input and are removed after generation.
 FLATTEN_JQ := scripts/flatten-schema.jq
@@ -31,11 +31,11 @@ download-schemas: clean-schemas ## Download Flux OpenAPI schemas for agent field
 		rm -f $$dir/*.json; \
 	done
 
-flatten-schemas: ## Regenerate greppable field indexes (.txt) from the OpenAPI schemas (requires jq)
+flatten-schemas: ## Regenerate greppable field indexes (.fields.txt) from the OpenAPI schemas (requires jq)
 	@for dir in $(SCHEMAS_DIRS); do \
 		for f in $$dir/*.json; do \
 			[ -e "$$f" ] || continue; \
-			t=$${f%.json}.txt; \
+			t=$${f%.json}.fields.txt; \
 			jq -r --arg src $$(basename $$f) -f $(FLATTEN_JQ) $$f > $$t; \
 			echo "generated $$t"; \
 		done; \

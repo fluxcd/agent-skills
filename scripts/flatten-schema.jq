@@ -4,7 +4,7 @@
 # Arrays are path[]; string maps are <map[string]T>; free-form/untyped values are <any>.
 #
 # Usage (see the flatten-schemas target in the Makefile):
-#   jq -r --arg src <schema.json> -f scripts/flatten-schema.jq <schema.json> > <index.txt>
+#   jq -r --arg src <schema.json> -f scripts/flatten-schema.jq <schema.json> > <index.fields.txt>
 
 # The schema JSONs carry no group-version-kind metadata, so the emitted
 # apiVersion/kind lines are derived: kind from the root description's first word,
