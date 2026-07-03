@@ -5,6 +5,11 @@ SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas \
 	skills/gitops-cluster-debug/assets/schemas \
 	skills/gitops-knowledge/assets/schemas
 
+# The skills ship greppable field indexes (.txt) instead of the raw OpenAPI
+# schemas: agents grep a dotted field path instead of reading the full JSON.
+# The downloaded JSONs are only flattener input and are removed after generation.
+FLATTEN_JQ := scripts/flatten-schema.jq
+
 DISCOVER_SCRIPT := skills/gitops-repo-audit/scripts/discover.sh
 VALIDATE_SCRIPT := skills/gitops-repo-audit/scripts/validate.sh
 TEST_DIR := tests/gitops-repo-audit
@@ -12,7 +17,7 @@ TEST_DIR := tests/gitops-repo-audit
 # validate.sh is vendored from the flux-schema action (single source of truth)
 VALIDATE_SCRIPT_URL := https://raw.githubusercontent.com/fluxcd/flux-schema/main/actions/validate/validate.sh
 
-.PHONY: help download-schemas clean-schemas test-discover test-validate validate-skills sync-validate
+.PHONY: help download-schemas clean-schemas flatten-schemas test-discover test-validate validate-skills sync-validate
 
 download-schemas: clean-schemas ## Download Flux OpenAPI schemas for agent field reference
 	@for dir in $(SCHEMAS_DIRS); do \
@@ -20,6 +25,20 @@ download-schemas: clean-schemas ## Download Flux OpenAPI schemas for agent field
 		curl -sL https://github.com/controlplaneio-fluxcd/flux-operator/releases/latest/download/crd-schemas.tar.gz | tar zxf - -C $$dir; \
 		curl -sL https://github.com/fluxcd/flux2/releases/latest/download/crd-schemas.tar.gz | tar zxf - -C $$dir; \
 		rm -f $$dir/all.json $$dir/_definitions.json; \
+	done
+	@$(MAKE) flatten-schemas
+	@for dir in $(SCHEMAS_DIRS); do \
+		rm -f $$dir/*.json; \
+	done
+
+flatten-schemas: ## Regenerate greppable field indexes (.txt) from the OpenAPI schemas (requires jq)
+	@for dir in $(SCHEMAS_DIRS); do \
+		for f in $$dir/*.json; do \
+			[ -e "$$f" ] || continue; \
+			t=$${f%.json}.txt; \
+			jq -r --arg src $$(basename $$f) -f $(FLATTEN_JQ) $$f > $$t; \
+			echo "generated $$t"; \
+		done; \
 	done
 
 clean-schemas: ## Remove downloaded schemas
