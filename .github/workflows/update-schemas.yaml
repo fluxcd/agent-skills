@@ -22,8 +22,8 @@ jobs:
         with:
           plugins: |
             schema
-      - name: Download schemas
-        run: make download-schemas
+      - name: Sync field indexes
+        run: make sync-schemas
       - name: Sync validation script
         run: make sync-validate
       - name: Run validation tests
@@ -36,10 +36,10 @@ jobs:
           committer: GitHub <noreply@github.com>
           author: fluxcdbot <fluxcdbot@users.noreply.github.com>
           signoff: true
-          commit-message: Update Flux OpenAPI schemas and validation script
-          title: Update Flux OpenAPI schemas and validation script
+          commit-message: Update Flux CRD field indexes and validation script
+          title: Update Flux CRD field indexes and validation script
           body: |
-            Update the Flux OpenAPI schemas used as agent field reference and
-            vendor the latest validate.sh from the flux-schema action.
+            Update the Flux CRD field indexes used as agent field reference and
+            vendor the latest validate.sh from the flux-schema catalog.
           labels: |
             dependencies

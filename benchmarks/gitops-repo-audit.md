@@ -1,5 +1,30 @@
 # gitops-repo-audit
 
+## v0.2.0 (2026-07-03)
+
+The bundled OpenAPI JSON schemas are replaced with greppable field indexes (`assets/schemas/*.fields.txt`, one line per field), shrinking the schema payload by ~45%. Agents grep a dotted field path instead of reading the full JSON. Three-way comparison against the v0.1.0 snapshot (JSON schemas) and the no-skill baseline; 3 runs per eval per configuration, assertion counts pooled across runs. Graded by `claude-opus-4-8`.
+
+Model: `claude-sonnet-5`
+
+**Results**
+
+| Eval | v0.2.0 | v0.1.0 | Baseline | Delta |
+|------|--------|--------|----------|-------|
+| Monorepo structure | 41/42 (98%) | 42/42 (100%) | 31/42 (74%) | +24% |
+| Multi-repo fleet | 48/48 (100%) | 47/48 (98%) | 30/48 (62%) | +38% |
+| Image automation | 36/42 (86%) | 35/42 (83%) | 21/42 (50%) | +36% |
+| Mixed issues | 60/63 (95%) | 61/63 (97%) | 40/63 (63%) | +32% |
+| Overlay effects | 15/15 (100%) | 15/15 (100%) | 15/15 (100%) | 0% |
+| Overlay stress | 18/18 (100%) | 18/18 (100%) | 18/18 (100%) | 0% |
+| **Overall** | **218/228 (96%)** | **218/228 (96%)** | **155/228 (68%)** | **+28%** |
+
+**Costs**
+
+| Metric | v0.2.0 | v0.1.0 | Baseline |
+|--------|--------|--------|----------|
+| Mean duration | 379s | 370s | 304s |
+| Mean tokens | 85.8k | 85.7k | 67.4k |
+
 ## v0.1.0 (2026-07-02)
 
 Suite grows from 65 to 76 assertions with new evals: `overlay-effects`, `overlay-stress`. The `monorepo-structure` fixture gained the `source-watcher` component on its FluxInstances (required by its ArtifactGenerator pipeline).
