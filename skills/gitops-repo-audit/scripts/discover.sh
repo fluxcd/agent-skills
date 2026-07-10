@@ -64,6 +64,25 @@ parse_args() {
   done
 }
 
+# Minimum flux-schema version required by this skill.
+readonly MIN_FLUX_SCHEMA_VERSION="0.10.0"
+
+# Return 0 if semver $1 is >= $2. Compares the numeric major.minor.patch
+# fields; inputs are validated x.y.z strings, so no external tools are needed.
+version_ge() {
+  local a="$1" b="$2" i x y
+  local -a af bf
+  IFS='.' read -r -a af <<< "$a"
+  IFS='.' read -r -a bf <<< "$b"
+  for i in 0 1 2; do
+    x="${af[i]:-0}"
+    y="${bf[i]:-0}"
+    if (( 10#$x > 10#$y )); then return 0; fi
+    if (( 10#$x < 10#$y )); then return 1; fi
+  done
+  return 0
+}
+
 # Resolve how to invoke flux-schema: prefer the 'flux schema' plugin dispatch,
 # otherwise fall back to a standalone flux-schema binary on PATH.
 check_prerequisites() {
@@ -74,6 +93,18 @@ check_prerequisites() {
   else
     echo "ERROR - flux-schema is not installed" >&2
     echo "ERROR - Install it with: flux plugin install schema" >&2
+    exit 1
+  fi
+
+  local version
+  version="$("${flux_schema[@]}" version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+  if [[ -z "$version" ]]; then
+    echo "ERROR - unable to determine the flux-schema version" >&2
+    exit 1
+  fi
+  if ! version_ge "$version" "$MIN_FLUX_SCHEMA_VERSION"; then
+    echo "ERROR - flux-schema v${version} is too old; this skill requires ${MIN_FLUX_SCHEMA_VERSION} or later" >&2
+    echo "ERROR - Upgrade it with: flux plugin install schema" >&2
     exit 1
   fi
 }
