@@ -49,10 +49,43 @@ parse_args() {
   done
 }
 
+# Minimum Flux CLI version that provides the 'flux migrate' subcommand used
+# below. Older clients silently lack it, which would otherwise be reported as
+# "No deprecated Flux API versions found" (a false negative).
+readonly MIN_FLUX_VERSION="2.9.0"
+
+# Return 0 if semver $1 is >= $2. Compares the numeric major.minor.patch
+# fields; inputs are validated x.y.z strings, so no external tools are needed.
+version_ge() {
+  local a="$1" b="$2" i x y
+  local -a af bf
+  IFS='.' read -r -a af <<< "$a"
+  IFS='.' read -r -a bf <<< "$b"
+  for i in 0 1 2; do
+    x="${af[i]:-0}"
+    y="${bf[i]:-0}"
+    if (( 10#$x > 10#$y )); then return 0; fi
+    if (( 10#$x < 10#$y )); then return 1; fi
+  done
+  return 0
+}
+
 check_prerequisites() {
   if ! command -v flux &> /dev/null; then
     echo "ERROR - flux is not installed" >&2
     echo "ERROR - Install it from https://fluxcd.io/flux/installation/" >&2
+    exit 1
+  fi
+
+  local version
+  version="$(flux version --client 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+  if [[ -z "$version" ]]; then
+    echo "ERROR - unable to determine the Flux CLI version" >&2
+    exit 1
+  fi
+  if ! version_ge "$version" "$MIN_FLUX_VERSION"; then
+    echo "ERROR - Flux CLI v${version} is too old; 'flux migrate' requires Flux ${MIN_FLUX_VERSION} or later" >&2
+    echo "ERROR - Upgrade Flux: https://fluxcd.io/flux/installation/" >&2
     exit 1
   fi
 }
