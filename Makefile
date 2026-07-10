@@ -7,8 +7,10 @@ SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas \
 
 # The skills ship greppable field indexes (.fields.txt) instead of the raw OpenAPI
 # schemas: agents grep a dotted field path instead of reading the full JSON.
-# The downloaded JSONs are only flattener input and are removed after generation.
-FLATTEN_JQ := scripts/flatten-schema.jq
+# The indexes are pre-built in the flux-schema catalog and vendored here for all
+# API groups matching 'fluxcd', renamed from <group>/<kind>_<version>.fields.txt
+# to <kind>-<group first label>-<version>.fields.txt.
+FLUX_SCHEMA_REPO := https://github.com/fluxcd/flux-schema.git
 
 DISCOVER_SCRIPT := skills/gitops-repo-audit/scripts/discover.sh
 VALIDATE_SCRIPT := skills/gitops-repo-audit/scripts/validate.sh
@@ -17,31 +19,25 @@ TEST_DIR := tests/gitops-repo-audit
 # validate.sh is vendored from the flux-schema action (single source of truth)
 VALIDATE_SCRIPT_URL := https://raw.githubusercontent.com/fluxcd/flux-schema/main/actions/validate/validate.sh
 
-.PHONY: help download-schemas clean-schemas flatten-schemas test-discover test-validate validate-skills sync-validate
+.PHONY: help sync-schemas clean-schemas test-discover test-validate validate-skills sync-validate
 
-download-schemas: clean-schemas ## Download Flux OpenAPI schemas for agent field reference
-	@for dir in $(SCHEMAS_DIRS); do \
+sync-schemas: clean-schemas ## Vendor the field indexes (.fields.txt) from the flux-schema catalog
+	@tmp=$$(mktemp -d); \
+	trap 'rm -rf $$tmp' EXIT; \
+	git clone --quiet --depth 1 --filter=blob:none --sparse $(FLUX_SCHEMA_REPO) $$tmp; \
+	git -C $$tmp sparse-checkout set --no-cone '/catalog/latest/*fluxcd*/*.fields.txt'; \
+	for dir in $(SCHEMAS_DIRS); do \
 		mkdir -p $$dir; \
-		curl -sL https://github.com/controlplaneio-fluxcd/flux-operator/releases/latest/download/crd-schemas.tar.gz | tar zxf - -C $$dir; \
-		curl -sL https://github.com/fluxcd/flux2/releases/latest/download/crd-schemas.tar.gz | tar zxf - -C $$dir; \
-		rm -f $$dir/all.json $$dir/_definitions.json; \
-	done
-	@$(MAKE) flatten-schemas
-	@for dir in $(SCHEMAS_DIRS); do \
-		rm -f $$dir/*.json; \
-	done
-
-flatten-schemas: ## Regenerate greppable field indexes (.fields.txt) from the OpenAPI schemas (requires jq)
-	@for dir in $(SCHEMAS_DIRS); do \
-		for f in $$dir/*.json; do \
-			[ -e "$$f" ] || continue; \
-			t=$${f%.json}.fields.txt; \
-			jq -r --arg src $$(basename $$f) -f $(FLATTEN_JQ) $$f > $$t; \
-			echo "generated $$t"; \
+		for f in $$tmp/catalog/latest/*fluxcd*/*.fields.txt; do \
+			group=$$(basename $$(dirname $$f)); \
+			base=$$(basename $$f .fields.txt); \
+			t=$$dir/$${base%%_*}-$${group%%.*}-$${base##*_}.fields.txt; \
+			cp $$f $$t; \
+			echo "synced $$t"; \
 		done; \
 	done
 
-clean-schemas: ## Remove downloaded schemas
+clean-schemas: ## Remove the vendored field indexes
 	@for dir in $(SCHEMAS_DIRS); do \
 		rm -rf $$dir; \
 	done

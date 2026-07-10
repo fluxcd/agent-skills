@@ -1,3 +1,4 @@
+# schema source: Flux v2.9.1 https://github.com/fluxcd/flux2
 apiVersion <string> enum=image.toolkit.fluxcd.io/v1
 kind <string> enum=ImageUpdateAutomation
 metadata.name <string> (required)
@@ -25,7 +26,7 @@ spec.git.push <object>	# Push specifies how and where to push commits made by th
 spec.git.push.branch <string>	# Branch specifies that commits should be pushed to the branch named. The branch is created using `.spec.checkout.branch` as the starting point, if it doesn't already exist.
 spec.git.push.options <map[string]string>	# Options specifies the push options that are sent to the Git server when performing a push operation. For details, see: https://git-scm.com/docs/git-push#Documentation/git-push.txt---push-optionltoptiongt
 spec.git.push.refspec <string>	# Refspec specifies the Git Refspec to use for a push operation. If both Branch and Refspec are provided, then the commit is pushed to the branch and also using the specified refspec. For more details about Git Refspecs, see: https://git-scm.com/book/en/v2/Git-Internals-The-Refspec
-spec.interval <string> (required)	# Interval gives an lower bound for how often the automation run should be attempted.
+spec.interval <string> (required) pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"	# Interval gives an lower bound for how often the automation run should be attempted.
 spec.policySelector <object>	# PolicySelector allows to filter applied policies based on labels. By default includes all policies in namespace.
 spec.policySelector.matchExpressions <[]object>	# matchExpressions is a list of label selector requirements. The requirements are ANDed.
 spec.policySelector.matchExpressions[].key <string> (required)	# key is the label key that the selector applies to.
@@ -43,17 +44,17 @@ spec.update.path <string>	# Path to the directory containing the manifests to be
 spec.update.strategy <string> enum=Setters default="Setters"	# Strategy names the strategy to be used.
 status <object> default={"observedGeneration":-1}	# ImageUpdateAutomationStatus defines the observed state of ImageUpdateAutomation
 status.conditions <[]object>
-status.conditions[].lastTransitionTime <string> (required)	# lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed. If that is not known, then using the time when the API field changed is acceptable.
-status.conditions[].message <string> (required)	# message is a human readable message indicating details about the transition. This may be an empty string.
-status.conditions[].observedGeneration <integer>	# observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.
-status.conditions[].reason <string> (required)	# reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.
+status.conditions[].lastTransitionTime <string> (required) format=date-time	# lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed. If that is not known, then using the time when the API field changed is acceptable.
+status.conditions[].message <string> (required) max=32768	# message is a human readable message indicating details about the transition. This may be an empty string.
+status.conditions[].observedGeneration <integer> format=int64 min=0	# observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.
+status.conditions[].reason <string> (required) pattern="^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$" min=1 max=1024	# reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.
 status.conditions[].status <string> (required) enum=True|False|Unknown	# status of the condition, one of True, False, Unknown.
-status.conditions[].type <string> (required)	# type of condition in CamelCase or in foo.example.com/CamelCase.
-status.lastAutomationRunTime <string>	# LastAutomationRunTime records the last time the controller ran this automation through to completion (even if no updates were made).
+status.conditions[].type <string> (required) pattern="^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$" max=316	# type of condition in CamelCase or in foo.example.com/CamelCase.
+status.lastAutomationRunTime <string> format=date-time	# LastAutomationRunTime records the last time the controller ran this automation through to completion (even if no updates were made).
 status.lastHandledReconcileAt <string>	# LastHandledReconcileAt holds the value of the most recent reconcile request value, so a change of the annotation value can be detected.
 status.lastPushCommit <string>	# LastPushCommit records the SHA1 of the last commit made by the controller, for this automation object
-status.lastPushTime <string>	# LastPushTime records the time of the last pushed change.
-status.observedGeneration <integer>
+status.lastPushTime <string> format=date-time	# LastPushTime records the time of the last pushed change.
+status.observedGeneration <integer> format=int64
 status.observedPolicies <map[string]object>	# ObservedPolicies is the list of observed ImagePolicies that were considered by the ImageUpdateAutomation update process.
 status.observedPolicies.<key>.digest <string>	# Digest is the image's digest.
 status.observedPolicies.<key>.name <string> (required)	# Name is the bare image's name.
