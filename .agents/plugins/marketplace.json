@@ -1,0 +1,20 @@
+{
+  "name": "fluxcd",
+  "interface": {
+    "displayName": "FluxCD"
+  },
+  "plugins": [
+    {
+      "name": "gitops-skills",
+      "source": {
+        "source": "local",
+        "path": "."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
