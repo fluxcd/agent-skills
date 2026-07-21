@@ -1,4 +1,4 @@
-# schema source: Flux v2.9.1 https://github.com/fluxcd/flux2
+# schema source: Flux v2.9.2 https://github.com/fluxcd/flux2
 apiVersion <string> enum=source.toolkit.fluxcd.io/v1
 kind <string> enum=HelmChart
 metadata.name <string> (required)
@@ -43,4 +43,4 @@ status.observedChartName <string>	# ObservedChartName is the last observed chart
 status.observedGeneration <integer> format=int64	# ObservedGeneration is the last observed generation of the HelmChart object.
 status.observedSourceArtifactRevision <string>	# ObservedSourceArtifactRevision is the last observed Artifact.Revision of the HelmChartSpec.SourceRef.
 status.observedValuesFiles <[]string>	# ObservedValuesFiles are the observed value files of the last successful reconciliation. It matches the chart in the last successfully reconciled artifact.
-status.url <string>	# URL is the dynamic fetch link for the latest Artifact. It is provided on a "best effort" basis, and using the precise BucketStatus.Artifact data is recommended.
+status.url <string>	# URL is the dynamic fetch link for the latest Artifact. It is provided on a "best effort" basis, and using the precise HelmChartStatus.Artifact data is recommended.

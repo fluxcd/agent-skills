@@ -1,4 +1,4 @@
-# schema source: Flux v2.9.1 https://github.com/fluxcd/flux2
+# schema source: Flux v2.9.2 https://github.com/fluxcd/flux2
 apiVersion <string> enum=image.toolkit.fluxcd.io/v1
 kind <string> enum=ImageUpdateAutomation
 metadata.name <string> (required)
@@ -59,4 +59,4 @@ status.observedPolicies <map[string]object>	# ObservedPolicies is the list of ob
 status.observedPolicies.<key>.digest <string>	# Digest is the image's digest.
 status.observedPolicies.<key>.name <string> (required)	# Name is the bare image's name.
 status.observedPolicies.<key>.tag <string> (required)	# Tag is the image's tag.
-status.observedSourceRevision <string>	# ObservedPolicies []ObservedPolicy `json:"observedPolicies,omitempty"` ObservedSourceRevision is the last observed source revision. This can be used to determine if the source has been updated since last observation.
+status.observedSourceRevision <string>	# ObservedSourceRevision is the last observed source revision. This can be used to determine if the source has been updated since last observation.
