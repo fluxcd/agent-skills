@@ -7,8 +7,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # This script validates Kubernetes manifests using the Flux Schema CLI.
-# It builds kustomize overlays and validating the output against the
-# default schema catalog or a user-provided config file.
+# It builds kustomize overlays and validates the output using a user-provided
+# config file, or the ecosystem catalog (schemas.fluxoperator.dev) when no
+# config file is found.
 # Arguments after '--' are passed verbatim to 'flux-schema validate' and
 # take precedence over the config file, so callers (e.g. AI agents) can
 # set validation options inline without writing a config file to disk.
@@ -69,11 +70,12 @@ kustomize_config="kustomization.yaml"
 helm_flags=("--include-crds")
 helm_config="Chart.yaml"
 
-# Default flags used when no config file is found. Strip SOPS-encrypted
-# fields before validation (Flux removes these at apply time), skip documents
-# whose schema is not in the catalog, and pin text output so the per-resource
-# summary tally is parsed reliably (a config or '--' override owns the format).
-default_flux_schema_flags=("--skip-json-path=/sops" "--skip-missing-schemas" "--verbose" "--output=text")
+# Default flags used when no config file is found. Use the ecosystem catalog,
+# strip SOPS-encrypted fields before validation (Flux removes these at apply
+# time), skip documents whose schema is not in the catalog, and pin text output
+# so the per-resource summary tally is parsed reliably (a config or '--'
+# override owns the format).
+default_flux_schema_flags=("--schema-location=ecosystem" "--skip-json-path=/sops" "--skip-missing-schemas" "--verbose" "--output=text")
 
 # Effective flags passed to flux-schema, populated by resolve_config.
 flux_schema_flags=()
