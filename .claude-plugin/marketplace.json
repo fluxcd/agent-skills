@@ -21,7 +21,8 @@
       ],
       "agents": [
         "./agents/claude-code/fluxcd.md"
-      ]
+      ],
+      "mcpServers": "./.mcp.json"
     }
   ]
 }

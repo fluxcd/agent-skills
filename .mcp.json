@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "flux-schema-catalog": {
+      "type": "http",
+      "url": "https://schemas.fluxoperator.dev/mcp"
+    }
+  }
+}

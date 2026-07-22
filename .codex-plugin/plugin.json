@@ -18,6 +18,7 @@
     "websiteURL": "https://fluxcd.io/"
   },
   "license": "Apache-2.0",
+  "mcpServers": "./.mcp.json",
   "name": "gitops-skills",
   "repository": "https://github.com/fluxcd/agent-skills",
   "skills": "./skills/",

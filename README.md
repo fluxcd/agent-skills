@@ -57,7 +57,7 @@ For Claude Code, add the marketplace and install the skills with:
 
 ### Using Codex
 
-Add the FluxCD marketplace and install the plugin:
+Add the FluxCD marketplace and install the plugin with:
 
 ```shell
 codex plugin marketplace add fluxcd/agent-skills
@@ -65,6 +65,15 @@ codex plugin add gitops-skills@fluxcd
 ```
 
 Start a new Codex thread after installation so the skills are discovered.
+
+### Using GitHub Copilot
+
+For Copilot CLI, add the FluxCD marketplace and install the plugin with:
+
+```shell
+copilot plugin marketplace add fluxcd/agent-skills
+copilot plugin install gitops-skills@fluxcd
+```
 
 ## Prerequisites
 
@@ -76,6 +85,18 @@ The skills in this repository rely on the following tools being available in the
 - `flux-operator-mcp` for debugging Flux on live Kubernetes clusters (required by `gitops-cluster-debug`)
 
 A [Brewfile](https://raw.githubusercontent.com/fluxcd/agent-skills/refs/heads/main/Brewfile) is provided for easy installation of the prerequisites on macOS.
+
+## Kubernetes Ecosystem Schema Catalog MCP
+
+The skills are complemented by the [Flux Schema Catalog](https://schemas.fluxoperator.dev/) MCP server,
+which gives the agent access to JSON schemas and field indexes for
+core Kubernetes, OpenShift and a broad set of Cloud Native projects.
+The AI Agent uses it to look up the real kinds, field names, types, constraints,
+when generating or reviewing custom resources.
+
+When installing the skills as a plugin (Claude Code, Copilot or Codex), the schema MCP server is
+configured automatically. For the other installation methods, it can be added manually.
+See the [schema catalog documentation](https://schemas.fluxoperator.dev/agents/) for more details.
 
 ## Available Skills
 
