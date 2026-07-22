@@ -11,7 +11,7 @@
       "Read",
       "Write"
     ],
-    "category": "Developer Tools",
+    "category": "Development",
     "displayName": "FluxCD GitOps Skills",
     "longDescription": "Collection of reusable AI skills for Flux CD workflows, manifest generation, repository auditing, and cluster debugging.",
     "shortDescription": "Skills to transform AI Agents into GitOps Engineers",
@@ -22,5 +22,5 @@
   "name": "gitops-skills",
   "repository": "https://github.com/fluxcd/agent-skills",
   "skills": "./skills/",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

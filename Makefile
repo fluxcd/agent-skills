@@ -5,6 +5,10 @@ SCHEMAS_DIRS := skills/gitops-repo-audit/assets/schemas \
 	skills/gitops-cluster-debug/assets/schemas \
 	skills/gitops-knowledge/assets/schemas
 
+# The release version is controlled from .claude-plugin/marketplace.json
+TAG ?= latest
+VERSION := $(shell grep '"version"' .claude-plugin/marketplace.json | awk -F'"' '{print $$4}')
+
 # The skills ship greppable field indexes (.fields.txt) instead of the raw OpenAPI
 # schemas: agents grep a dotted field path instead of reading the full JSON.
 # The indexes are pre-built in the flux-schema catalog and vendored here for all
@@ -19,7 +23,7 @@ TEST_DIR := tests/gitops-repo-audit
 # validate.sh is vendored from the flux-schema action (single source of truth)
 VALIDATE_SCRIPT_URL := https://raw.githubusercontent.com/fluxcd/flux-schema/main/actions/validate/validate.sh
 
-.PHONY: help sync-schemas clean-schemas test-discover test-validate validate-skills sync-validate
+.PHONY: help sync-schemas clean-schemas test-discover test-validate validate-skills sync-validate version-set prep-release release
 
 sync-schemas: clean-schemas ## Vendor the field indexes (.fields.txt) from the flux-schema catalog
 	@tmp=$$(mktemp -d); \
@@ -63,6 +67,34 @@ sync-validate: ## Vendor validate.sh from the flux-schema action (source of trut
 		print "# Source: $(VALIDATE_SCRIPT_URL)"; \
 		next} {print}' $(VALIDATE_SCRIPT) > $(VALIDATE_SCRIPT).tmp && mv $(VALIDATE_SCRIPT).tmp $(VALIDATE_SCRIPT)
 	chmod +x $(VALIDATE_SCRIPT)
+
+version-set: ## Set the release version in the plugin manifests (make version-set TAG=x.y.z)
+	@next="$(TAG)" && \
+	current="$(VERSION)" && \
+	perl -i -pe "s/\"version\": \"\Q$$current\E\"/\"version\": \"$$next\"/g" .claude-plugin/marketplace.json && \
+	perl -i -pe "s/\"version\": \"\Q$$current\E\"/\"version\": \"$$next\"/g" .codex-plugin/plugin.json && \
+	echo "Version $$next set in plugin manifests"
+
+prep-release: ## Open a release PR bumping the version (make prep-release TAG=x.y.z, defaults to next minor)
+	@branch="$$(git rev-parse --abbrev-ref HEAD)" && \
+	if [ "$$branch" != "main" ]; then \
+		echo "Error: prep-release must be run from the main branch (current: $$branch)"; \
+		exit 1; \
+	fi && \
+	git pull origin main && \
+	next="$(TAG)" && \
+	if [ "$$next" = "latest" ]; then \
+		next="$$(echo $(VERSION) | awk -F. '{ printf "%d.%d.%d", $$1, $$2+1, 0 }')"; \
+	fi && \
+	git checkout -b prep-$$next && \
+	$(MAKE) version-set TAG=$$next && \
+	git commit -am "Release v$$next" && \
+	git push origin prep-$$next && \
+	gh pr create --title "Release v$$next" --body "Prepare for v$$next release" --base main --head prep-$$next
+
+release: ## Tag and push the current version
+	git tag -s -m "v$(VERSION)" "v$(VERSION)"
+	git push origin "v$(VERSION)"
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-20s %s\n", $$1, $$2}'

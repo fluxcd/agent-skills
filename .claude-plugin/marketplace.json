@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "AI skills for GitOps engineering with Flux CD and Kubernetes",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
@@ -14,6 +14,7 @@
       "description": "Collection of GitOps engineering skills for Flux CD knowledge, manifest generation, repository auditing, and cluster debugging",
       "source": "./",
       "strict": false,
+      "category": "Development",
       "skills": [
         "./skills/gitops-knowledge",
         "./skills/gitops-repo-audit",
