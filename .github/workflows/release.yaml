@@ -17,7 +17,7 @@ jobs:
       artifact-metadata: write
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Package skills
         env:
           TAG: ${{ github.ref_name }}
@@ -31,7 +31,7 @@ jobs:
           (cd dist && sha256sum * > checksums.txt)
           ls -la dist
       - name: Attest skill archives
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
         with:
           subject-checksums: dist/checksums.txt
       - name: Create GitHub release
