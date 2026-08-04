@@ -1,4 +1,4 @@
-# schema source: Flux Operator v0.56.0 https://github.com/controlplaneio-fluxcd/flux-operator
+# schema source: Flux Operator v0.57.0 https://github.com/controlplaneio-fluxcd/flux-operator
 apiVersion <string> enum=fluxcd.controlplane.io/v1
 kind <string> enum=ResourceSetInputProvider
 metadata.name <string> (required)
@@ -15,7 +15,7 @@ spec.filter.includeBranch <string>	# IncludeBranch specifies the regular express
 spec.filter.includeEnvironment <string>	# IncludeEnvironment specifies the regular expression to filter the environments that the input provider should include.
 spec.filter.includeTag <string>	# IncludeTag specifies the regular expression to filter the tags that the input provider should include.
 spec.filter.labels <[]string>	# Labels specifies the list of labels to filter the input provider response.
-spec.filter.limit <integer> default=100	# Limit specifies the maximum number of input sets to return. When not set, the default limit is 100.
+spec.filter.limit <integer> default=100 max=10000	# Limit specifies the maximum number of input sets to return. When not set, the default limit is 100.
 spec.filter.semver <string>	# Semver specifies a semantic version range to filter and sort the tags. If this field is not specified, the tags will be sorted in reverse alphabetical order. Supported only for tags at the moment.
 spec.insecure <boolean>	# Insecure allows connecting to an ExternalService or OCIArtifactTag provider over plain HTTP without TLS. When not set, the URL must use HTTPS.
 spec.schedule <[]object>	# Schedule defines the schedules for the input provider to run.
@@ -24,10 +24,18 @@ spec.schedule[].timeZone <string> default="UTC"	# TimeZone specifies the time zo
 spec.schedule[].window <string> default="0s" pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"	# Window defines the time window during which the execution is allowed. Defaults to 0s, meaning no window is applied.
 spec.secretRef <object>	# SecretRef specifies the Kubernetes Secret containing the credentials to access the input provider. When connecting to a Git provider, the secret must contain the keys 'username' and 'password', and the password should be a personal access token that grants read-only access to the repository. When connecting to an OCI provider, the secret must contain a Kubernetes Image Pull Secret, as if created by `kubectl create secret docker-registry`. When connecting to an ExternalService provider, the secret must contain either a 'token' key for bearer token authentication, or 'username' and 'password' keys for basic authentication.
 spec.secretRef.name <string> (required)	# Name of the referent.
+spec.selectors <[]object>	# Selectors specifies label selectors used to discover ExternalArtifact objects. Required when spec.type is 'ExternalArtifact' and must not be set otherwise.
+spec.selectors[].matchExpressions <[]object>	# matchExpressions is a list of label selector requirements. The requirements are ANDed.
+spec.selectors[].matchExpressions[].key <string> (required)	# key is the label key that the selector applies to.
+spec.selectors[].matchExpressions[].operator <string> (required)	# operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.
+spec.selectors[].matchExpressions[].values <[]string>	# values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.
+spec.selectors[].matchLabels <map[string]string>	# matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.
+spec.selectors[].name <string>	# Name selects a single ExternalArtifact by metadata.name. This field is mutually exclusive with matchLabels and matchExpressions.
+spec.selectors[].namespace <string>	# Namespace scopes ExternalArtifact discovery. When empty, ExternalArtifacts are listed in the ResourceSetInputProvider namespace. When set to "*", ExternalArtifacts are listed across all namespaces by omitting the namespace option from List(). Otherwise, ExternalArtifacts are listed only in the specified namespace.
 spec.serviceAccountName <string>	# ServiceAccountName specifies the name of the Kubernetes ServiceAccount used for authentication with AWS, Azure or GCP services through workload identity federation features. If not specified, the authentication for these cloud providers will use the ServiceAccount of the operator (or any other environment authentication configuration).
 spec.skip <object>	# Skip defines whether we need to skip input provider response updates.
 spec.skip.labels <[]string>	# Labels specifies list of labels to skip input provider response when any of the label conditions matched. When prefixed with !, input provider response will be skipped if it does not have this label.
-spec.type <string> (required) enum=Static|GitHubBranch|GitHubTag|GitHubPullRequest|GitLabBranch|GitLabTag|GitLabMergeRequest|GitLabEnvironment|AzureDevOpsBranch|AzureDevOpsTag|AzureDevOpsPullRequest|AWSCodeCommitBranch|AWSCodeCommitTag|AWSCodeCommitPullRequest|GiteaBranch|GiteaTag|GiteaPullRequest|OCIArtifactTag|ACRArtifactTag|ECRArtifactTag|GARArtifactTag|ExternalService	# Type specifies the type of the input provider.
+spec.type <string> (required) enum=Static|GitHubBranch|GitHubTag|GitHubPullRequest|GitLabBranch|GitLabTag|GitLabMergeRequest|GitLabEnvironment|AzureDevOpsBranch|AzureDevOpsTag|AzureDevOpsPullRequest|AWSCodeCommitBranch|AWSCodeCommitTag|AWSCodeCommitPullRequest|GiteaBranch|GiteaTag|GiteaPullRequest|OCIArtifactTag|ACRArtifactTag|ECRArtifactTag|GARArtifactTag|ExternalService|ExternalArtifact	# Type specifies the type of the input provider.
 spec.url <string> pattern="^((http|https|oci)://.*){0,1}$"	# URL specifies the HTTP/S or OCI address of the input provider API. When connecting to a Git provider, the URL should point to the repository address. When connecting to an OCI provider, the URL should point to the OCI repository address.
 status <object>	# ResourceSetInputProviderStatus defines the observed state of ResourceSetInputProvider.
 status.conditions <[]object>	# Conditions contains the readiness conditions of the object.
