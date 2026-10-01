@@ -48,7 +48,10 @@ Supported controllers:
   moment it finishes. Do the same for tag-triggered release workflows
   (`gh run watch <id> -R fluxcd/<repo>` in the background). Do not wait
   until "everything is pushed" to start watching — start watching the first
-  PR while you prepare the second.
+  PR while you prepare the second. Note that `gh pr checks --watch` can finish
+  early, reporting success on a set of checks that does not yet include a run
+  it just re-triggered, so restart the watch (and re-read `gh pr checks <num>`)
+  after any amend or force-push.
 - **Also start a background approval watch per PR.** `gh pr checks --watch`
   only covers CI; it does not fire on maintainer approval. Poll the review
   state in the background so you are notified the moment it flips to
@@ -60,7 +63,11 @@ Supported controllers:
     sleep 30
   done
   ```
-  Run this in the background; when it exits, merge the PR and proceed.
+  Run this in the background; when it exits, merge the PR and proceed. The
+  session's git user opens these PRs, so they cannot approve them: request a
+  review from a maintainer with
+  `gh pr edit <num> -R fluxcd/<repo> --add-reviewer <login>`, so the approval
+  watch has a reviewer to fire on.
 - Every git commit must use `-s` (sign-off). Never include Co-Authored-By
   lines, your own name, or any AI attribution in commit messages, PR titles,
   or PR descriptions. This applies to all PRs, including PRs that update this
@@ -121,9 +128,43 @@ Supported controllers:
 - Fetch before reasoning about release branches or merged PRs. Do not trust stale
   local `origin/*` refs.
 
+## Determining which controllers need a patch release
+
+Do this first, for every supported controller, before touching any of them. Compare
+the tip of each controller's **latest** release series branch against the most recent
+tag on that series. If the branch is ahead of its tag, it needs a patch release and
+the next version is the next patch increment of that tag.
+
+```shell
+for repo in helm-controller image-automation-controller image-reflector-controller \
+            kustomize-controller notification-controller source-controller source-watcher; do
+  cd ~/Documents/github.com/fluxcd/$repo
+  git fetch --all --tags --prune
+  br=$(git for-each-ref --format='%(refname:lstrip=3)' 'refs/remotes/origin/release/v*.x' | sort -V | tail -1)
+  series=${br#release/}; series=${series%.x}
+  tag=$(git tag -l "${series}.*" --sort=-v:refname | grep -v '\-' | head -1)
+  ahead=$(git rev-list --count "${tag}..origin/${br}")
+  echo "$repo  $br  latest=$tag  ahead=$ahead  next=${tag%.*}.$(( ${tag##*.} + 1 ))"
+done
+```
+
+Read the output as follows:
+
+- `ahead=0` — nothing to release for that controller; skip it.
+- `ahead>0` — the controller needs a patch release at the printed `next` version.
+- Only the **latest** series (highest `vN.M`) is an automatic patch candidate.
+  Older supported series are patched only for critical fixes, and picking one is a
+  deliberate decision — never infer it from the loop alone.
+- A series can be `ahead>0` because a release PR is already open for it. Check
+  `gh pr list -R fluxcd/<repo> --state open --base release/vX.Y.x` before starting a
+  new one, and resume that PR instead of opening a duplicate.
+- Confirm the latest tag against GitHub with
+  `gh api repos/fluxcd/<repo>/git/matching-refs/tags/v --jq '.[].ref'` — local tags and
+  refs go stale when a fetch fails, which silently hides or invents unreleased commits.
+
 ## Release Flow
 
-For each controller:
+For each controller identified above as needing a patch release:
 
 1. Refresh local state.
    - `git fetch --all --tags --prune`
@@ -164,6 +205,9 @@ For each controller:
 7. Open and merge the release PR into the release series branch.
    - Base: `release/vX.Y.x`
    - Head: `release-vX.Y.Z`
+   - Merge with a merge commit (`gh pr merge <num> -R fluxcd/<repo> --merge`),
+     not a squash: the tagged commit on the release series branch must keep
+     both signed commits and the DCO history.
 
 8. Refresh the release series branch after merge.
    - `git switch release/vX.Y.x`
@@ -177,6 +221,9 @@ For each controller:
    - `git push origin vX.Y.Z`
 
 10. Confirm the non-`api/` tag triggered the release workflow.
+    - It runs `release.yaml` on the `vX.Y.Z` tag; wait for it with
+      `gh run watch <id> -R fluxcd/<repo> --exit-status`, then confirm a
+      non-draft GitHub release was published (`gh release view vX.Y.Z`).
 
 11. Cherry-pick only the changelog commit back to `main`.
    - `git switch main`
