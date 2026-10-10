@@ -263,10 +263,18 @@ kustomize-controller, image-automation-controller, and source-watcher). This is 
 separate follow-up PR per dependent repo, not part of the 11 release steps above.
 
 - Branch from the dependent repo's `main` (which may already carry an earlier
-  bump from the same release round), then
-  `go get github.com/fluxcd/<controller>/api@vX.Y.0` followed by `go mod tidy`.
-- The bump is usually **`go.mod` + `go.sum` only**. Mirror an existing sibling PR
-  from the same round for the exact title/body/commit shape.
+  bump from the same release round).
+- The dependency may be imported by **both** modules of a multi-module repo: the
+  root `go.mod` and the repo's own `api/go.mod`. These are separate Go modules and
+  must be bumped independently — a single `go get` at the root does **not** update
+  `api/go.mod`. For each module that actually imports the dependency, run
+  `go get github.com/fluxcd/<controller>/api@vX.Y.0` followed by `go mod tidy`
+  **in that module's directory** (root, then `cd api && …`). Check first and skip
+  a module that does not import it.
+- The bump is `go.mod` + `go.sum` — and also `api/go.mod` + `api/go.sum` when the
+  `api` module imports the dependency. Leaving `api/go.mod` stale is a common
+  miss. Mirror an existing sibling PR from the same round for the exact
+  title/body/commit shape.
 - **But check whether the dependent repo pins the dependency's published release
   manifests** in `config/default/kustomization.yaml` (remote
   `…/releases/download/vX.Y.Z/<controller>.crds.yaml` and `.deployment.yaml`
