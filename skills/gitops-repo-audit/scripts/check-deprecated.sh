@@ -100,8 +100,14 @@ check_deprecated() {
   # Match the versioned-arrow shape ('vX... -> vY...') rather than any bare
   # '✚' or '->' so unrelated arrows in flux output can't cause a false positive.
   local output
-  output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)" || true
+  local status=0
+  output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)" || status=$?
   echo "$output"
+
+  if [[ $status -ne 0 ]]; then
+    echo "ERROR - Flux API migration check failed (exit ${status})" >&2
+    return "$status"
+  fi
 
   if echo "$output" | grep -qE " v[0-9][a-zA-Z0-9]* -> v[0-9]"; then
     echo "ERROR - deprecated Flux API versions found" >&2
