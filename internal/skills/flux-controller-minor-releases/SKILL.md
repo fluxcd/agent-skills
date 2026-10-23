@@ -25,6 +25,29 @@ Supported controllers:
 - `source-controller`
 - `source-watcher`
 
+## Release order across controllers
+
+A controller is released when its tag-triggered release workflow has finished.
+Release in this order. Do not start a controller's release before everything it
+depends on is released **and** bumped (see "Bumping the API in dependent
+controllers").
+
+**Wave 1** — no Flux controller dependencies, any order:
+- `source-controller`
+- `notification-controller`
+- `image-reflector-controller`
+
+**Wave 2** — only after Wave 1 is released and the bump PRs are merged:
+- `helm-controller` — needs `source-controller`
+- `kustomize-controller` — needs `source-controller`
+- `source-watcher` — needs `source-controller`
+- `image-automation-controller` — needs `source-controller` and
+  `image-reflector-controller`
+
+**Hard rule:** a Wave 2 controller's `release/vX.Y.x` branch (step 1) must be cut
+from a `main` that already contains the bump. If it does not, stop and land the
+bump PR first — a release cut without the bump is out of order.
+
 ## Important rules
 
 - **Strictly follow the documented git commands, one step at a time.** Each step
@@ -99,7 +122,9 @@ Supported controllers:
 
 For the controller being released (target version `vX.Y.0`):
 
-1. Create the release series branch from `main` and push it.
+1. Create the release series branch from `main` and push it. `main` must already
+   contain every API bump this controller needs (see "Release order across
+   controllers").
    - `git switch -c release/vX.Y.x main`
    - `git push origin release/vX.Y.x`
 
@@ -245,6 +270,10 @@ Do not reduce a dependency bump to a generic line without checking its substance
   `v(X).(Y-1).0..release/vX.Y.x` or reasoning about merged PRs.
 - The release series branch (step 1) is cut from `main`; the prep branch (step 2)
   is cut from `release/vX.Y.x`.
+- Follow the release order: source-controller, notification-controller, and
+  image-reflector-controller first; then helm-controller, kustomize-controller,
+  source-watcher, and image-automation-controller. Never release a Wave 2
+  controller before its dependency is released and its API bump is merged.
 - Pull the release series branch again after merging the release PR and before
   tagging. Tag from the series-branch merge commit, not from the prep branch.
 - Push `api/vX.Y.0` before `vX.Y.0`.
@@ -256,11 +285,14 @@ Do not reduce a dependency bump to a generic line without checking its substance
 
 ## Bumping the API in dependent controllers
 
-After a controller minor ships, its API module often needs bumping in the
-controllers that depend on it (e.g. `image-reflector-controller/api` in
-image-automation-controller, or `source-controller/api` in helm-controller,
-kustomize-controller, image-automation-controller, and source-watcher). This is a
-separate follow-up PR per dependent repo, not part of the 11 release steps above.
+After a controller minor ships, its API module must be bumped in every controller
+that depends on it before that controller's own release starts (e.g.
+`image-reflector-controller/api` in image-automation-controller, or
+`source-controller/api` in helm-controller, kustomize-controller,
+image-automation-controller, and source-watcher). This is a separate PR per
+dependent repo, run between release waves. It is not one of the 11 release steps
+above, but it is **not** a post-release follow-up: the dependent's release is
+blocked until the bump is merged.
 
 - Branch from the dependent repo's `main` (which may already carry an earlier
   bump from the same release round).
