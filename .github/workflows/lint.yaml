@@ -29,3 +29,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - name: Check scripts
         run: shellcheck skills/gitops-repo-audit/scripts/*.sh
+      - name: Test deprecated API scan outcomes
+        run: make test-check-deprecated

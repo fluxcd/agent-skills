@@ -77,7 +77,12 @@ Check for deprecated Flux API versions.
    ```
    The script runs `flux migrate -f . --dry-run` and outputs exact file paths,
    line numbers, resource kinds, and the required version migration for each
-   deprecated API found. Exit code 1 means deprecated APIs were found.
+   deprecated API found. A completed scan with findings returns exit code 1 and
+   reports `deprecated Flux API versions found`. If the scan fails, the script
+   preserves the Flux failure status, reports `Flux API scan failed`, and includes
+   the command's output. Prerequisite errors also return nonzero. Treat an
+   incomplete scan as an audit failure even if it printed some migration findings;
+   do not infer a clean result or classify it from the exit code alone.
    
 2. If deprecated APIs are found, read [api-migration.md](references/api-migration.md) for the
    migration procedure and include the steps in the report.

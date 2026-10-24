@@ -5,7 +5,8 @@
 
 # This script checks for deprecated Flux API versions in a directory using the
 # flux CLI's migrate command in dry-run mode. It reports the exact resources and
-# the versions they should migrate to; exit code 1 means deprecated APIs found.
+# the versions they should migrate to. A completed scan with deprecated APIs
+# returns 1; an incomplete scan preserves the Flux failure status and diagnostic.
 
 # Prerequisites
 # - flux (https://fluxcd.io/flux/installation/)
@@ -99,11 +100,17 @@ check_deprecated() {
   #   ✚ infrastructure/nginx.yaml:11: HelmRelease v2beta2 -> v2
   # Match the versioned-arrow shape ('vX... -> vY...') rather than any bare
   # '✚' or '->' so unrelated arrows in flux output can't cause a false positive.
-  local output
-  output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)" || true
-  echo "$output"
+  local output status
+  if output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)"; then
+    echo "$output"
+  else
+    status=$?
+    echo "$output"
+    echo "ERROR - Flux API scan failed" >&2
+    return "$status"
+  fi
 
-  if echo "$output" | grep -qE " v[0-9][a-zA-Z0-9]* -> v[0-9]"; then
+  if grep -qE " v[0-9][a-zA-Z0-9]* -> v[0-9]" <<< "$output"; then
     echo "ERROR - deprecated Flux API versions found" >&2
     return 1
   fi

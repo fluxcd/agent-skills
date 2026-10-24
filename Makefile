@@ -23,7 +23,7 @@ TEST_DIR := tests/gitops-repo-audit
 # validate.sh is vendored from the flux-schema action (single source of truth)
 VALIDATE_SCRIPT_URL := https://raw.githubusercontent.com/fluxcd/flux-schema/main/actions/validate/validate.sh
 
-.PHONY: help sync-schemas clean-schemas test-discover test-validate validate-skills sync-validate version-set prep-release release
+.PHONY: help sync-schemas clean-schemas test-discover test-validate test-check-deprecated validate-skills sync-validate version-set prep-release release
 
 sync-schemas: clean-schemas ## Vendor the field indexes (.fields.txt) from the flux-schema catalog
 	@tmp=$$(mktemp -d); \
@@ -56,6 +56,9 @@ test-validate: ## Run validation script on the test fixtures
 	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/monorepo-structure
 	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/multi-repo-structure
 	$(VALIDATE_SCRIPT) -d $(TEST_DIR)/image-automation
+
+test-check-deprecated: ## Test deprecated API scan outcomes and failure propagation
+	bash skills/gitops-repo-audit/scripts/check-deprecated.test.sh
 
 validate-skills: ## Validate skill packaging against the Agent Skills spec
 	gh skill publish --dry-run
