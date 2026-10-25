@@ -116,8 +116,8 @@ Supported controllers:
   external: CI still running, a PR awaiting a maintainer's approval, a release
   workflow in flight. When one of those clears, act on it immediately instead
   of asking whether to continue.
-- PRs opened by this procedure use the commit subject as the PR title and an
-  empty body.
+- PRs opened by this procedure use the release commit subject (`Release vX.Y.Z`)
+  as the PR title and an empty body — never the changelog commit subject.
 
 ## Preconditions
 
