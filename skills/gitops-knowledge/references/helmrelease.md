@@ -93,11 +93,38 @@ spec:
     namespace: cert-manager  # optional, for cross-namespace
 ```
 
-These are **mutually exclusive** — use one or the other, never both.
+**Option C — `spec.chart` with `kind: OCIRepository`** (Flux 2.10+, auto-creates an OCIRepository):
+```yaml
+spec:
+  interval: 10m
+  chart:
+    kind: OCIRepository      # default is HelmChart (Option A)
+    spec:                    # inline OCIRepository spec
+      interval: 10m          # defaults to .spec.interval
+      url: oci://ghcr.io/stefanprodan/charts/podinfo
+      ref:
+        semver: ">= 6.0.0"   # pick the version here, not in chart.spec.version
+  values:
+    replicaCount: 2
+```
+
+`chart.spec` takes the OCIRepository fields (`url` (required), `ref`, `layerSelector`, `verify`,
+`provider`, `secretRef`, `certSecretRef`, `serviceAccountName`, `interval`). The HelmChart-only
+fields are rejected: `chart`, `sourceRef`, `version` (other than `*`), `reconcileStrategy` (other than `ChartVersion`),
+`valuesFiles`, `ignoreMissingValuesFiles`. `layerSelector` defaults to the Helm chart layer
+(`application/vnd.cncf.helm.chart.content.v1.tar+gzip`, `copy`). The controller creates the
+OCIRepository in the HelmRelease namespace, named `<namespace>-<name>`, and reports it in
+`.status.helmChart` as `OCIRepository/<namespace>/<name>`.
+
+`spec.chart` (Options A and C) and `spec.chartRef` (Option B) are **mutually exclusive** — use one or the other, never both.
 
 **When to use which:**
 - `chart.spec` with HelmRepository: Traditional HTTPS Helm repos (e.g., Bitnami)
-- `chartRef` with OCIRepository: OCI registries (recommended — supports Cosign verification)
+- `chartRef` with OCIRepository: OCI registries (recommended — supports Cosign verification); the
+  OCIRepository can be shared by several HelmReleases
+- `chart.kind: OCIRepository`: OCI chart owned by one HelmRelease — the chart version (`ref`) and
+  `values` change in one atomic edit, avoiding upgrade failures from values that don't match the new
+  chart; requires Flux 2.10+
 - `chart.spec` with GitRepository: Charts stored alongside application code
 
 ## Key Spec Fields
@@ -308,7 +335,7 @@ Control how Helm manages CRDs:
 
 | Value | Install | Upgrade | Description |
 |-------|---------|---------|-------------|
-| `Create` | Install CRDs | Skip CRDs | Default — create on install, leave on upgrade |
+| `Create` | Install CRDs | Create new CRDs only | Default for install and upgrade — create missing CRDs, never update existing ones |
 | `Skip` | Skip CRDs | Skip CRDs | Never touch CRDs (manage separately) |
 | `CreateReplace` | Install CRDs | Replace CRDs | Create and update CRDs (use with caution) |
 

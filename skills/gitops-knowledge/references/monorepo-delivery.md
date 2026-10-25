@@ -45,8 +45,8 @@ as they are created, updated or deleted.
 
 ## Prerequisites
 
-Flux **v2.9.0 or later** with the `source-watcher` component enabled on the `FluxInstance`
-(see `references/flux-operator.md` for the full spec):
+Flux **v2.9.0 or later** (v2.10.0+ for cross-namespace artifacts and managed tenant namespaces) with
+the `source-watcher` component enabled on the `FluxInstance` (see `references/flux-operator.md`):
 
 ```yaml
 spec:
@@ -569,6 +569,57 @@ ExternalArtifacts or reconciliation fails with a forbidden error. Pair this with
 same tenant identity. Note the production layout above uses `multitenant: false` for its
 cross-namespace references; a locked-down variant keeps each tenant's artifacts, provider and
 ResourceSet in the tenant namespace.
+
+### Cross-Namespace Artifacts and Tenant Namespaces (Flux 2.10+)
+
+source-watcher v2.3 (Flux 2.10) lets one ArtifactGenerator in a shared namespace publish each
+tenant's `ExternalArtifact` into the tenant's namespace, and optionally create the namespaces:
+
+```yaml
+apiVersion: source.extensions.fluxcd.io/v1beta1
+kind: ArtifactGenerator
+metadata:
+  name: tenants
+  namespace: flux-system
+spec:
+  serviceAccountName: tenant-artifacts      # authorizes the work via SubjectAccessReview
+  managedNamespaces:                        # opt-in namespace provisioning
+    allowedNames:
+      - "ns.startsWith('tenant-')"          # CEL over `ns`; default/kube-*/flux-system always rejected
+    prune: true                             # deletes the WHOLE namespace when the dir is removed
+  sources:
+    - alias: repo
+      kind: GitRepository
+      name: my-monorepo
+  pathPattern: "@repo/tenants/{tenant}"
+  artifacts:
+    - name: "{tenant}"
+      namespace: "{tenant}"                 # captures are lowercased; must be a valid namespace
+      copy:
+        - from: "@repo/tenants/{tenant}/**"
+          to: "@artifact/"
+```
+
+- `artifacts[].namespace` targets another namespace. The controller checks with
+  SubjectAccessReview that `spec.serviceAccountName` (resolved in the generator's namespace) may
+  `get`/`list`/`create`/`patch`/`delete` `externalartifacts` (and `patch` `externalartifacts/status`)
+  in every target namespace, then acts with its own credentials — no impersonation RBAC.
+- Without `serviceAccountName`, in-namespace artifacts use the controller's credentials;
+  cross-namespace ones use the `--default-service-account` flag's SA (or the controller's when
+  unset). On multi-tenant clusters set `--default-service-account` on source-watcher.
+- `managedNamespaces` requires `serviceAccountName` or `--default-service-account`. Both that
+  authorizing ServiceAccount (checked via SubjectAccessReview) and the `flux-system/source-watcher`
+  ServiceAccount need a ClusterRole with `get`/`create`/`patch`/`delete` on `namespaces` (not granted
+  by default; namespace verbs are cluster-scoped). Existing namespaces are adopted. Namespace metadata
+  comes from `commonMetadata`, then `managedNamespaces.metadata.fromSource` (a `NamespaceMetadata`
+  file in the repo, filtered by `allowedLabels`/`allowedAnnotations` CEL over `value`), then
+  `metadata.from[]` (`strategy: Reset|Override|Merge`, `namespace: <name>|*`). Protect a namespace
+  from pruning with the `source.extensions.fluxcd.io/prune: Disabled` annotation.
+- Only enable `prune` when the generator fully owns the namespaces; it wipes anything else in them.
+
+Other source-watcher v2.3 additions: `copy[].optional: true` skips copy operations that match no
+files instead of failing, and the `source.extensions.fluxcd.io/reconcileEvery: 10m` annotation
+sets the generator's reconcile interval.
 
 ## Operations
 

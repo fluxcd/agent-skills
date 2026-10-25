@@ -54,10 +54,11 @@ parse_args() {
   done
 }
 
-# Minimum Flux CLI version that provides the 'flux migrate' subcommand used
-# below. Older clients silently lack it, which would otherwise be reported as
-# "No deprecated Flux API versions found" (a false negative).
-readonly MIN_FLUX_VERSION="2.9.0"
+# Minimum Flux CLI version whose 'flux migrate' knows the latest Flux APIs.
+# Older clients don't flag notification.toolkit.fluxcd.io/v1beta3 (deprecated
+# in Flux 2.10), which would be reported as "No deprecated Flux API versions
+# found" (a false negative).
+readonly MIN_FLUX_VERSION="2.10.0"
 
 # Return 0 if semver $1 is >= $2. Compares the numeric major.minor.patch
 # fields; inputs are validated x.y.z strings, so no external tools are needed.

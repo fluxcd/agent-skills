@@ -6,6 +6,11 @@ ResourceSet generates Kubernetes resources from a matrix of input values using a
 approach. It is the primary mechanism for multi-tenant orchestration, fleet management, and
 self-service platforms.
 
+For monorepos where each tenant is a directory, Flux 2.10 also lets an ArtifactGenerator publish
+per-tenant `ExternalArtifact`s into tenant namespaces and provision those namespaces
+(`spec.managedNamespaces`); an `ExternalArtifact` provider then feeds the ResourceSet. See
+`references/monorepo-delivery.md` (Cross-Namespace Artifacts and Tenant Namespaces).
+
 **Contents:** [Canonical YAML](#canonical-yaml) | [Key Spec Fields](#key-spec-fields) | [Template Syntax](#template-syntax) | [Testing ResourceSets Locally](#testing-resourcesets-locally) | [Input Strategies](#input-strategies) | [Dependencies](#dependencies) | [Step-Based Reconciliation](#step-based-reconciliation) (Jobs before/after a deploy) | [Advanced Features](#advanced-features) (annotations, `copyFrom`, `checksumFrom`) | [Built-in Input Fields](#built-in-input-fields) | [ResourceSetInputProvider](#resourcesetinputprovider) | [Use Cases](#use-cases)
 
 ## Canonical YAML

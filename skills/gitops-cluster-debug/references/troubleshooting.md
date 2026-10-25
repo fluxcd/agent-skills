@@ -31,6 +31,30 @@ Common failure patterns and debugging procedures for Flux on Kubernetes clusters
 - OOMKilled (increase memory limits in FluxInstance kustomize patches)
 - Incompatible CRD version (controller binary doesn't match installed CRDs)
 - Corrupt cache or storage (delete the pod to force fresh start)
+- Unsupported Kubernetes version (Flux 2.10 requires Kubernetes 1.35 or later)
+
+### Object identity credentials fail (Flux 2.10+)
+
+**Symptoms**: Sources, Providers, image or applier objects with `.spec.serviceAccountName` fail auth
+(cloud `.spec.provider`, `generic` with `credential.auth.fluxcd.io/*` ServiceAccount annotations, or
+`kubeConfig.configMapRef`) — typically right after upgrading to 2.10; errors mention `serviceaccounts/token` or forbidden.
+
+**Common causes**:
+- **Missing token RBAC**: Flux 2.10 default RBAC no longer grants `create` on `serviceaccounts/token`. Bind a ClusterRole with that permission to the controller ServiceAccounts (or set FluxInstance `.spec.cluster.objectIdentityRBAC: true`).
+- **Incomplete annotations**: `generic` ServiceAccount tokens need both `credential.auth.fluxcd.io/provider: kubernetes` and `credential.auth.fluxcd.io/type: jwt`; one without the other is an error, and they can't be combined with `imagePullSecrets`.
+- **Lockdown default SA**: With the object identity lockdown (`--default-service-account`, `multitenantObjectIdentity`), objects without `serviceAccountName` use the tenant's default SA, not the controller identity.
+- **`spiffe` provider**: Requires the SPIFFE Workload API socket plus `--spiffe-broker-endpoint` and `--spiffe-broker-id` flags on the controller.
+
+### Inter-controller mTLS failures (SPIFFE, Flux 2.10+)
+
+**Symptoms**: Kustomizations/HelmReleases fail to fetch artifacts while the source is `Ready`, or
+events stop reaching notification-controller, after `--authorized-*-spiffe-id` flags were added.
+
+**Diagnosis**: mTLS is enabled per traffic type by the presence of a flag, on both sides. Check that the
+peer's flag is also set (e.g. `--authorized-artifact-client-spiffe-id` on source-controller pairs with
+`--authorized-artifact-server-spiffe-id` on kustomize/helm-controller), that each flag holds the **peer's** SPIFFE ID
+exactly as issued by the SPIFFE runtime, that `SPIFFE_ENDPOINT_SOCKET` and the socket mount exist on every
+controller, and that the Services expose port 443 (`https`).
 
 ## Source Failures
 
@@ -169,6 +193,12 @@ notification-controller logs, not object status.
 - **Event filtered**: Alert `.spec.eventSeverity: error` drops info events; `.spec.eventSources` doesn't match the resource kind/name/namespace producing the event.
 - **Provider auth/address error**: Wrong or expired token in the `secretRef`, wrong webhook `address` — look for HTTP 401/404/timeout errors in controller logs.
 - **Wrong provider type**: `.spec.type` doesn't match the receiving service's expected payload format.
+- **Secret keys rejected after upgrading to Flux 2.10** (applies to `v1beta3` objects too, the controller reads `v1`):
+  - a `proxy` key in the `secretRef` Secret is rejected — move it to a Secret referenced by `.spec.proxySecretRef`;
+  - commit status Providers (`github`, `gitlab`, `gitea`, `bitbucket`, `bitbucketserver`, `azuredevops`) fail when the `secretRef` Secret holds TLS data and `.spec.certSecretRef` is unset;
+  - `azureeventhub` fails when its Secret has a `token` key (static JWT auth removed; use SAS `address` or object identity);
+  - `bitbucket` rejects `<username>:<app-password>` tokens — use a Bitbucket Cloud API token.
+- **Alert summary or Provider proxy gone after upgrade**: `v1` dropped Alert `.spec.summary` and Provider `.spec.proxy`/`.spec.interval`; the API server drops them when objects are served or written at the `v1` storage version, with no error. Restore with `.spec.eventMetadata.summary` and `.spec.proxySecretRef`. Warnings like `v1beta3 Alert is deprecated, upgrade to v1` mean manifests in Git still use `v1beta3` — run `flux migrate -f .`.
 
 ### Receiver not triggering
 

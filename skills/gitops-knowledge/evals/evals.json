@@ -46,11 +46,11 @@
     {
       "id": 3,
       "prompt": "Set up Flux notifications for our production cluster. I need: (1) Slack alerts for all errors across all Kustomizations and HelmReleases, (2) GitHub commit status updates on our repo https://github.com/acme-corp/infra for the 'infra' Kustomization so we can see deploy status on commits, (3) a GitHub webhook Receiver that triggers immediate reconciliation of the 'infra' Kustomization on push events. Give me the Provider, Alert, Receiver, and Secret manifests for all three.",
-      "expected_output": "Two Providers (one Slack type, one GitHub type), two Alerts using notification.toolkit.fluxcd.io/v1beta3, and a Receiver using notification.toolkit.fluxcd.io/v1. Slack provider uses secretRef for webhook URL. GitHub provider uses address field for repo URL. Receiver type is 'github' with a secretRef for webhook validation.",
+      "expected_output": "Two Providers (one Slack type, one GitHub type), two Alerts, all using notification.toolkit.fluxcd.io/v1, and a Receiver using notification.toolkit.fluxcd.io/v1. Slack provider uses secretRef for webhook URL. GitHub provider uses address field for repo URL. Receiver type is 'github' with a secretRef for webhook validation.",
       "files": [],
       "expectations": [
-        "All Provider resources use apiVersion notification.toolkit.fluxcd.io/v1beta3 (not v1 or v1beta2)",
-        "All Alert resources use apiVersion notification.toolkit.fluxcd.io/v1beta3 (not v1 or v1beta2)",
+        "All Provider resources use apiVersion notification.toolkit.fluxcd.io/v1 (not the deprecated v1beta3 or v1beta2)",
+        "All Alert resources use apiVersion notification.toolkit.fluxcd.io/v1 (not the deprecated v1beta3 or v1beta2)",
         "The Slack Provider spec.type is 'slack' (not 'Slack')",
         "The Slack Provider has a secretRef pointing to a Secret",
         "The Slack Secret has a 'token' key in stringData for the bot token",
@@ -155,10 +155,10 @@
       "expected_output": "An OCIRepository (source.toolkit.fluxcd.io/v1) for the chart with layerSelector for the Helm media type and verify.provider cosign plus verify.trustedRootSecretRef pointing at 'sigstore-trusted-root'. A HelmRelease (helm.toolkit.fluxcd.io/v2) using chartRef, waitStrategy.name 'poller', postRenderStrategy 'nohooks', a postRenderers kustomize patch for the sidecar, and a valuesFrom entry referencing the 'podinfo-config' ConfigMap with valuesKey 'allowedHosts', targetPath config.allowedHosts, and literal: true. A second OCIRepository plus a Kustomization (kustomize.toolkit.fluxcd.io/v1) into the 'platform' namespace with spec.ignore excluding /spec/replicas on the Deployment and spec.prune set.",
       "files": [],
       "expectations": [
-        "The chart OCIRepository uses apiVersion source.toolkit.fluxcd.io/v1 with url starting oci:// and a Helm chart layerSelector (mediaType 'application/vnd.cncf.helm.chart.content.v1.tar+gzip', operation 'copy')",
+        "The chart source is an OCIRepository with url starting oci:// that selects the Helm chart layer: either a source.toolkit.fluxcd.io/v1 OCIRepository with layerSelector (mediaType 'application/vnd.cncf.helm.chart.content.v1.tar+gzip', operation 'copy'), or a HelmRelease spec.chart.kind: OCIRepository template (Flux 2.10+), where that layerSelector is the default",
         "The chart OCIRepository spec.verify.provider is 'cosign'",
         "The chart OCIRepository spec.verify.trustedRootSecretRef.name is 'sigstore-trusted-root' (custom Sigstore root for air-gapped keyless verification)",
-        "The HelmRelease uses apiVersion helm.toolkit.fluxcd.io/v2 and references the chart via spec.chartRef (not spec.chart.spec)",
+        "The HelmRelease uses apiVersion helm.toolkit.fluxcd.io/v2 and sources the chart from the OCIRepository, via spec.chartRef or spec.chart.kind: OCIRepository (not a HelmChart generated from chart.spec.sourceRef)",
         "The HelmRelease spec.waitStrategy.name is 'poller' (not 'legacy')",
         "The HelmRelease spec.postRenderStrategy is 'nohooks' (so hooks are not sent to post-renderers)",
         "The HelmRelease spec.postRenderers contains a kustomize patch injecting the Istio sidecar",
@@ -264,6 +264,26 @@
         "Every app has envs/test, envs/staging and envs/prod overlays and every infra component has envs/dev and envs/prod overlays, each referencing ../../base",
         "Every kustomization.yaml directory under the tree builds successfully with kustomize (LoadRestrictionsNone) and the rendered output passes flux schema validate after variable substitution",
         "The report states that kustomize builds and schema validation were run as verification"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "We just upgraded to Flux 2.10. Give me the manifests for three things: (1) deploy podinfo from oci://ghcr.io/stefanprodan/charts/podinfo (semver >=6.0.0) into the apps namespace as a single HelmRelease that manages its own chart source, I don't want a separate OCIRepository object to maintain; (2) send Flux errors and recoveries for all HelmReleases and Kustomizations in flux-system to our incident.io HTTP alert source (config id 01JABCDEF) so incidents open and auto-resolve; (3) a GitRepository for https://github.com/acme-corp/fleet that authenticates with our GitHub App using its client ID Iv23liABCDEF and installation owner acme-corp, we don't want to use the numeric app ID.",
+      "expected_output": "A HelmRelease (helm.toolkit.fluxcd.io/v2) with spec.chart.kind: OCIRepository and an inline OCIRepository spec (url, ref.semver), no separate OCIRepository and no chartRef. A Provider and Alert in notification.toolkit.fluxcd.io/v1 with type incident.io, a Secret with address and token, and eventSeverity info so resolved events are sent. A GitRepository with provider: github and a Secret using githubAppClientID, githubAppInstallationOwner and githubAppPrivateKey, without githubAppID.",
+      "files": [],
+      "expectations": [
+        "The HelmRelease uses apiVersion helm.toolkit.fluxcd.io/v2 and sets spec.chart.kind: OCIRepository",
+        "The HelmRelease spec.chart.spec.url is oci://ghcr.io/stefanprodan/charts/podinfo",
+        "The HelmRelease spec.chart.spec.ref.semver selects versions >=6.0.0 (equivalent semver ranges are acceptable)",
+        "No standalone OCIRepository object and no spec.chartRef are used for podinfo, and spec.chart.spec does not set chart, sourceRef or version",
+        "The Provider uses apiVersion notification.toolkit.fluxcd.io/v1 with spec.type: incident.io",
+        "The incident.io Provider references a Secret holding both an address (https://api.incident.io/v2/alert_events/http/01JABCDEF) and a token",
+        "The Alert uses apiVersion notification.toolkit.fluxcd.io/v1 and does not set the removed spec.summary field",
+        "The Alert uses eventSeverity: info (or omits it, which defaults to info), not error, so recovery events resolve the incident",
+        "The Alert eventSources include HelmRelease and Kustomization with name '*'",
+        "The GitRepository uses apiVersion source.toolkit.fluxcd.io/v1 with spec.provider: github and a secretRef",
+        "The GitHub App Secret sets githubAppClientID: Iv23liABCDEF, githubAppInstallationOwner: acme-corp and githubAppPrivateKey",
+        "The GitHub App Secret does not set githubAppID (exactly one of githubAppID or githubAppClientID is allowed)"
       ]
     }
   ]

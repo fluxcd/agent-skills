@@ -45,6 +45,7 @@ spec:
 | `interval` | duration | yes | Scan interval |
 | `provider` | string | no | Registry auth provider: `generic` (default), `aws`, `azure`, `gcp` |
 | `secretRef.name` | string | no | Secret of type `kubernetes.io/dockerconfigjson` for auth |
+| `serviceAccountName` | string | no | ServiceAccount for object identity (cloud providers) or its `imagePullSecrets`; with `generic`, a ServiceAccount token (see below) |
 | `exclusionList` | array | no | Regex patterns — matching tags are excluded from results |
 | `insecure` | bool | no | Allow HTTP (non-TLS) connections |
 | `suspend` | bool | no | Pause scanning |
@@ -53,7 +54,27 @@ spec:
 - `aws` — uses IRSA/pod identity for ECR authentication
 - `azure` — uses workload identity for ACR authentication
 - `gcp` — uses workload identity for GAR/GCR authentication
-- `generic` — uses `secretRef` with dockerconfigjson
+- `generic` — uses `secretRef` with dockerconfigjson, or (Flux 2.10+) a Kubernetes
+  ServiceAccount token for registries that trust the cluster's OIDC issuer:
+
+```yaml
+spec:
+  provider: generic
+  serviceAccountName: registry-puller
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: registry-puller
+  annotations:
+    credential.auth.fluxcd.io/provider: kubernetes   # required together with type
+    credential.auth.fluxcd.io/type: jwt
+    credential.auth.fluxcd.io/audiences: registry.example.com  # optional, defaults to the registry host
+    credential.auth.fluxcd.io/username: flux         # optional, switches Bearer to Basic auth
+```
+
+The annotations can't be combined with `imagePullSecrets`, and since Flux 2.10 the controller
+needs a ClusterRole granting `create` on `serviceaccounts/token` (no longer in the default RBAC).
 
 ## ImagePolicy
 
@@ -210,6 +231,7 @@ spec:
 | `git.commit.messageTemplate` | string | no | Go template for commit message |
 | `git.commit.signingKey.secretRef.name` | string | no | Secret with an OpenPGP or SSH key to sign the commit |
 | `git.push.branch` | string | no | Branch to push to (enables PR workflow) |
+| `policyChangeDelay` | duration | no | Wait after an ImagePolicy change so close updates land in one commit (Flux 2.10+) |
 | `update.path` | string | no | Directory to scan for image markers (default: repository root) |
 | `update.strategy` | string | no | `Setters` (default) |
 | `suspend` | bool | no | Pause automation |
@@ -227,6 +249,13 @@ spec:
 
 This creates/updates a branch with the image changes. Set up a CI workflow or
 manual process to create PRs from this branch and merge into main.
+
+### Batching Updates
+
+`spec.policyChangeDelay` (e.g. `2m`, CLI: `flux create image update --policy-change-delay=2m`)
+delays the run triggered by an ImagePolicy change, so images released together go into one
+commit. The delay starts at the first change and isn't extended by later ones; interval, spec,
+source and manual reconciles run immediately and replace the pending run.
 
 ### Signed Commits
 
@@ -259,6 +288,20 @@ Available template data:
 - `.Changed.Objects` — map of resource to changes
 - `.Changed.Objects[].OldValue` — previous image reference
 - `.Changed.Objects[].NewValue` — new image reference
+- `.Changed.Summary` — one line per change, sorted and deduplicated, e.g.
+  `ghcr.io/org/app tag 1.2.0 -> 1.2.1` (Flux 2.10+)
+
+```yaml
+spec:
+  git:
+    commit:
+      messageTemplate: |
+        Update container images
+
+        {{ .Changed.Summary }}
+```
+
+For a bulleted list: `{{ with .Changed.Summary }}{{ . | replace "\n" "\n- " | printf "- %s" }}{{ end }}`.
 
 ## Image Policy Markers
 

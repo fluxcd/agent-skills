@@ -121,6 +121,8 @@ component, which must be listed in the FluxInstance `.spec.components` (it is no
   - `.copy[].to` — Destination path using `@artifact/path/` syntax
 - `.spec.pathPattern` — `@<alias>/<pattern>` directory-discovery pattern with named captures (e.g. `@monorepo/apps/{app}/envs/{env}`); one ExternalArtifact is generated per matching directory and the captures template `artifacts[].name` and `copy` paths. The captured values are set as **labels** on each generated ExternalArtifact
 - `.spec.commonMetadata.labels` / `.annotations` — Applied to every generated ExternalArtifact (used as `ResourceSetInputProvider` selector keys)
+- `.spec.artifacts[].namespace` (Flux 2.10+) — Generate the ExternalArtifact in another namespace (can use `pathPattern` captures). Requires `.spec.serviceAccountName` (or source-watcher `--default-service-account`) with RBAC on `externalartifacts` in each target namespace, checked via SubjectAccessReview
+- `.spec.managedNamespaces` (Flux 2.10+) — Tenant namespace provisioning: `allowedNames` (CEL over `ns`; `default`, `kube-system`, `kube-public`, `flux-system` always rejected), `prune`, optional `metadata`. Both the authorizing ServiceAccount (SubjectAccessReview) and the source-watcher ServiceAccount need a ClusterRole for `namespaces` get/create/patch/delete (not granted by default)
 
 **Patterns:**
 - Monorepo decomposition — split one GitRepository into multiple ExternalArtifacts for independent reconciliation. E.g., separate `infrastructure/**` and `apps/**` into independent artifacts so infra changes don't trigger app reconciliation.
@@ -169,6 +171,7 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 
 **Key fields:**
 - `.spec.chart.spec` — Inline chart template (chart, version, sourceRef, interval) — creates a HelmChart automatically
+- `.spec.chart.kind: OCIRepository` (Flux 2.10+) — `.spec.chart.spec` holds an inline OCIRepository spec (`url`, `ref.semver`/`ref.tag`, `layerSelector`, `verify`, `provider`); the controller creates `<hr-namespace>-<hr-name>` OCIRepository. `chart`, `sourceRef`, `version` (other than `*`), `reconcileStrategy` (other than `ChartVersion`), `valuesFiles`, `ignoreMissingValuesFiles` are rejected with this kind
 - `.spec.chartRef` — Direct reference to OCIRepository or HelmChart (preferred for OCI)
 - `.spec.releaseName` — Helm release name
 - `.spec.interval` — Reconciliation interval
@@ -187,26 +190,32 @@ Manages Helm chart releases with install, upgrade, test, rollback, and drift det
 - `.spec.postRenderers[]` — Post-rendering with Kustomize patches
 
 **Patterns:**
-- Use `.spec.chartRef` with OCIRepository for OCI charts.
+- Use `.spec.chartRef` with a shared OCIRepository for OCI charts, or `.spec.chart.kind: OCIRepository` when the chart version and values must change atomically in one edit (source is not shareable).
 - Enable `driftDetection.mode: enabled` in production.
 
 ## Notification API
 
-### Provider (`notification.toolkit.fluxcd.io/v1beta3`)
+### Provider (`notification.toolkit.fluxcd.io/v1`)
 
-Field index: assets/schemas/provider-notification-v1beta3.fields.txt
+Field index: assets/schemas/provider-notification-v1.fields.txt
 
 Configures notification services for forwarding events.
 
 **Key fields:**
-- `.spec.type` — Service type: `slack`, `msteams`, `discord`, `github`, `gitlab`, `bitbucketserver`, `googlechat`, `webex`, `generic`, `generic-hmac`, `opsgenie`, `pagerduty`, `datadog`, `grafana`, `matrix`, `ntfy`, `nats`, `sentry`, `azuredevops`, `azureeventhub`, `googlepubsub`
+- `.spec.type` — Service type: `slack`, `msteams`, `discord`, `googlechat`, `webex`, `telegram`, `matrix`, `lark`, `rocket`, `zulip`, `zoom`, `mastodon` (v1 only), `incident.io`, `opsgenie`, `pagerduty`, `alertmanager`, `datadog`, `grafana`, `sentry`, `otel`, `nats`, `azureeventhub`, `googlepubsub`, `githubdispatch`, `generic`, `generic-hmac`; commit status: `github`, `gitlab`, `gitea`, `bitbucket`, `bitbucketserver`, `azuredevops`; PR comments: `githubpullrequestcomment`, `gitlabmergerequestcomment`, `giteapullrequestcomment`
 - `.spec.address` — Webhook URL or service address
 - `.spec.channel` — Channel name (for Slack, Discord, etc.)
-- `.spec.secretRef` — Secret with auth token
+- `.spec.secretRef` — Secret with credentials; keys `address`, `token`, `username`, `password`, `headers` (a `proxy` key is rejected since Flux 2.10)
+- `.spec.proxySecretRef` — Secret with proxy `address` (optional `username`/`password`); replaces `.spec.proxy`, removed in v1
+- `.spec.certSecretRef` — TLS data (`ca.crt`, `tls.crt`, `tls.key`); TLS keys in `secretRef` are not read
 
-### Alert (`notification.toolkit.fluxcd.io/v1beta3`)
+**Gotchas (Flux 2.10):**
+- `v1beta3` is deprecated; `v1` drops `.spec.proxy` and `.spec.interval` (see [api-migration.md](api-migration.md)).
+- `bitbucket` needs a Bitbucket Cloud API token; `<username>:<app-password>` no longer works. `azureeventhub` rejects a `token` key (use SAS `address` or object identity).
 
-Field index: assets/schemas/alert-notification-v1beta3.fields.txt
+### Alert (`notification.toolkit.fluxcd.io/v1`)
+
+Field index: assets/schemas/alert-notification-v1.fields.txt
 
 Configures events to be forwarded to a Provider.
 
@@ -214,7 +223,7 @@ Configures events to be forwarded to a Provider.
 - `.spec.providerRef` — Reference to Provider
 - `.spec.eventSeverity` — Minimum severity: `info` or `error`
 - `.spec.eventSources[]` — Source filter (kind, name, namespace, matchLabels)
-- `.spec.eventMetadata` — Additional metadata for notifications
+- `.spec.eventMetadata` — Additional metadata for notifications; `summary` key replaces `.spec.summary` (removed in v1)
 - `.spec.exclusionList[]` — Regex patterns to exclude events
 
 **Patterns:**
@@ -279,7 +288,8 @@ Automatically updates Git repositories with new image tags selected by ImagePoli
 - `.spec.interval` — Automation interval
 - `.spec.git.checkout.ref` — Branch to checkout
 - `.spec.git.commit.author` — Commit author (name, email)
-- `.spec.git.commit.messageTemplate` — Commit message Go template
+- `.spec.git.commit.messageTemplate` — Commit message Go template; `{{ .Changed.Summary }}` (Flux 2.10+) renders one line per change
+- `.spec.policyChangeDelay` (Flux 2.10+) — Wait after an ImagePolicy change so several updates land in one commit (e.g. `2m`)
 - `.spec.git.push.branch` — Branch to push changes to
 - `.spec.update.path` — Path within the repo to scan for update markers
 - `.spec.update.strategy` — `Setters` (default)
@@ -309,8 +319,8 @@ Do NOT fetch these URLs unless you need to look up a specific field or behavior 
 - Kustomization: https://raw.githubusercontent.com/fluxcd/kustomize-controller/refs/heads/main/docs/spec/v1/kustomizations.md
 - HelmRelease: https://raw.githubusercontent.com/fluxcd/helm-controller/refs/heads/main/docs/spec/v2/helmreleases.md
 - Receiver: https://raw.githubusercontent.com/fluxcd/notification-controller/refs/heads/main/docs/spec/v1/receivers.md
-- Alert: https://raw.githubusercontent.com/fluxcd/notification-controller/refs/heads/main/docs/spec/v1beta3/alerts.md
-- Provider: https://raw.githubusercontent.com/fluxcd/notification-controller/refs/heads/main/docs/spec/v1beta3/providers.md
+- Alert: https://raw.githubusercontent.com/fluxcd/notification-controller/refs/heads/main/docs/spec/v1/alerts.md
+- Provider: https://raw.githubusercontent.com/fluxcd/notification-controller/refs/heads/main/docs/spec/v1/providers.md
 - ImageRepository: https://raw.githubusercontent.com/fluxcd/image-reflector-controller/refs/heads/main/docs/spec/v1/imagerepositories.md
 - ImagePolicy: https://raw.githubusercontent.com/fluxcd/image-reflector-controller/refs/heads/main/docs/spec/v1/imagepolicies.md
 - ImageUpdateAutomation: https://raw.githubusercontent.com/fluxcd/image-automation-controller/refs/heads/main/docs/spec/v1/imageupdateautomations.md

@@ -79,7 +79,7 @@ copilot plugin install gitops-skills@fluxcd
 
 The skills in this repository rely on the following tools being available in the environment:
 
-- `flux` for dry running and manifest generation
+- `flux` v2.10 or later for dry running, deprecated API detection and manifest generation
 - `flux-schema` for discovering and validating Kubernetes manifests (install with `flux plugin install schema`)
 - `flux-operator-mcp` for debugging Flux on live Kubernetes clusters (required by `gitops-cluster-debug`)
 

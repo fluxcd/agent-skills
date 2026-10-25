@@ -220,6 +220,7 @@ Note: OCI HelmRepositories have no status conditions.
 
 **Key spec fields**:
 - `.spec.chartRef` / `.spec.chart.spec.sourceRef` — Chart source reference
+- `.spec.chart.kind: OCIRepository` (Flux 2.10+) — `.spec.chart.spec` is an inline OCIRepository spec (`url`, `ref`); the controller creates and owns an OCIRepository named `<hr-namespace>-<hr-name>`, reported in `.status.helmChart` as `OCIRepository/<ns>/<name>` (event `OCIRepositoryCreated`). Debug that OCIRepository like any other source
 - `.spec.interval` — Reconciliation interval
 - `.spec.values` — Inline Helm values
 - `.spec.valuesFrom` — Values from ConfigMaps/Secrets
@@ -242,18 +243,21 @@ Note: OCI HelmRepositories have no status conditions.
 
 ## Notification Controller
 
-### Provider (`notification.toolkit.fluxcd.io/v1beta3`)
+### Provider (`notification.toolkit.fluxcd.io/v1`)
 
 **Purpose**: Represents a notification service (Slack, MS Teams, GitHub, etc.).
 
 **Key spec fields**:
 - `.spec.type` — Provider type (slack, msteams, github, generic, etc.)
 - `.spec.address` — Webhook URL or API endpoint
-- `.spec.secretRef` — Secret with authentication token
+- `.spec.secretRef` — Secret with credentials (`address`, `token`, `username`, `password`, `headers`)
+- `.spec.proxySecretRef` — Secret with proxy `address`; replaces `.spec.proxy` (removed in v1)
+- `.spec.certSecretRef` — TLS data (`ca.crt`, `tls.crt`, `tls.key`)
 
-Note: Providers have no status conditions.
+Note: Providers have no status conditions. `v1beta3` is deprecated in Flux 2.10 (warning
+`v1beta3 Provider is deprecated, upgrade to v1`); `v1` drops `.spec.proxy` and `.spec.interval`.
 
-### Alert (`notification.toolkit.fluxcd.io/v1beta3`)
+### Alert (`notification.toolkit.fluxcd.io/v1`)
 
 **Purpose**: Configures events to be forwarded to notification providers.
 
@@ -263,6 +267,7 @@ Note: Providers have no status conditions.
 - `.spec.eventSeverity` — Minimum severity to forward (info, error)
 
 Note: Alerts have no status conditions.
+`v1beta3` is deprecated in Flux 2.10; `v1` drops `.spec.summary` (use `.spec.eventMetadata.summary`).
 
 ### Receiver (`notification.toolkit.fluxcd.io/v1`)
 

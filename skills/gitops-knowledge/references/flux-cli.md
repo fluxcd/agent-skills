@@ -11,7 +11,7 @@ need schema validation, when a Kustomize overlay or ResourceSet must be rendered
 debugged locally, or when users ask about the `flux schema` plugin, `flux build`,
 `flux envsubst`, or `flux-operator build`.
 
-**Contents:** [Plugin Setup](#plugin-setup) | [Repository Discovery](#repository-discovery-with-flux-schema-discover) | [The Authoring Control Loop](#the-authoring-control-loop-with-flux-schema-validate) | [Schemas for Custom CRDs](#schemas-for-custom-crds) | [Rendering Manifests Locally](#rendering-manifests-locally) | [Debugging a Failing Overlay](#debugging-a-failing-overlay) | [When Tools Are Missing](#when-tools-are-missing)
+**Contents:** [Plugin Setup](#plugin-setup) | [Repository Discovery](#repository-discovery-with-flux-schema-discover) | [The Authoring Control Loop](#the-authoring-control-loop-with-flux-schema-validate) | [Schemas for Custom CRDs](#schemas-for-custom-crds) | [Rendering Manifests Locally](#rendering-manifests-locally) | [Debugging a Failing Overlay](#debugging-a-failing-overlay) | [Cluster Commands](#cluster-commands-and-flux-210-changes) | [When Tools Are Missing](#when-tools-are-missing)
 
 ## Plugin Setup
 
@@ -194,6 +194,41 @@ instead of reasoning about the YAML in the abstract:
 
 Each step isolates one layer (Kustomize syntax → Flux transformations → schema
 correctness), so the first failing step tells you which layer holds the bug.
+
+## Cluster Commands and Flux 2.10 Changes
+
+These need cluster access, except `flux migrate -f` and `--export`. Flux 2.10 CLI (`flux check` requires Kubernetes >= 1.35):
+
+```bash
+# kubectl-style TYPE/NAME args in get, reconcile, suspend, resume, export and delete.
+# Short names: hr, ks, gitrepo, ocirepo, helmrepo, hc, ea, ag, imgrepo, imgpol, iua, alert-provider
+flux get hr/podinfo
+flux reconcile kustomizations podinfo                 # plural/short names in the space form
+flux reconcile gitrepositories.source.toolkit.fluxcd.io/podinfo
+flux get ks frontend backend                         # multiple names (older CLIs used only the first)
+flux suspend gitrepo/podinfo gitrepo/flux-system
+
+# ArtifactGenerator (source-watcher)
+flux suspend artifact generator podinfo              # or: flux suspend ag/podinfo
+flux resume artifact generator podinfo               # resume requests a reconcile and waits
+flux reconcile artifact generator frontend backend
+
+# Migrate manifests to the latest APIs (Alert/Provider v1beta3 -> v1); also strips fields
+# dropped in v1 (Alert spec.summary, Provider spec.proxy/interval) with a warning per field
+flux migrate -f . --dry-run
+flux migrate -f .
+
+# Batch image updates into one commit (sets ImageUpdateAutomation spec.policyChangeDelay)
+flux create image update apps --policy-change-delay=2m ...
+
+# GitHub App auth by client ID instead of app ID (writes the githubAppClientID key)
+flux create secret githubapp app-auth --app-client-id="<client-id>" \
+  --app-installation-id="<id>" --app-private-key=./private-key.pem --export
+```
+
+`flux create image policy` now rejects more than one of `--select-semver`, `--select-alpha`,
+`--select-numeric`. HelmReleases with `spec.chart.kind: OCIRepository` work with
+`get --show-source`, `reconcile --with-source`, `trace` and `events`.
 
 ## When Tools Are Missing
 
