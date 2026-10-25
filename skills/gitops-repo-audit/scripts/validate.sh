@@ -372,24 +372,21 @@ bundle_append() {
 
 # Check if a path is under a user-excluded, auto-skipped, or kustomize directory
 is_excluded_dir() {
-  local path
+  local path dir d
   path="$(normalize_path "$1")"
   for dir in "${exclude_dirs[@]}"; do
-    local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
       return 0
     fi
   done
   for dir in "${auto_skip_dirs[@]}"; do
-    local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
       return 0
     fi
   done
   for dir in "${kustomize_dirs[@]}"; do
-    local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
       return 0
@@ -400,10 +397,9 @@ is_excluded_dir() {
 
 # Check if a path is under a user-excluded directory only
 is_user_excluded_dir() {
-  local path
+  local path dir d
   path="$(normalize_path "$1")"
   for dir in "${exclude_dirs[@]}"; do
-    local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
       return 0
@@ -416,10 +412,9 @@ is_user_excluded_dir() {
 # (e.g. a dependency under the parent's charts/ directory); such charts
 # are rendered as part of their parent and must not be templated standalone
 is_nested_chart_dir() {
-  local path
+  local path dir d
   path="$(normalize_path "$1")"
   for dir in "${helm_chart_dirs[@]}"; do
-    local d
     d="$(normalize_path "$dir")"
     if [[ "$path" != "$d" && "$path" == "$d"/* ]]; then
       return 0
@@ -430,10 +425,9 @@ is_nested_chart_dir() {
 
 # Check if a path is under a user-excluded or auto-skipped directory (but not kustomize dirs)
 is_non_kustomize_excluded_dir() {
-  local path
+  local path dir d
   path="$(normalize_path "$1")"
   for dir in "${exclude_dirs[@]}" "${auto_skip_dirs[@]}"; do
-    local d
     d="$(normalize_path "$dir")"
     if [[ "$path" == "$d"/* || "$path" == "$d" ]]; then
       return 0
@@ -444,6 +438,7 @@ is_non_kustomize_excluded_dir() {
 
 # Detect directories containing Terraform files, Helm charts, or kustomize overlays
 detect_excluded_dirs() {
+  local file
   while IFS= read -r -d $'\0' file; do
     auto_skip_dirs+=("$(dirname "$file")")
   done < <(find "$root_dir" -mindepth 1 -name '.*' -prune -o -type f -name '*.tf' -print0 | LC_ALL=C sort -z)
@@ -506,7 +501,7 @@ accumulate_summary() {
 
 validate_kubernetes_manifests() {
   echo "INFO - Validating Kubernetes manifests"
-  local files=() output dir build_output
+  local files=() output dir build_output file
   while IFS= read -r -d $'\0' file; do
     dir="$(dirname "$file")"
     if is_excluded_dir "$dir"; then
@@ -546,7 +541,7 @@ validate_kubernetes_manifests() {
 }
 
 validate_kustomize_overlays() {
-  local overlay build_output output dir
+  local overlay build_output output dir file
   while IFS= read -r -d $'\0' file; do
     dir="$(dirname "$file")"
     if is_non_kustomize_excluded_dir "$dir"; then
