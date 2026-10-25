@@ -5,7 +5,12 @@
 
 # This script checks for deprecated Flux API versions in a directory using the
 # flux CLI's migrate command in dry-run mode. It reports the exact resources and
-# the versions they should migrate to; exit code 1 means deprecated APIs found.
+# the versions they should migrate to.
+#
+# Exit codes:
+#   0 - scan completed, no deprecated APIs found
+#   1 - scan completed, deprecated APIs found
+#   2 - scan could not complete (bad arguments, missing prerequisites, flux error)
 
 # Prerequisites
 # - flux (https://fluxcd.io/flux/installation/)
@@ -31,7 +36,7 @@ parse_args() {
       -d|--dir)
         if [[ -z "${2:-}" ]]; then
           echo "ERROR - --dir requires a directory argument" >&2
-          exit 1
+          exit 2
         fi
         root_dir="${2%/}"
         shift 2
@@ -43,7 +48,7 @@ parse_args() {
       *)
         echo "ERROR - Unknown argument: $1" >&2
         usage >&2
-        exit 1
+        exit 2
         ;;
     esac
   done
@@ -74,19 +79,19 @@ check_prerequisites() {
   if ! command -v flux &> /dev/null; then
     echo "ERROR - flux is not installed" >&2
     echo "ERROR - Install it from https://fluxcd.io/flux/installation/" >&2
-    exit 1
+    exit 2
   fi
 
   local version
   version="$(flux version --client 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
   if [[ -z "$version" ]]; then
     echo "ERROR - unable to determine the Flux CLI version" >&2
-    exit 1
+    exit 2
   fi
   if ! version_ge "$version" "$MIN_FLUX_VERSION"; then
     echo "ERROR - Flux CLI v${version} is too old; 'flux migrate' requires Flux ${MIN_FLUX_VERSION} or later" >&2
     echo "ERROR - Upgrade Flux: https://fluxcd.io/flux/installation/" >&2
-    exit 1
+    exit 2
   fi
 }
 
@@ -99,11 +104,20 @@ check_deprecated() {
   #   ✚ infrastructure/nginx.yaml:11: HelmRelease v2beta2 -> v2
   # Match the versioned-arrow shape ('vX... -> vY...') rather than any bare
   # '✚' or '->' so unrelated arrows in flux output can't cause a false positive.
-  local output
-  output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)" || true
+  # A failed scan may print partial findings; report it as a failure (exit 2)
+  # rather than classifying the incomplete output as clean or deprecated.
+  local output status=0
+  output="$(cd "$root_dir" && flux migrate -f . --dry-run 2>&1)" || status=$?
   echo "$output"
+  if (( status != 0 )); then
+    echo "ERROR - Flux API scan failed (flux migrate exit code ${status})" >&2
+    return 2
+  fi
 
-  if echo "$output" | grep -qE " v[0-9][a-zA-Z0-9]* -> v[0-9]"; then
+  # Use a here-string instead of a pipe: with pipefail, grep -q exiting early
+  # on large output makes the producer fail with SIGPIPE, hiding the match.
+
+  if grep -qE " v[0-9][a-zA-Z0-9]* -> v[0-9]" <<< "$output"; then
     echo "ERROR - deprecated Flux API versions found" >&2
     return 1
   fi
@@ -115,6 +129,6 @@ parse_args "$@"
 check_prerequisites
 if [[ ! -d "$root_dir" ]]; then
   echo "ERROR - directory not found: $root_dir" >&2
-  exit 1
+  exit 2
 fi
 check_deprecated
