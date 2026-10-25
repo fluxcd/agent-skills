@@ -6,7 +6,7 @@ description: >
   management, and produces a prioritized GitOps report. Use when users ask to audit, analyze,
   validate, review, or security-check a GitOps repo.
 license: Apache-2.0
-compatibility: Requires flux, flux-schema, and kustomize or kubectl
+compatibility: Requires flux and flux-schema
 ---
 
 # GitOps Repository Auditor

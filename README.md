@@ -81,7 +81,6 @@ The skills in this repository rely on the following tools being available in the
 
 - `flux` for dry running and manifest generation
 - `flux-schema` for discovering and validating Kubernetes manifests (install with `flux plugin install schema`)
-- `kustomize` (or `kubectl`, which embeds kustomize) for building kustomize overlays
 - `flux-operator-mcp` for debugging Flux on live Kubernetes clusters (required by `gitops-cluster-debug`)
 
 A [Brewfile](https://raw.githubusercontent.com/fluxcd/agent-skills/refs/heads/main/Brewfile) is provided for easy installation of the prerequisites on macOS.
