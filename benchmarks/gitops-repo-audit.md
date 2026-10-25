@@ -1,5 +1,35 @@
 # gitops-repo-audit
 
+## v0.4.0 (2026-10-26)
+
+Updates the audit for Flux 2.10: notification `v1beta3` is flagged as deprecated (a Warning, still served), Alert `summary` and Provider `proxy`/`interval` are flagged as fields `v1` drops, `check-deprecated.sh` requires Flux CLI 2.10, and the references cover the 2.10 notification behavior changes, the object identity RBAC change and lockdown flags, ArtifactGenerator cross-namespace output, and the 2.7 / Kubernetes 1.34 end of support. The `mixed-issues` fixture gains a `v1beta3` Provider with `proxy` and an Alert with `summary` (eval 4 grows from 21 to 23 assertions), and the `image-automation` fixture moves to notification `v1`. The suite has 94 assertions. The bundled field indexes are generated from Flux v2.10.0 and Flux Operator v0.62.0, and the components check now covers the image automation controllers as well as `source-watcher`. One run per eval per configuration; executors used Flux CLI v2.10.0 and Flux Operator v0.62.0 with the schema catalog serving the Flux 2.10 schemas. Graded by `claude-opus-5-5`.
+
+Model: `claude-sonnet-5-5`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| Monorepo structure | 14/14 (100%) | 11/14 (79%) | +21% |
+| Multi-repo fleet | 16/16 (100%) | 12/16 (75%) | +25% |
+| Image automation | 13/14 (93%) | 10/14 (71%) | +22% |
+| Mixed issues | 23/23 (100%) | 14/23 (61%) | +39% |
+| Overlay effects | 5/5 (100%) | 5/5 (100%) | 0% |
+| Overlay stress | 6/6 (100%) | 6/6 (100%) | 0% |
+| ResourceSet pipelines | 16/16 (100%) | 12/16 (75%) | +25% |
+| **Overall** | **93/94 (99%)** | **70/94 (74%)** | **+25%** |
+
+On mixed issues the baseline hedged on the notification `v1beta3` to `v1` migration and never flagged the `summary` and `proxy` fields that `v1` drops; the skill's `check-deprecated.sh` reported both, with the replacement fields. The baseline also produced false positives no assertion penalises: `<< inputs.provider.namespace >>` reported as an undefined input on the multi-repo fleet, and a `layerSelector` reported as required for a `chartRef` OCIRepository on the monorepo structure.
+
+The image automation eval was run three times with the skill and each run missed a different single item: the first did not mention that the FluxInstance enables the image controllers, which led to the broader components check above; the second called podinfo's separate push branch an orphan branch, which led to a note in `security-audit.md` that a push branch nobody reconciles is the intended PR flow; the third, shown in the table, did not flag the missing `storageNamespace` on the podinfo HelmRelease. The earlier runs are archived under `_archive/`.
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 80s | 68s |
+| Mean tokens | 81.0k | 52.9k |
+
 ## v0.3.0 (2026-08-25)
 
 Adds ResourceSet pipeline checks (`spec.steps` + `wait`, Job `force`/`recreateOnFailure`/`ttlSecondsAfterFinished`, step vs applier timeouts, `dependsOn` namespaces), post-build substitution rules (YAML-safe values, `spec.images[].name` matching the manifest image, same-namespace `substituteFrom`), the directory-driven monorepo pattern (ArtifactGenerator `pathPattern` + `ExternalArtifact` input provider), the `source-watcher` prerequisite, and tenancy-aware severity for cross-namespace refs. New fixture `tests/gitops-repo-audit/resourceset-pipelines` (eval 7) seeds each defect; the suite grows from 76 to 92 assertions. One run per eval per configuration (eval 3 has two runs, pooled); the no-skill baseline had the same tools available. Graded by `claude-opus-5`.
