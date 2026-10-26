@@ -1,55 +1,77 @@
 {
   "skill_name": "gitops-cluster-debug",
-  "note": "These evals require a live Kubernetes cluster with Flux Operator and the flux-operator-mcp server running. They serve as documentation for expected skill behavior.",
+  "note": "These evals need a live cluster running Flux Operator and Flux 2.10 with the scenarios from tests/gitops-cluster-debug/scenarios.yaml applied, and the flux-operator-mcp server (v0.60+) running with --read-only. Executors get only the MCP tools plus local file tools; they have no kubectl access to the cluster.",
   "evals": [
     {
       "id": 1,
       "prompt": "Check the Flux installation health on the current cluster and provide a status report.",
-      "expected_output": "A report showing the Flux Operator status, FluxInstance readiness, controller deployment health, installed Flux version, and a summary from the FluxReport.",
+      "expected_output": "A report showing the Flux Operator and FluxInstance status, the Flux version and components, controller health, and the Flux resources that are not ready across the cluster.",
       "files": [],
       "expectations": [
-        "Calls get_flux_instance to check the Flux Operator status",
-        "Reports the FluxInstance Ready condition and any issues",
-        "Lists all Flux controller deployments and their status",
-        "Reports the installed Flux distribution version",
-        "Summarizes the FluxReport resource counts and conditions",
-        "If controllers are unhealthy, checks controller pod logs",
-        "Produces a structured report with summary and recommendations"
+        "Calls get_flux_instance to check the Flux Operator and FluxInstance status",
+        "Reports the installed Flux distribution version (v2.10.0) and that the FluxInstance is Ready",
+        "Lists the Flux controller deployments and their status",
+        "Names the failing Kustomization tenant-a/apps and the failing GitRepository tenant-a/tenant-a",
+        "Names the failing HelmRelease default/podinfo",
+        "Produces a structured report with a summary and recommendations"
       ]
     },
     {
       "id": 2,
-      "prompt": "Debug the failing Kustomization 'apps' in the 'flux-system' namespace.",
-      "expected_output": "A root cause analysis identifying that the Kustomization fails because its source GitRepository has an authentication error, with recommendations to fix the Git credentials.",
+      "prompt": "Debug the failing Kustomization 'apps' in the 'tenant-a' namespace.",
+      "expected_output": "A root cause analysis identifying that the Kustomization has no artifact because its GitRepository tenant-a fails to clone with an authentication error, with recommendations to fix the Git credentials in the git-auth Secret.",
       "files": [],
       "expectations": [
-        "Calls get_flux_instance to check the kustomize-controller status",
-        "Calls get_kubernetes_api_versions to verify the Kustomization apiVersion",
-        "Gets the Kustomization resource and analyzes its status conditions and events",
-        "Identifies the sourceRef pointing to a GitRepository",
-        "Gets the GitRepository resource and finds the FetchFailed condition",
-        "Identifies the authentication error as the root cause",
-        "Checks if the referenced secretRef Secret exists and has the expected keys",
-        "Produces a root cause analysis report with the dependency chain",
-        "Recommends fixing the Git credentials in the referenced Secret"
+        "Gets the Kustomization and reports its Ready condition (source artifact not found)",
+        "Identifies the sourceRef GitRepository tenant-a and gets it",
+        "Identifies the GitRepository authentication failure (invalid username or token) as the root cause",
+        "Checks that the referenced Secret git-auth exists and reports its key names (username, password)",
+        "Produces a root cause analysis report with the dependency chain GitRepository -> Kustomization",
+        "Recommends replacing the credentials in the git-auth Secret with a valid token (or GitHub App) and reconciling the source"
       ]
     },
     {
       "id": 3,
       "prompt": "Debug the failing HelmRelease 'podinfo' in the 'default' namespace.",
-      "expected_output": "A root cause analysis identifying that the HelmRelease upgrade failed with managed Deployment pods in ImagePullBackOff due to a non-existent container image tag.",
+      "expected_output": "A root cause analysis identifying that the HelmRelease install fails because the podinfo Deployment pods are in ImagePullBackOff for the non-existent image tag 6.99.0-hotfix set in the HelmRelease values.",
       "files": [],
       "expectations": [
-        "Calls get_flux_instance to check the helm-controller status",
-        "Calls get_kubernetes_api_versions to verify the HelmRelease apiVersion",
-        "Gets the HelmRelease resource and analyzes its status conditions and events",
-        "Identifies the chart source from chartRef or sourceRef",
-        "Gets the source resource and verifies it is ready",
-        "Checks the HelmRelease inventory for managed resources",
-        "Gets managed Deployments and finds pods in ImagePullBackOff",
-        "Analyzes pod events to identify the image pull error",
-        "Produces a root cause analysis tracing from HelmRelease to Deployment to Pod",
-        "Recommends fixing the container image reference in the HelmRelease values"
+        "Gets the HelmRelease and analyzes its status conditions (install failed or retrying)",
+        "Identifies the chart source OCIRepository default/podinfo and reports it as ready",
+        "Gets the managed podinfo Deployment or its pods from the release inventory",
+        "Finds the pods in ErrImagePull/ImagePullBackOff from events or pod status",
+        "Identifies the non-existent image tag 6.99.0-hotfix as the root cause",
+        "Traces the tag to spec.values.image.tag in the HelmRelease",
+        "Recommends fixing image.tag in the HelmRelease values (in Git) to an existing tag"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Pods of the 'orders' deployment in the 'shop' namespace keep crashing. Find out what deploys it through GitOps and why it crashes.",
+      "expected_output": "Traces the Deployment to the ResourceSet shop/shop-services, finds CrashLoopBackOff/BackOff events, reads the container logs showing DB_PASSWORD is not set, and recommends adding DB_PASSWORD (from a Secret) in the ResourceSet template.",
+      "files": [],
+      "expectations": [
+        "Calls trace_kubernetes_resource on the orders Deployment (or one of its pods)",
+        "Identifies the ResourceSet shop/shop-services as the Flux object that deploys the Deployment",
+        "Calls get_kubernetes_events for the orders workload and reports the BackOff / CrashLoopBackOff warnings",
+        "Calls get_kubernetes_logs with kind Deployment (not a pod name looked up first)",
+        "Identifies from the logs that the app exits because DB_PASSWORD is not set",
+        "Notes that the orders-config ConfigMap provides DB_HOST/DB_PORT/DB_NAME but no DB_PASSWORD",
+        "Recommends adding DB_PASSWORD from a Secret in the ResourceSet template (not editing the live Deployment)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I edited the podinfo manifests in {FIXTURE:tests/gitops-cluster-debug/podinfo-change} (this directory is deployed by the Flux Kustomization 'podinfo' in the 'web' namespace). Before I commit, tell me exactly what this change will do on the cluster.",
+      "expected_output": "Builds the directory, diffs it against the cluster with the web/podinfo Kustomization as owner, and reports the Deployment memory limit change, the HPA maxReplicas change and that the Service web/podinfo will be deleted (pruned).",
+      "files": ["tests/gitops-cluster-debug/podinfo-change"],
+      "expectations": [
+        "Builds the manifests locally (kustomize build or equivalent) and passes the complete build output",
+        "Calls diff_kubernetes_manifest with owner Kustomization web/podinfo (owner_kind/owner_name/owner_namespace or flux_object)",
+        "Reports the Deployment update: memory limit 512Mi -> 256Mi",
+        "Reports the HorizontalPodAutoscaler update: maxReplicas 4 -> 8",
+        "Reports that the Service web/podinfo will be deleted because prune is enabled",
+        "Does not modify the cluster or the local files"
       ]
     }
   ]

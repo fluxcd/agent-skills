@@ -1,5 +1,41 @@
 # gitops-knowledge
 
+## v0.4.0 (2026-10-26)
+
+Updates the skill for Flux 2.10: Alert and Provider at `notification.toolkit.fluxcd.io/v1` (the fields `v1` drops and the `v1beta3` deprecation), HelmRelease `spec.chart.kind: OCIRepository`, GitHub App `githubAppClientID`, ServiceAccount tokens for `generic` OCI sources, `.Changed.Summary` and `policyChangeDelay` for image automation, ArtifactGenerator cross-namespace artifacts and managed namespaces, object identity GA and the `serviceaccounts/token` RBAC change, SPIFFE mTLS, the `zoom`/`incident.io`/`mastodon` providers and the CLI TYPE/NAME arguments. The bundled field indexes are generated from Flux v2.10.0 and Flux Operator v0.62.0, including the notification `v1` indexes. The suite grows from 149 to 161 assertions with the new eval `flux-2.10-features`, and the `notifications` eval now expects `v1`. Eval 8 (`airgapped-2.9-fields`) now accepts either `spec.chartRef` or the 2.10 `spec.chart.kind: OCIRepository` template as the chart source. One run per eval per configuration. Executors used Flux CLI v2.10.0 and Flux Operator v0.62.0 with the schema catalog serving the Flux 2.10 schemas; evals 1-8 and 15 graded per assertion by `claude-opus-5-5`, evals 9-14 graded programmatically.
+
+Model: `claude-sonnet-5-5`
+
+**Results**
+
+| Eval | With Skill | Baseline | Delta |
+|------|-----------|----------|-------|
+| OCI Helm chart | 11/11 (100%) | 3/11 (27%) | +73% |
+| ResourceSet preview envs | 15/15 (100%) | 15/15 (100%) | 0% |
+| Notifications | 16/16 (100%) | 15/16 (94%) | +6% |
+| Image automation | 9/9 (100%) | 9/9 (100%) | 0% |
+| FluxInstance + ResourceSets | 15/15 (100%) | 14/15 (93%) | +7% |
+| Terraform bootstrap | 12/12 (100%) | 7/12 (58%) | +42% |
+| Gitless publish pipeline | 14/14 (100%) | 14/14 (100%) | 0% |
+| Air-gapped 2.9 fields | 11/11 (100%) | 10/11 (91%) | +9% |
+| Add app in repo | 7/7 (100%) | 7/7 (100%) | 0% |
+| Debug broken overlay | 5/5 (100%) | 5/5 (100%) | 0% |
+| ResourceSet local render | 6/6 (100%) | 6/6 (100%) | 0% |
+| Monorepo delivery | 9/9 (100%) | 4/9 (44%) | +56% |
+| Staged Jobs | 9/9 (100%) | 3/9 (33%) | +67% |
+| Fleet scaffold | 10/10 (100%) | 1/10 (10%) | +90% |
+| Flux 2.10 features | 12/12 (100%) | 8/12 (67%) | +33% |
+| **Overall** | **161/161 (100%)** | **121/161 (75%)** | **+25%** |
+
+On the new eval the baseline used `spec.chart.kind: OCIRepository` and the GitHub App client ID correctly, but wrote the incident.io Provider and Alert at `v1beta3`, put the alert source URL in `spec.address` instead of the Secret, and filtered the Alert to `error`, which drops the recovery events that resolve incidents.
+
+**Costs**
+
+| Metric | With Skill | Baseline |
+|--------|-----------|----------|
+| Mean duration | 49s | 57s |
+| Mean tokens | 61.2k | 50.4k |
+
 ## v0.3.0 (2026-08-24)
 
 The `gitops-knowledge` skill gains the Flux Operator ResourceSet features for monorepo delivery and staged Jobs: the `ExternalArtifact` input provider, step-based reconciliation with Job lifecycle rules, the directory-driven gitless fleet layout (`references/monorepo-delivery.md`), and post-build substitution pitfalls. The suite grows from 121 to 149 assertions with three new evals: `monorepo-delivery`, `staged-jobs`, and `fleet-scaffold` (scaffolds a two-cluster gitless monorepo from scratch and is graded by building every overlay with kustomize and schema-validating the output). One run per eval per configuration; evals 1-8 graded per-assertion by `claude-opus-5`, evals 9-14 graded programmatically. The no-skill baseline had the same tools available (Flux CLI, schema catalog MCP, web) and in several runs compensated by fetching upstream docs, which is reflected in its duration and token costs.

@@ -74,7 +74,19 @@ stringData:
   known_hosts: github.com ssh-ed25519 AAAA...
 ```
 
-For GitHub App — Secret with `githubAppID`, `githubAppPrivateKey` and `githubAppInstallationID` or `githubAppInstallationOwner`.
+For GitHub App (`spec.provider: github`) — Secret with `githubAppPrivateKey`, exactly one of
+`githubAppID` or `githubAppClientID` (Flux 2.10+), and exactly one of `githubAppInstallationID` or
+`githubAppInstallationOwner` (optional `githubAppBaseURL` for GitHub Enterprise):
+```yaml
+stringData:
+  githubAppClientID: "<client-id>"     # or githubAppID: "<app-id>", never both
+  githubAppInstallationOwner: my-org
+  githubAppPrivateKey: |
+    -----BEGIN RSA PRIVATE KEY-----
+    ...
+```
+CLI: `flux create secret githubapp <name> --app-client-id=<id> --app-installation-owner=<org> --app-private-key=./key.pem --export`
+(or `--app-id` for the numeric App ID).
 
 ## OCIRepository
 
@@ -112,14 +124,42 @@ spec:
 | `ref.digest` | string | Exact digest (`sha256:...`) |
 | `secretRef.name` | string | Secret of type `kubernetes.io/dockerconfigjson` |
 | `certSecretRef.name` | string | Secret with TLS CA and client certs for mTLS auth |
-| `provider` | string | Cloud OIDC provider for keyless auth: `aws`, `azure`, `gcp` |
+| `provider` | string | `generic` (default), or cloud OIDC provider for keyless auth: `aws`, `azure`, `gcp` |
 | `layerSelector.mediaType` | string | Filter OCI layers by media type |
 | `layerSelector.operation` | string | `extract` (default) or `copy` |
 | `verify.provider` | string | Signature verification: `cosign` or `notation` |
 | `verify.matchOIDCIdentity` | array | OIDC issuer/subject patterns for keyless verification |
 | `verify.trustedRootSecretRef.name` | string | Secret with a custom Sigstore `trusted_root.json` — verify against self-hosted Fulcio CA / Rekor (air-gapped keyless) |
-| `serviceAccountName` | string | Service account for image pull (uses imagePullSecrets) |
+| `serviceAccountName` | string | Service account for image pull: object identity for cloud providers, its `imagePullSecrets`, or a ServiceAccount token with `generic` (see below) |
 | `insecure` | bool | Allow HTTP (non-TLS) connections |
+
+**ServiceAccount token auth for `generic` registries (Flux 2.10+):** for registries that trust
+the cluster's OIDC issuer, the controller sends a short-lived Kubernetes ServiceAccount token
+instead of a static pull secret. No new spec fields — annotate the ServiceAccount:
+
+```yaml
+spec:
+  provider: generic
+  serviceAccountName: registry-puller
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: registry-puller
+  namespace: apps
+  annotations:
+    credential.auth.fluxcd.io/provider: kubernetes   # required together with type
+    credential.auth.fluxcd.io/type: jwt
+    credential.auth.fluxcd.io/audiences: registry.example.com  # optional, defaults to the registry host
+    credential.auth.fluxcd.io/username: flux         # optional, token sent as Basic password instead of Bearer
+    credential.auth.fluxcd.io/expiration: 10m        # optional
+```
+
+Setting only one of `provider`/`type` is an error, and the annotations can't be combined with
+`imagePullSecrets`. Object identity with the `kubernetes` provider needs the Flux controllers to
+create ServiceAccount tokens: since Flux 2.10 the default RBAC no longer grants `create` on
+`serviceaccounts/token`, so bind a ClusterRole with that permission to the controller
+ServiceAccounts.
 
 **Fetching Helm charts from OCI registries:**
 

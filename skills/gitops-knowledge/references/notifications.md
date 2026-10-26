@@ -6,16 +6,22 @@ target or source.
 
 **Contents:** [Provider](#provider) | [Alert](#alert) | [Receiver](#receiver) | [Common Patterns](#common-patterns)
 
+**Flux 2.10:** `Provider` and `Alert` are GA at `notification.toolkit.fluxcd.io/v1`; `v1beta3` is
+deprecated (still served). `v1` drops Alert `spec.summary` (use `spec.eventMetadata.summary`),
+Provider `spec.proxy` (use `spec.proxySecretRef`) and Provider `spec.interval` (no replacement).
+`flux migrate -f .` bumps manifests to `v1` and removes those fields. The Event payload sent to
+`generic` webhooks gains `relatedObject` and `action` fields.
+
 ## Provider
 
-`apiVersion: notification.toolkit.fluxcd.io/v1beta3`
+`apiVersion: notification.toolkit.fluxcd.io/v1`
 
 Defines an external notification service that Alert resources route events to.
 
 ### Canonical YAML — Microsoft Teams
 
 ```yaml
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Provider
 metadata:
   name: msteams
@@ -49,6 +55,8 @@ stringData:
 | `rocket` | `address` (webhook URL) | — | Rocket.Chat (type is `rocket`, not `rocketchat`) |
 | `lark` | `address` (webhook URL) | — | |
 | `webex` | `token` | — | Channel is room ID |
+| `zoom` | `address` (incoming webhook URL) + `token` (verification token) | — | Zoom Team Chat |
+| `mastodon` | `token` (access token, `write:statuses` scope) + `address` (server root URL, e.g. `https://mastodon.social`) | — | `v1` only; statuses truncated to 500 chars |
 
 **Alerting and monitoring platforms:**
 
@@ -60,13 +68,14 @@ stringData:
 | `datadog` | `token` (API key) | DataDog endpoint | |
 | `opsgenie` | `token` (API key) | OpsGenie endpoint | |
 | `pagerduty` | — (none required) | `https://events.pagerduty.com` | Integration routing key set in `spec.channel`, not a secret |
+| `incident.io` | `address` (`https://api.incident.io/v2/alert_events/http/<alert_source_config_id>`) + `token` (API token) | — | Type is `incident.io`. Errors fire, other events resolve — keep the Alert at `eventSeverity: info` so alerts auto-resolve |
 
 **Event streaming:**
 
 | Type | Secret Field | Address | Notes |
 |------|-------------|---------|-------|
 | `googlepubsub` | `token` (JSON key) | — | Channel is topic ID |
-| `azureeventhub` | `address` (SAS connection string, SAS auth only) | hub name in `spec.address` | `spec.channel` = Event Hubs namespace; `spec.address` = hub name. Managed identity uses `spec.channel`/`spec.address` directly |
+| `azureeventhub` | `address` (SAS connection string, SAS auth only) | hub name in `spec.address` | `spec.channel` = Event Hubs namespace; `spec.address` = hub name. Object identity (`spec.serviceAccountName`) or the controller's workload identity uses `spec.channel`/`spec.address` directly. A `token` key fails (static JWT auth removed in 2.10) |
 | `nats` | `creds` / `nkey` / `username`+`password` (priority order) | NATS server URL | Channel is subject |
 
 **Git commit status:**
@@ -76,7 +85,7 @@ stringData:
 | `github` | `token` (PAT or app token) | — | Sets commit status on PRs |
 | `gitlab` | `token` (access token) | GitLab URL | Sets pipeline status |
 | `gitea` | `token` | Gitea URL | |
-| `bitbucket` | `token` | — | Bitbucket Cloud |
+| `bitbucket` | `token` (Bitbucket Cloud API token, scopes `read:repository:bitbucket` + `write:repository:bitbucket`) | — | Bitbucket Cloud; `<username>:<app-password>` no longer works |
 | `bitbucketserver` | `token` | Bitbucket Server URL | |
 | `azuredevops` | `token` | Azure DevOps URL | |
 
@@ -95,20 +104,23 @@ stringData:
 | `address` | string | API endpoint URL (some providers use secret instead) |
 | `channel` | string | Channel, room ID, or topic |
 | `username` | string | Bot username for display |
-| `secretRef.name` | string | Secret with credentials |
-| `certSecretRef.name` | string | Secret with custom TLS CA certificate |
+| `secretRef.name` | string | Secret with credentials — keys `address`, `token`, `username`, `password`, `headers` (a `proxy` key is rejected) |
+| `certSecretRef.name` | string | Secret with `ca.crt` (and `tls.crt`/`tls.key` for mTLS); TLS data is read only from here, not from `secretRef` |
+| `proxySecretRef.name` | string | Secret with proxy `address` and optional `username`/`password` (replaces `spec.proxy`) |
+| `serviceAccountName` | string | Object identity for `azureeventhub`, `azuredevops`, `googlepubsub`; unset falls back to the controller's workload identity |
+| `timeout` | duration | Timeout for the whole delivery (default `15s`) |
 | `suspend` | bool | Pause the provider |
 
 ## Alert
 
-`apiVersion: notification.toolkit.fluxcd.io/v1beta3`
+`apiVersion: notification.toolkit.fluxcd.io/v1`
 
 Routes Flux events to a Provider based on source, severity, and content filters.
 
 ### Canonical YAML
 
 ```yaml
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Alert
 metadata:
   name: slack-alert
@@ -189,7 +201,11 @@ spec:
     environment: production
     cluster: prod-eu-1
     team: platform
+    summary: "Production cluster"   # replaces the removed spec.summary
 ```
+
+Precedence, lowest to highest: `event.toolkit.fluxcd.io/<key>` annotations on the source object,
+then `spec.eventMetadata`, then controller-set metadata.
 
 ## Receiver
 
@@ -296,7 +312,7 @@ The `req` object exposes the webhook payload fields and `res` provides the resou
 `type: generic-oidc` authenticates incoming requests with a signed OIDC/JWT bearer token
 instead of a shared HMAC secret — no webhook secret to provision or rotate. The controller
 verifies the token's signature, expiry, and audience against the provider whose `issuerURL`
-matches the token's `iss` claim, then evaluates optional CEL `validations` against the claims.
+matches the token's `iss` claim, then evaluates the provider's CEL `validations` against the claims.
 Ideal for callers that already have a workload identity token (CI runners, cloud services):
 
 ```yaml
@@ -314,16 +330,18 @@ spec:
       audience: flux-notification-controller     # expected 'aud' claim (defaults to 'notification-controller')
       validations:
         # only accept tokens from a specific repo's workflows
-        - "claims.repository == 'my-org/my-app'"
+        - expression: "claims.repository == 'my-org/my-app'"
+          message: "token must be issued for my-org/my-app"
   resources:
     - apiVersion: source.toolkit.fluxcd.io/v1
       kind: OCIRepository
       name: my-app
 ```
 
-`validations` are CEL booleans over `claims` (the token claims); the request is accepted only
-if all pass. `variables` can define named CEL expressions exposed as `vars.<name>` for reuse
-inside validations. No `secretRef` is needed for `generic-oidc`.
+`validations` is required (at least one): each item has a CEL boolean `expression` over `claims`
+(the token claims) and a `message` returned to the caller when it is false; the request is
+accepted only if all pass. `variables` (`name` + `expression`) define named CEL expressions
+exposed as `vars.<name>` for reuse inside validations. No `secretRef` is needed for `generic-oidc`.
 
 ## Common Patterns
 
@@ -331,7 +349,7 @@ inside validations. No `secretRef` is needed for `generic-oidc`.
 
 ```yaml
 # Provider + Alert for error-only Slack notifications using Slack Bot API
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Provider
 metadata:
   name: slack-bot
@@ -343,7 +361,7 @@ spec:
   secretRef:
     name: slack-bot-token
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Alert
 metadata:
   name: all-failures
@@ -363,7 +381,7 @@ spec:
 
 ```yaml
 # Show deploy status on GitHub PRs/commits
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Provider
 metadata:
   name: github-status
@@ -374,7 +392,7 @@ spec:
   secretRef:
     name: github-token
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
+apiVersion: notification.toolkit.fluxcd.io/v1
 kind: Alert
 metadata:
   name: github-status

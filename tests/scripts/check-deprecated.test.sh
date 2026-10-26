@@ -25,7 +25,7 @@ cat >"$tmp/bin/flux" <<'FLUX'
 #!/usr/bin/env bash
 set -euo pipefail
 case "$*" in
-  'version --client') printf '%s\n' "${FLUX_TEST_VERSION:-flux: v2.9.0}" ;;
+  'version --client') printf '%s\n' "${FLUX_TEST_VERSION:-flux: v2.10.0}" ;;
   'migrate -f . --dry-run')
     [[ "$PWD" == "$FLUX_TEST_DIRECTORY" ]] || {
       printf 'Unexpected scan directory: %s\n' "$PWD" >&2
@@ -34,6 +34,9 @@ case "$*" in
     case "$FLUX_TEST_MODE" in
       clean) ;;
       deprecated) printf '✚ source.yaml:1: GitRepository v1beta2 -> v1\n' ;;
+      deprecated-fields)
+        printf '✚ alert.yaml:1: Alert v1beta3 -> v1\n'
+        printf '⚠️ alert.yaml:6: Alert spec.summary will be removed, not supported in v1, use spec.eventMetadata.summary instead\n' ;;
       deprecated-large)
         for ((i=0; i<5000; i++)); do
           printf '✚ directory/with/a/long/resource/path/source.yaml:1: GitRepository v1beta2 -> v1\n'
@@ -61,7 +64,7 @@ fail() {
 
 # run_case <name> <want-exit> [flux-version] [dir]
 run_case() {
-  local name=$1 want=$2 version=${3:-flux: v2.9.0} dir=${4:-$scan_dir} status=0
+  local name=$1 want=$2 version=${3:-flux: v2.10.0} dir=${4:-$scan_dir} status=0
   PATH="$tmp/bin:$PATH" FLUX_TEST_MODE="$name" FLUX_TEST_VERSION="$version" \
     FLUX_TEST_DIRECTORY="$dir" \
     bash "$script" --dir "$dir" >"$out" 2>&1 || status=$?
@@ -83,6 +86,8 @@ run_case clean 0
 run_case unrelated-arrow 0
 run_case deprecated 1
 expect 'deprecated Flux API versions found' 'deprecated: missing finding'
+run_case deprecated-fields 1
+expect 'spec.eventMetadata.summary' 'deprecated-fields: field removal hint lost'
 run_case deprecated-large 1
 expect 'deprecated Flux API versions found' 'deprecated-large: finding lost on large output'
 
@@ -98,11 +103,11 @@ run_case error-partial-arrow 2
 expect 'GitRepository v1beta2 -> v1' 'error-partial-arrow: partial output lost'
 
 # Prerequisite failures
-run_case clean 2 'flux: v2.8.9'
+run_case clean 2 'flux: v2.9.6'
 expect 'too old' 'old flux version not rejected'
 run_case clean 2 'unparseable version'
 expect 'unable to determine' 'unparseable flux version not rejected'
-run_case clean 2 'flux: v2.9.0' "$tmp/missing-directory"
+run_case clean 2 'flux: v2.10.0' "$tmp/missing-directory"
 expect 'directory not found' 'missing directory not rejected'
 
 status=0

@@ -79,6 +79,46 @@ Prescriptive guidance for production Flux deployments with Flux Operator.
   the Flux Operator itself via Flux (operator manages itself pattern).
 - **Cosign verification:** Add Cosign verification patches to the FluxInstance for the sync
   OCIRepository to verify artifact signatures.
+- **Object identity (Flux 2.10+):** set `cluster.objectIdentityRBAC: true` when objects use
+  object identity (`serviceAccountName` for cloud or `kubernetes` provider auth) — the 2.10 distribution
+  no longer grants `serviceaccounts/token` create. Add `cluster.multitenantObjectIdentity: true`
+  to force tenants onto object identity. Both need a Flux Operator release with 2.10 support.
+
+## SPIFFE: Inter-Controller mTLS and Object Identity (RFC-0014, Flux 2.10+)
+
+Opt-in, configured only through controller env vars and flags (no CRD fields or feature gates).
+With Flux Operator, apply them as FluxInstance `spec.kustomize.patches` on the controller
+Deployments; with bootstrap, as patches in `flux-system/kustomization.yaml`.
+
+- **Prerequisite:** a SPIFFE runtime (e.g. SPIRE) deployed *before* Flux — `flux bootstrap` does
+  not install it; the Flux Operator bootstrap Terraform module can. Each controller needs the
+  Workload API socket: env `SPIFFE_ENDPOINT_SOCKET=unix:///spiffe-workload-api/<socket>` plus a
+  volume mount, e.g. a CSI volume (`driver: csi.spiffe.io`, `readOnly: true`) at `/spiffe-workload-api`.
+- **Inter-controller mTLS:** each traffic type is enabled by passing at least one of its repeatable
+  flags, each taking the authorized peer's SPIFFE ID:
+
+| Flag | Set on |
+|------|--------|
+| `--authorized-artifact-client-spiffe-id` | source-controller, source-watcher (artifact servers) |
+| `--authorized-artifact-server-spiffe-id` | kustomize-controller, helm-controller, source-watcher (artifact clients) |
+| `--authorized-notifier-spiffe-id` | notification-controller (event server) |
+| `--authorized-event-server-spiffe-id` | all controllers except notification-controller |
+| `--authorized-receiver-spiffe-id` | notification-controller (ingress/gateway peer of the webhook receiver) |
+| `--authorized-kube-apiserver-spiffe-id` | all controllers (optional) |
+
+  The source-controller, source-watcher, notification-controller and webhook-receiver Services
+  expose port `443` (`https`); clients rewrite artifact URLs to HTTPS in memory, so
+  `.status.artifact.url` is unchanged.
+- **Object identity via `spiffe`:** set `--spiffe-broker-endpoint=dns:///<svc>.<ns>.svc.cluster.local:443`
+  and one or more `--spiffe-broker-id=spiffe://<trust-domain>/<path>` (trailing `/` = prefix) on the
+  controllers, then annotate the object's ServiceAccount with
+  `credential.auth.fluxcd.io/provider: spiffe` and `credential.auth.fluxcd.io/type: jwt` (JWT-SVID).
+  GCP also needs `gcp.auth.fluxcd.io/workload-identity-provider`; AWS can set
+  `aws.auth.fluxcd.io/sts-endpoint`. Tenant isolation is up to the SPIFFE runtime issuing
+  namespaced SPIFFE IDs. Object identity basics are in `references/kustomization.md`.
+- **Deferred to Flux 2.11:** `credential.auth.fluxcd.io/type: x509` (AWS IAM Roles Anywhere, GCP
+  WIF with X.509), the `spiffe.mtls.fluxcd.io/server-ids` annotation, and the `dockerhub`
+  provider with `dockerhub.auth.fluxcd.io/oidc-connection-id`. Don't generate these for 2.10.
 
 ## Operational Excellence
 

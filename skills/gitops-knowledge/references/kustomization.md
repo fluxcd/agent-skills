@@ -183,19 +183,58 @@ feature gate required. This covers:
 - **Cloud KMS** (AWS KMS, GCP KMS, Azure Key Vault) via the controller's cloud workload identity, and
 - **Vault / OpenBao** via the Kubernetes auth method, using the kustomize-controller's SA token.
 
-Setting `decryption.serviceAccountName` switches authentication from controller-level to
-**object-level** — the named per-Kustomization ServiceAccount is used instead (e.g. for
-multi-tenancy). This requires the `ObjectLevelWorkloadIdentity` feature gate on kustomize-controller:
+Setting `decryption.serviceAccountName` switches authentication from the controller's identity
+to **object identity**: the named per-Kustomization ServiceAccount is used instead (e.g. for
+multi-tenancy). Since Flux 2.10 object identity is GA and always on; the old
+`ObjectLevelWorkloadIdentity` feature gate is retired (setting it has no effect).
 
 ```yaml
 spec:
   decryption:
     provider: sops
-    serviceAccountName: tenant-sa   # object-level identity; needs ObjectLevelWorkloadIdentity gate
+    serviceAccountName: tenant-sa   # object identity
+```
+
+**Object identity (Flux 2.10+).** The same model applies to every API with a `serviceAccountName`
+for external auth (sources, image repositories, notification Providers, `kubeConfig.configMapRef`):
+
+- The ServiceAccount's annotations select the credential provider:
+  `credential.auth.fluxcd.io/provider: kubernetes` (TokenRequest API JWT) or `spiffe`
+  (JWT-SVID from the SPIFFE Broker API), always together with `credential.auth.fluxcd.io/type: jwt`.
+  Optional: `credential.auth.fluxcd.io/audiences`, `.../expiration` (kubernetes only), and
+  `.../username` (only OCIRepository/ImageRepository with the `generic` provider).
+  Cloud SAs keep using `eks.amazonaws.com/role-arn`, `azure.workload.identity/client-id` +
+  `azure.workload.identity/tenant-id`, `iam.gke.io/gcp-service-account`.
+- The Flux 2.10 distribution **no longer grants** `create` on `serviceaccounts/token` to the
+  controllers. Any object identity (`serviceAccountName` with the `kubernetes` provider or a cloud
+  provider: aws/azure/gcp) requires binding a ClusterRole with that verb to the controller ServiceAccounts (with Flux Operator, set `spec.cluster.objectIdentityRBAC: true`).
+- Remote clusters: the `kubeConfig` ConfigMap's legacy `audiences` key cannot be combined with the
+  annotations; use `credential.auth.fluxcd.io/audiences`.
+- Multi-tenancy lockdown (forces tenants onto object identity): `--default-service-account` on
+  source-, notification-, image-reflector- and image-automation-controller;
+  `--default-kubeconfig-service-account` on kustomize- and helm-controller;
+  `--default-decryption-service-account` on kustomize-controller. Point them at `default`, a SA
+  with no identity configured (Flux Operator: `spec.cluster.multitenantObjectIdentity: true`).
+
+**OpenBao/Vault transit engine (Flux 2.10+).** Instead of the `--sops-vault-configmap` controller
+flag, annotate the decryption ServiceAccount (the two cannot be combined):
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sops-decrypter
+  namespace: apps
+  annotations:
+    credential.auth.fluxcd.io/provider: kubernetes   # or spiffe
+    credential.auth.fluxcd.io/type: jwt
+    credential.auth.fluxcd.io/audiences: https://openbao.example.com
+    transit-engine.auth.fluxcd.io/login-path: auth/jwt/login
+    transit-engine.auth.fluxcd.io/role: sops
 ```
 
 For Vault/OpenBao specifically, the authentication precedence is: a static `sops.vault-token`
-in the `secretRef` Secret **>** the Kubernetes auth method (controller or object-level SA) **>**
+in the `secretRef` Secret **>** the Kubernetes/SPIFFE JWT auth (controller or object identity) **>**
 a global `VAULT_TOKEN` environment variable patched onto the controller Deployment.
 
 ## Health Checks

@@ -123,7 +123,7 @@ spec:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `distribution.version` | string | Semver range (`2.x`, `2.8.x`) or exact version |
+| `distribution.version` | string | Semver range (`2.x`, `2.10.x`) or exact version |
 | `distribution.registry` | string | Container registry (e.g., `ghcr.io/fluxcd`) |
 | `distribution.variant` | string | `upstream-alpine`, `enterprise-alpine`, `enterprise-distroless`, `enterprise-distroless-fips` |
 | `distribution.artifact` | string | OCI artifact URL with distribution manifests |
@@ -149,8 +149,15 @@ Optional components:
 | `cluster.size` | string | `medium` | Affects controller resource limits and concurrency |
 | `cluster.multitenant` | bool | false | Enable multi-tenancy lockdown |
 | `cluster.tenantDefaultServiceAccount` | string | `default` | Default SA for tenant reconcilers when multitenant lockdown is enabled and the field is omitted |
+| `cluster.objectIdentityRBAC` | bool | false | Object identity with SA tokens. Flux 2.10+: adds the `serviceaccounts/token` create RBAC the distribution no longer ships (2.6–2.9: enables the feature gate). Replaces legacy `objectLevelWorkloadIdentity` |
+| `cluster.multitenantObjectIdentity` | bool | false | Multi-tenancy lockdown for object identity (default SA for source, notification and image controllers; requires `objectIdentityRBAC: true`). Replaces legacy `multitenantWorkloadIdentity` |
+| `cluster.tenantDefaultDecryptionServiceAccount` | string | `default` | Default SA for SOPS decryption under the object identity lockdown |
+| `cluster.tenantDefaultKubeConfigServiceAccount` | string | `default` | Default SA for remote cluster access (`kubeConfig.configMapRef`) under the object identity lockdown |
 | `cluster.networkPolicy` | bool | true | Restrict network access to Flux controllers |
 | `cluster.domain` | string | `cluster.local` | Kubernetes cluster domain |
+
+`objectIdentityRBAC` and `multitenantObjectIdentity` need Flux Operator v0.62.0
+or later; older operators only accept the legacy names. Set either the new or the legacy name, never both.
 
 ### Cluster Sizing
 

@@ -64,7 +64,7 @@
         "Flags the podinfo-values ConfigMap used in HelmRelease valuesFrom as missing the reconcile.fluxcd.io/watch: Enabled label",
         "Flags the podinfo HelmRelease is missing storageNamespace",
         "Flags overlapping Kustomization paths: notifications (./notifications) and notifications-dev (./notifications/dev) manage overlapping resources",
-        "Detects current notification API (v1beta3) Provider and Alert as properly configured",
+        "Detects current notification API (v1) Provider and Alert as properly configured",
         "Notes that the FluxInstance includes image-reflector-controller and image-automation-controller components",
         "Produces a structured report with image automation findings, security findings, and recommendations"
       ]
@@ -72,7 +72,7 @@
     {
       "id": 4,
       "prompt": "Analyze the tests/gitops-repo-audit/mixed-issues/ directory as a GitOps repository and provide a complete analysis report.",
-      "expected_output": "A report identifying multiple critical issues: gotk-sync.yaml indicating flux bootstrap (recommend Flux Operator migration), deprecated API versions on GitRepository v1beta1, Kustomization v1beta1/v1beta2, HelmRelease v2beta2, HelmRepository v1beta1, hardcoded password in redis HelmRelease, insecure source, HelmRepository type:oci legacy pattern, cross-namespace sourceRef on podinfo HelmRelease, missing prune/dependsOn on apps Kustomization, missing drift detection and remediation strategies, runtime-values ConfigMap without watch label, and targetNamespace/createNamespace on monitoring HelmRelease.",
+      "expected_output": "A report identifying multiple critical issues: gotk-sync.yaml indicating flux bootstrap (recommend Flux Operator migration), deprecated API versions on GitRepository v1beta1, Kustomization v1beta1/v1beta2, HelmRelease v2beta2, HelmRepository v1beta1, Provider and Alert on the deprecated notification v1beta3 API with the Alert summary and Provider proxy fields that v1 drops, hardcoded password in redis HelmRelease, insecure source, HelmRepository type:oci legacy pattern, cross-namespace sourceRef on podinfo HelmRelease, missing prune/dependsOn on apps Kustomization, missing drift detection and remediation strategies, runtime-values ConfigMap without watch label, and targetNamespace/createNamespace on monitoring HelmRelease.",
       "files": [],
       "expectations": [
         "Detects gotk-sync.yaml and recommends migrating to Flux Operator with link to https://fluxoperator.dev/docs/guides/migration/",
@@ -80,6 +80,8 @@
         "Detects Kustomization using kustomize.toolkit.fluxcd.io/v1beta1 and v1beta2 (should be v1)",
         "Detects HelmRelease using helm.toolkit.fluxcd.io/v2beta2 (should be v2)",
         "Detects HelmRepository using source.toolkit.fluxcd.io/v1beta1 (should be v1)",
+        "Detects the Provider and Alert using notification.toolkit.fluxcd.io/v1beta3 as deprecated in Flux 2.10 (should be v1)",
+        "Flags the Alert spec.summary and Provider spec.proxy fields as removed in notification v1, recommending spec.eventMetadata.summary and spec.proxySecretRef",
         "Detects the hardcoded password (supersecret123) in redis.yaml HelmRelease values",
         "Flags the secretGenerator in apps/kustomization.yaml for containing plaintext credentials (DB_PASSWORD, CONNECTION_STRING) that should use SOPS encryption or External Secrets",
         "Detects insecure: true on the ingress-nginx HelmRepository",
