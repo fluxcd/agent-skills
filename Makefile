@@ -91,7 +91,7 @@ prep-release: ## Open a release PR bumping the version (make prep-release TAG=x.
 	fi && \
 	git checkout -b prep-$$next && \
 	$(MAKE) version-set TAG=$$next && \
-	git commit -am "Release v$$next" && \
+	git commit -s -am "Release v$$next" && \
 	git push origin prep-$$next && \
 	gh pr create --title "Release v$$next" --body "Prepare for v$$next release" --base main --head prep-$$next
 
