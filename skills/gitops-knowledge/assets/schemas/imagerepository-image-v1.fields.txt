@@ -1,4 +1,4 @@
-# schema source: Flux v2.9.6 https://github.com/fluxcd/flux2
+# schema source: Flux v2.10.0 https://github.com/fluxcd/flux2
 apiVersion <string> enum=image.toolkit.fluxcd.io/v1
 kind <string> enum=ImageRepository
 metadata.name <string> (required)
@@ -18,7 +18,7 @@ spec.proxySecretRef <object>	# ProxySecretRef specifies the Secret containing th
 spec.proxySecretRef.name <string> (required)	# Name of the referent.
 spec.secretRef <object>	# SecretRef can be given the name of a secret containing credentials to use for the image registry. The secret should be created with `kubectl create secret docker-registry`, or the equivalent.
 spec.secretRef.name <string> (required)	# Name of the referent.
-spec.serviceAccountName <string> max=253	# ServiceAccountName is the name of the Kubernetes ServiceAccount used to authenticate the image pull if the service account has attached pull secrets.
+spec.serviceAccountName <string> max=253	# ServiceAccountName is the name of the Kubernetes ServiceAccount used to authenticate the image pull, either with the pull secrets attached to the service account or with an object identity. For more information about object identity: https://fluxcd.io/flux/integrations/object-identity/
 spec.suspend <boolean>	# This flag tells the controller to suspend subsequent image scans. It does not apply to already started scans. Defaults to false.
 spec.timeout <string> pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m))+$"	# Timeout for image scanning. Defaults to 'Interval' duration.
 status <object> default={"observedGeneration":-1}	# ImageRepositoryStatus defines the observed state of ImageRepository

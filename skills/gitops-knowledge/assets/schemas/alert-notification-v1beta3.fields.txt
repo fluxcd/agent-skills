@@ -1,5 +1,5 @@
-# schema source: Flux v2.9.6 https://github.com/fluxcd/flux2
-apiVersion <string> enum=notification.toolkit.fluxcd.io/v1beta3
+# schema source: Flux v2.10.0 https://github.com/fluxcd/flux2
+apiVersion <string> enum=notification.toolkit.fluxcd.io/v1beta3 (deprecated)	# v1beta3 Alert is deprecated, upgrade to v1
 kind <string> enum=Alert
 metadata.name <string> (required)
 metadata.namespace <string> (required)

@@ -1,4 +1,4 @@
-# schema source: Flux v2.9.6 https://github.com/fluxcd/flux2
+# schema source: Flux v2.10.0 https://github.com/fluxcd/flux2
 apiVersion <string> enum=source.toolkit.fluxcd.io/v1
 kind <string> enum=Bucket
 metadata.name <string> (required)
@@ -18,7 +18,7 @@ spec.proxySecretRef.name <string> (required)	# Name of the referent.
 spec.region <string>	# Region of the Endpoint where the BucketName is located in.
 spec.secretRef <object>	# SecretRef specifies the Secret containing authentication credentials for the Bucket.
 spec.secretRef.name <string> (required)	# Name of the referent.
-spec.serviceAccountName <string>	# ServiceAccountName is the name of the Kubernetes ServiceAccount used to authenticate the bucket. This field is only supported for the 'gcp' and 'aws' providers. For more information about workload identity: https://fluxcd.io/flux/components/source/buckets/#workload-identity
+spec.serviceAccountName <string>	# ServiceAccountName is the name of the Kubernetes ServiceAccount used to authenticate the bucket. This field is only supported for the 'gcp' and 'aws' providers. For more information about object identity: https://fluxcd.io/flux/integrations/object-identity/
 spec.sts <object>	# STS specifies the required configuration to use a Security Token Service for fetching temporary credentials to authenticate in a Bucket provider. This field is only supported for the `aws` and `generic` providers.
 spec.sts.certSecretRef <object>	# CertSecretRef can be given the name of a Secret containing either or both of - a PEM-encoded client certificate (`tls.crt`) and private key (`tls.key`); - a PEM-encoded CA certificate (`ca.crt`) and whichever are supplied, will be used for connecting to the STS endpoint. The client cert and key are useful if you are authenticating with a certificate; the CA cert is useful if you are using a self-signed server certificate. The Secret must be of type `Opaque` or `kubernetes.io/tls`. This field is only supported for the `ldap` provider.
 spec.sts.certSecretRef.name <string> (required)	# Name of the referent.
