@@ -1,4 +1,4 @@
-# schema source: Flux v2.9.6 https://github.com/fluxcd/flux2
+# schema source: Flux v2.10.0 https://github.com/fluxcd/flux2
 apiVersion <string> enum=source.toolkit.fluxcd.io/v1
 kind <string> enum=GitRepository
 metadata.name <string> (required)
@@ -66,4 +66,5 @@ status.observedInclude[].repository.name <string> (required)	# Name of the refer
 status.observedInclude[].toPath <string>	# ToPath specifies the path to copy contents to, defaults to the name of the GitRepositoryRef.
 status.observedRecurseSubmodules <boolean>	# ObservedRecurseSubmodules is the observed resource submodules configuration used to produce the current Artifact.
 status.observedSparseCheckout <[]string>	# ObservedSparseCheckout is the observed list of directories used to produce the current Artifact.
+status.sourceVerificationFingerprint <string>	# SourceVerificationFingerprint is the fingerprint of the public keys used to verify the signature of the Git object(s) for the current Artifact. It is used to detect changes to the verification policy, such as a key rotation, that require the current revision to be verified again.
 status.sourceVerificationMode <string>	# SourceVerificationMode is the last used verification mode indicating which Git object(s) have been verified.

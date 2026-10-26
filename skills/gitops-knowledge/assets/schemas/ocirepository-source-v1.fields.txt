@@ -1,4 +1,4 @@
-# schema source: Flux v2.9.6 https://github.com/fluxcd/flux2
+# schema source: Flux v2.10.0 https://github.com/fluxcd/flux2
 apiVersion <string> enum=source.toolkit.fluxcd.io/v1
 kind <string> enum=OCIRepository
 metadata.name <string> (required)
@@ -8,11 +8,11 @@ spec.certSecretRef <object>	# CertSecretRef can be given the name of a Secret co
 spec.certSecretRef.name <string> (required)	# Name of the referent.
 spec.ignore <string>	# Ignore overrides the set of excluded patterns in the .sourceignore format (which is the same as .gitignore). If not provided, a default will be used, consult the documentation for your version to find out what those are.
 spec.insecure <boolean>	# Insecure allows connecting to a non-TLS HTTP container registry.
-spec.interval <string> (required) pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"	# Interval at which the OCIRepository URL is checked for updates. This interval is approximate and may be subject to jitter to ensure efficient use of resources.
+spec.interval <string> pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"	# Interval at which the OCIRepository URL is checked for updates. This interval is approximate and may be subject to jitter to ensure efficient use of resources.
 spec.layerSelector <object>	# LayerSelector specifies which layer should be extracted from the OCI artifact. When not specified, the first layer found in the artifact is selected.
 spec.layerSelector.mediaType <string>	# MediaType specifies the OCI media type of the layer which should be extracted from the OCI Artifact. The first layer matching this type is selected.
 spec.layerSelector.operation <string> enum=extract|copy	# Operation specifies how the selected layer should be processed. By default, the layer compressed content is extracted to storage. When the operation is set to 'copy', the layer compressed content is persisted to storage as it is.
-spec.provider <string> enum=generic|aws|azure|gcp default="generic"	# The provider used for authentication, can be 'aws', 'azure', 'gcp' or 'generic'. When not specified, defaults to 'generic'.
+spec.provider <string> enum=generic|aws|azure|gcp	# The provider used for authentication, can be 'aws', 'azure', 'gcp' or 'generic'. When not specified, defaults to 'generic'.
 spec.proxySecretRef <object>	# ProxySecretRef specifies the Secret containing the proxy configuration to use while communicating with the container registry.
 spec.proxySecretRef.name <string> (required)	# Name of the referent.
 spec.ref <object>	# The OCI reference to pull and monitor for changes, defaults to the latest tag.
@@ -22,10 +22,10 @@ spec.ref.semverFilter <string>	# SemverFilter is a regex pattern to filter the t
 spec.ref.tag <string>	# Tag is the image tag to pull, defaults to latest.
 spec.secretRef <object>	# SecretRef contains the secret name containing the registry login credentials to resolve image metadata. The secret must be of type kubernetes.io/dockerconfigjson.
 spec.secretRef.name <string> (required)	# Name of the referent.
-spec.serviceAccountName <string>	# ServiceAccountName is the name of the Kubernetes ServiceAccount used to authenticate the image pull if the service account has attached pull secrets. For more information: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
+spec.serviceAccountName <string>	# ServiceAccountName is the name of the Kubernetes ServiceAccount used to authenticate the image pull, either with the pull secrets attached to the service account or with an object identity. For more information about object identity: https://fluxcd.io/flux/integrations/object-identity/ For more information about image pull secrets: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account
 spec.suspend <boolean>	# This flag tells the controller to suspend the reconciliation of this source.
-spec.timeout <string> default="60s" pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m))+$"	# The timeout for remote OCI Repository operations like pulling, defaults to 60s.
-spec.url <string> (required) pattern="^oci://.*$"	# URL is a reference to an OCI artifact repository hosted on a remote container registry.
+spec.timeout <string> pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m))+$"	# The timeout for remote OCI Repository operations like pulling, defaults to 60s.
+spec.url <string> pattern="^oci://.*$"	# URL is a reference to an OCI artifact repository hosted on a remote container registry.
 spec.verify <object>	# Verify contains the secret name containing the trusted public keys used to verify the signature and specifies which provider to use to check whether OCI image is authentic.
 spec.verify.matchOIDCIdentity <[]object>	# MatchOIDCIdentity specifies the identity matching criteria to use while verifying an OCI artifact which was signed using Cosign keyless signing. The artifact's identity is deemed to be verified if any of the specified matchers match against the identity.
 spec.verify.matchOIDCIdentity[].issuer <string> (required)	# Issuer specifies the regex pattern to match against to verify the OIDC issuer in the Fulcio certificate. The pattern must be a valid Go regular expression.
@@ -57,4 +57,5 @@ status.observedIgnore <string>	# ObservedIgnore is the observed exclusion patter
 status.observedLayerSelector <object>	# ObservedLayerSelector is the observed layer selector used for constructing the source artifact.
 status.observedLayerSelector.mediaType <string>	# MediaType specifies the OCI media type of the layer which should be extracted from the OCI Artifact. The first layer matching this type is selected.
 status.observedLayerSelector.operation <string> enum=extract|copy	# Operation specifies how the selected layer should be processed. By default, the layer compressed content is extracted to storage. When the operation is set to 'copy', the layer compressed content is persisted to storage as it is.
+status.sourceVerificationFingerprint <string>	# SourceVerificationFingerprint is the fingerprint of the verification material used to verify the signature of the current Artifact. It is used to detect changes to the verification policy, such as a key rotation, that require the current revision to be verified again.
 status.url <string>	# URL is the download link for the artifact output of the last OCI Repository sync.
