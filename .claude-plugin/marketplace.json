@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "AI skills for GitOps engineering with Flux CD and Kubernetes",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "plugins": [
     {
