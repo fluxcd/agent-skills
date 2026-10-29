@@ -382,7 +382,7 @@ The config holds the two registries and takes the app and version from the envir
 (strict mode fails on unset variables, so a typo cannot mirror the wrong thing):
 
 ```yaml
-apiVersion: mirror.plugin.fluxcd.io/v1beta1
+apiVersion: mirror.plugin.fluxcd.io/v1beta2
 kind: Config
 hosts:                                     # optional: cloud auth via ambient identity
   - host: 111111111111.dkr.ecr.eu-west-1.amazonaws.com
