@@ -312,6 +312,14 @@ Weigh Flux's own repos and third-party dependencies differently:
 
 - Always fetch before comparing `tag..origin/release/...`.
 - Always pull the release series branch before creating `release-vX.Y.Z`.
+- If `git pull` on the release series branch reports that the branches have
+  diverged, do not merge them. A stale local branch that merged `main` into the
+  release series carries commits upstream never backported, and merging again
+  would repeat that. Confirm the local-only commits are already contained in
+  `origin/main` (`git branch -r --contains <sha>`), then create
+  `release-vX.Y.Z` from `origin/release/vX.Y.x` and fast-forward the stale local
+  branch to the remote (`git branch -f release/vX.Y.x origin/release/vX.Y.x`)
+  before tagging. If any local-only commit is not on `origin/main`, stop and ask.
 - Always pull the release series branch again after merging the release PR and
   before tagging.
 - Always inspect the actual root `go.mod`; do not assume the self-API path form.
